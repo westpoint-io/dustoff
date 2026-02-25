@@ -1,4 +1,4 @@
-import { opendir } from 'node:fs/promises';
+import { opendir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { TARGET_DIRS, IGNORE_DIRS } from './constants.js';
 import type { ScanResult, ScanOptions } from './types.js';
@@ -31,12 +31,15 @@ function isPermissionError(err: unknown): boolean {
  * - Handles permission errors gracefully (continues scanning)
  * - Supports AbortSignal cancellation
  * - Streams results as an AsyncGenerator
+ * - Calls onProgress with directoriesVisited count on each directory dequeued
+ * - Populates mtimeMs on each yielded ScanResult via stat()
  */
 export async function* scan(
   rootPath: string,
   options?: ScanOptions,
 ): AsyncGenerator<ScanResult> {
   const queue: string[] = [rootPath];
+  let directoriesVisited = 0;
 
   while (queue.length > 0) {
     // Check for cancellation at the top of each iteration
@@ -45,6 +48,10 @@ export async function* scan(
     }
 
     const currentDir = queue.shift()!;
+
+    // Increment directory counter and notify caller
+    directoriesVisited++;
+    options?.onProgress?.({ directoriesVisited });
 
     let dir;
     try {
@@ -78,11 +85,20 @@ export async function* scan(
         }
 
         if (TARGET_DIRS.has(entry.name)) {
-          // Found an artifact directory — yield it and do NOT recurse into it
+          // Found an artifact directory — get mtimeMs and yield it; do NOT recurse
+          let mtimeMs: number | undefined;
+          try {
+            const s = await stat(entryPath);
+            mtimeMs = s.mtimeMs;
+          } catch {
+            // stat failed — leave mtimeMs undefined
+          }
+
           yield {
             path: entryPath,
             type: entry.name,
             sizeBytes: null,
+            mtimeMs,
           };
           continue;
         }

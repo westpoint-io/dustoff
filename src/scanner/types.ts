@@ -2,10 +2,12 @@ export interface ScanResult {
   path: string;
   type: string;           // basename of the matched dir (e.g. "node_modules", ".next")
   sizeBytes: number | null; // null = not yet calculated
+  mtimeMs?: number;       // last-modified time in milliseconds; undefined if stat failed
 }
 
 export interface ScanOptions {
   signal?: AbortSignal;   // allow cancellation
+  onProgress?: (event: { directoriesVisited: number }) => void; // called on each directory visited
 }
 
 export interface ScanStats {

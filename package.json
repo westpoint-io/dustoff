@@ -11,6 +11,9 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "bin": {
+    "dustoff": "dist/cli.js"
+  },
   "engines": {
     "node": ">=18.18.0"
   },

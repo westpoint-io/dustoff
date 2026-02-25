@@ -16,6 +16,8 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:unit": "vitest run test/unit/",
+    "test:integration": "vitest run test/integration/",
     "test:watch": "vitest",
     "build": "tsc",
     "typecheck": "tsc --noEmit"

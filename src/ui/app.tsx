@@ -332,7 +332,14 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           />
         </Box>
         {state.detailVisible && cursorArtifact !== undefined && (
-          <DetailPanel artifact={cursorArtifact} width={detailWidth} />
+          <>
+            <Box flexDirection="column">
+              {Array.from({ length: 30 }, (_, i) => (
+                <Text key={`sep${i}`} color={theme.surface0}>{'│'}</Text>
+              ))}
+            </Box>
+            <DetailPanel artifact={cursorArtifact} width={detailWidth} />
+          </>
         )}
       </Box>
 

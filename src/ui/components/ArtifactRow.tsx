@@ -13,13 +13,6 @@ interface ArtifactRowProps {
   maxSizeBytes: number;
 }
 
-/**
- * Single artifact row matching the mockup layout:
- * [#] [TYPE badge] [PATH] [SIZE bar] [SIZE text] [AGE]
- *
- * Cursor row: blue left border + › glyph + highlighted background
- * Even rows: subtle surface0 tint background
- */
 export function ArtifactRow({
   artifact,
   index,
@@ -33,46 +26,36 @@ export function ArtifactRow({
   const ageClr = ageColor(days);
   const sizeText = formatBytes(artifact.sizeBytes);
   const sizeClr = sizeColor(artifact.sizeBytes);
+  const pathWidth = Math.max(20, Math.floor((process.stdout.columns || 80) * 0.35));
 
-  // Row background: cursor gets surface0, even rows get subtle tint
-  const bgColor = isCursor ? theme.surface0 : undefined;
+  // Cursor indicator
+  const cursorGlyph = isCursor ? '›' : ' ';
+  const idxColor = isCursor ? theme.blue : theme.overlay0;
 
   return (
-    <Box
-      paddingX={1}
-      borderStyle={isCursor ? 'single' : undefined}
-      borderLeft={isCursor}
-      borderRight={false}
-      borderTop={false}
-      borderBottom={false}
-      borderColor={theme.blue}
-    >
-      {/* # column */}
-      <Box width={4}>
-        {isCursor ? (
-          <Text color={theme.blue} bold>{'›'}{String(index)}</Text>
-        ) : (
-          <Text color={theme.overlay0}>{String(index).padStart(2)}</Text>
-        )}
-      </Box>
+    <Box>
+      {/* Cursor + # */}
+      <Text color={isCursor ? theme.blue : theme.overlay0} bold={isCursor}>
+        {`${cursorGlyph}${String(index).padStart(2)} `}
+      </Text>
 
-      {/* TYPE column - badge style */}
+      {/* TYPE badge */}
       <Box width={14}>
-        <Text color={typeColor}>{artifact.type}</Text>
+        <Text backgroundColor={isCursor ? undefined : undefined} color={typeColor}>{artifact.type.padEnd(13)}</Text>
       </Box>
 
-      {/* PATH column - flex fill */}
+      {/* PATH */}
       <Box flexGrow={1}>
-        <Text>{truncatePath(artifact.path, process.stdout.columns ? Math.floor(process.stdout.columns * 0.35) : 40)}</Text>
+        <Text>{truncatePath(artifact.path, pathWidth)}</Text>
       </Box>
 
-      {/* SIZE bar column */}
+      {/* SIZE bar */}
       <Box width={10}>
         <SizeBar bytes={artifact.sizeBytes} maxBytes={maxSizeBytes} />
       </Box>
 
-      {/* SIZE text column */}
-      <Box width={12} justifyContent="flex-end">
+      {/* SIZE text */}
+      <Box width={10} justifyContent="flex-end">
         {artifact.sizeBytes === null ? (
           <Text italic color={theme.overlay0}>{'calculating...'}</Text>
         ) : (
@@ -80,7 +63,7 @@ export function ArtifactRow({
         )}
       </Box>
 
-      {/* AGE column */}
+      {/* AGE */}
       <Box width={6} justifyContent="flex-end">
         <Text color={ageClr} bold={days >= 90}>{ageText}</Text>
       </Box>

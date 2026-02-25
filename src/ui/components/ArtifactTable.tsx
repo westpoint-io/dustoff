@@ -1,12 +1,12 @@
 import React, { useMemo, useEffect } from 'react';
 import type { Dispatch } from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useStdout } from 'ink';
 import type { AppState, AppAction } from '../app.js';
 import { ArtifactRow } from './ArtifactRow.js';
 import { useWindow } from '../hooks/useWindow.js';
 import { theme } from '../theme.js';
 
-const RESERVED_ROWS = 9;
+const RESERVED_ROWS = 12; // header(6+1sep) + table header(1) + blue line(1) + status(1) + shortcut(1) + buffer(1)
 
 interface ArtifactTableProps {
   state: AppState;
@@ -19,6 +19,9 @@ export function ArtifactTable({
   dispatch,
   onVisibleCountChange,
 }: ArtifactTableProps): React.ReactElement {
+  const { stdout } = useStdout();
+  const cols = stdout?.columns ?? 80;
+
   const sortedArtifacts = useMemo(() => {
     const sorted = [...state.artifacts];
     sorted.sort((a, b) => {
@@ -51,28 +54,27 @@ export function ArtifactTable({
     onVisibleCountChange?.(visibleCount);
   }, [visibleCount, onVisibleCountChange]);
 
-  // Sort indicators
-  const sizeArrow = state.sortKey === 'size' ? (state.sortDir === 'desc' ? ' ↓' : ' ↑') : '';
-  const pathArrow = state.sortKey === 'path' ? (state.sortDir === 'asc' ? ' ↑' : ' ↓') : '';
-  const ageArrow = state.sortKey === 'age' ? (state.sortDir === 'desc' ? ' ↓' : ' ↑') : '';
+  // Sort arrow on active column
+  const sizeLabel = state.sortKey === 'size' ? `SIZE ${state.sortDir === 'desc' ? '↓' : '↑'}` : 'SIZE';
+  const ageLabel = state.sortKey === 'age' ? `AGE ${state.sortDir === 'desc' ? '↓' : '↑'}` : 'AGE';
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      {/* Column header row */}
-      <Box paddingX={1}>
-        <Box width={4}><Text color={theme.blue} bold>{'#'}</Text></Box>
+      {/* Column header */}
+      <Box>
+        <Text color={theme.blue} bold>
+          {' # '}
+        </Text>
         <Box width={14}><Text color={theme.blue} bold>{'TYPE'}</Text></Box>
         <Box flexGrow={1}><Text color={theme.blue} bold>{'PATH'}</Text></Box>
         <Box width={10}><Text color={theme.blue} bold>{'SIZE'}</Text></Box>
-        <Box width={12}><Text color={state.sortKey === 'size' ? theme.blue : theme.blue} bold>{`SIZE${sizeArrow}`}</Text></Box>
-        <Box width={6}><Text color={theme.blue} bold>{`AGE${ageArrow}`}</Text></Box>
+        <Box width={10} justifyContent="flex-end"><Text color={theme.blue} bold>{sizeLabel}</Text></Box>
+        <Box width={6} justifyContent="flex-end"><Text color={theme.blue} bold>{ageLabel}</Text></Box>
       </Box>
       {/* Blue underline */}
-      <Box paddingX={1}>
-        <Text color={theme.blue}>{'─'.repeat(process.stdout.columns ? process.stdout.columns - 2 : 78)}</Text>
-      </Box>
+      <Text color={theme.blue}>{'━'.repeat(cols)}</Text>
 
-      {/* Visible rows */}
+      {/* Rows */}
       {visibleItems.map((artifact, i) => {
         const absoluteIndex = scrollOffset + i;
         return (
@@ -88,8 +90,8 @@ export function ArtifactTable({
       })}
 
       {state.artifacts.length === 0 && (
-        <Box paddingX={2}>
-          <Text dimColor>{'No artifacts found in this directory.'}</Text>
+        <Box paddingX={2} marginTop={1}>
+          <Text dimColor>{'No artifacts found.'}</Text>
         </Box>
       )}
     </Box>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useStdout } from 'ink';
 import Spinner from 'ink-spinner';
 import { theme } from '../theme.js';
 
@@ -11,11 +11,6 @@ interface StatusBarProps {
   totalArtifacts: number;
 }
 
-/**
- * Status bar matching mockup layout:
- * Scanning: ● Scanning... [████░░░░] 58%  |  684 / 1,180 dirs  |  Row 4 of 9
- * Complete: ✓ Scan complete · 0.8s         |  1,180 directories  |  Row 2 of 13
- */
 export function StatusBar({
   scanStatus,
   scanDurationMs,
@@ -23,22 +18,21 @@ export function StatusBar({
   cursorIndex,
   totalArtifacts,
 }: StatusBarProps): React.ReactElement {
+  const { stdout } = useStdout();
+  const cols = stdout?.columns ?? 80;
   const rowText = totalArtifacts > 0
     ? `Row ${cursorIndex + 1} of ${totalArtifacts}`
-    : 'No artifacts';
+    : '';
 
   return (
-    <Box>
-      {/* Top separator */}
-      <Box position="absolute" marginTop={-1}>
-        <Text color={theme.surface0}>{'─'.repeat(process.stdout.columns || 80)}</Text>
-      </Box>
-      <Box paddingX={1} justifyContent="space-between" width="100%">
+    <Box flexDirection="column">
+      <Text color={theme.surface0}>{'─'.repeat(cols)}</Text>
+      <Box justifyContent="space-between">
+        {/* Left: scan state */}
         <Box>
           {scanStatus === 'scanning' ? (
             <>
-              <Text color={theme.green}>{'● '}</Text>
-              <Text color={theme.green}>{'Scanning'}</Text>
+              <Text color={theme.green}>{'● Scanning'}</Text>
               <Spinner type="dots" />
               <Text color={theme.overlay0}>{` ${directoriesScanned.toLocaleString()} dirs`}</Text>
             </>
@@ -49,14 +43,10 @@ export function StatusBar({
           )}
         </Box>
 
-        {/* Middle: directory count */}
-        <Box>
-          <Text color={theme.overlay0}>
-            {scanStatus === 'complete'
-              ? `${directoriesScanned.toLocaleString()} directories`
-              : ''}
-          </Text>
-        </Box>
+        {/* Center: directory count */}
+        {scanStatus === 'complete' && (
+          <Text color={theme.overlay0}>{`${directoriesScanned.toLocaleString()} directories`}</Text>
+        )}
 
         {/* Right: row position */}
         <Text color={theme.overlay0}>{rowText}</Text>

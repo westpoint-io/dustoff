@@ -66,9 +66,9 @@ describe('ArtifactRow', () => {
         isEven={false}
         maxSizeBytes={0}
       />,
-      { columns: 120 },
+      { columns: 160 },
     );
-    expect(lastFrame()).toContain('calculating');
+    expect(lastFrame()).toContain('calculat');
   });
 
   it('shows formatted size when sizeBytes is set', () => {

@@ -10,14 +10,25 @@ interface DetailPanelProps {
   width: number;
 }
 
-/**
- * Detail panel matching mockup layout:
- * - Panel header: name + type badge
- * - Path section
- * - Info section: Type, Size, Files, Last modified, Pkg manager
- * - Heaviest section (stub)
- * - Safe to delete? section (stub)
- */
+function Section({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+  return (
+    <Box flexDirection="column" paddingX={1}>
+      <Text color={theme.surface0}>{'─'.repeat(40)}</Text>
+      <Text color={theme.surface2}>{label}</Text>
+      {children}
+    </Box>
+  );
+}
+
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
+  return (
+    <Box justifyContent="space-between">
+      <Text color={theme.overlay0}>{label}</Text>
+      {children}
+    </Box>
+  );
+}
+
 export function DetailPanel({ artifact, width }: DetailPanelProps): React.ReactElement {
   const name = basename(artifact.path);
   const typeColor = typeBadgeColor[artifact.type] ?? theme.subtext0;
@@ -28,60 +39,44 @@ export function DetailPanel({ artifact, width }: DetailPanelProps): React.ReactE
   const ageClr = ageColor(days);
 
   return (
-    <Box
-      flexDirection="column"
-      width={width}
-      borderStyle="single"
-      borderColor={theme.surface0}
-      borderLeft={true}
-      borderRight={false}
-      borderTop={false}
-      borderBottom={false}
-    >
-      {/* Panel header */}
-      <Box paddingX={1} paddingY={0} justifyContent="space-between" borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
+    <Box flexDirection="column" width={width}>
+      {/* Panel header: name + type badge */}
+      <Box paddingX={1} justifyContent="space-between">
         <Text color={theme.blue} bold>{name}</Text>
         <Text color={typeColor}>{artifact.type}</Text>
       </Box>
 
-      {/* Path section */}
-      <Box flexDirection="column" paddingX={1} paddingY={0} borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
-        <Text color={theme.surface2}>{'PATH'}</Text>
+      {/* PATH */}
+      <Section label="PATH">
         <Text color={theme.blue} wrap="truncate-end">{artifact.path}</Text>
-      </Box>
+      </Section>
 
-      {/* Info section */}
-      <Box flexDirection="column" paddingX={1} paddingY={0} borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
-        <Text color={theme.surface2}>{'INFO'}</Text>
-        <Box justifyContent="space-between">
-          <Text color={theme.overlay0}>{'Type'}</Text>
+      {/* INFO */}
+      <Section label="INFO">
+        <InfoRow label="Type">
           <Text color={typeColor}>{artifact.type}</Text>
-        </Box>
-        <Box justifyContent="space-between">
-          <Text color={theme.overlay0}>{'Size'}</Text>
+        </InfoRow>
+        <InfoRow label="Size">
           {artifact.sizeBytes === null ? (
             <Text italic color={theme.overlay0}>{'calculating...'}</Text>
           ) : (
             <Text color={sizeClr} bold>{sizeText}</Text>
           )}
-        </Box>
-        <Box justifyContent="space-between">
-          <Text color={theme.overlay0}>{'Last modified'}</Text>
+        </InfoRow>
+        <InfoRow label="Last modified">
           <Text color={ageClr}>{`${ageText} ago`}</Text>
-        </Box>
-      </Box>
+        </InfoRow>
+      </Section>
 
-      {/* Heaviest / Contents — stub for Phase 3 */}
-      <Box flexDirection="column" paddingX={1} paddingY={0} borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
-        <Text color={theme.surface2}>{'CONTENTS'}</Text>
+      {/* CONTENTS — stub */}
+      <Section label="CONTENTS">
         <Text color={theme.overlay0} italic>{'Run detail scan for breakdown'}</Text>
-      </Box>
+      </Section>
 
-      {/* Safe to delete? */}
-      <Box flexDirection="column" paddingX={1} paddingY={0}>
-        <Text color={theme.surface2}>{'SAFE TO DELETE?'}</Text>
+      {/* SAFE TO DELETE? — stub */}
+      <Section label="SAFE TO DELETE?">
         <Text color={theme.overlay0} italic>{'Analysis available after selection'}</Text>
-      </Box>
+      </Section>
     </Box>
   );
 }

@@ -3,6 +3,7 @@ import { Box, Text } from 'ink';
 import type { ScanResult } from '../../scanner/types.js';
 import { theme, sizeColor, ageColor, typeBadgeColor } from '../theme.js';
 import { formatBytes, formatAge, truncatePath } from '../formatters.js';
+import { SizeBar } from './SizeBar.js';
 import { differenceInDays } from 'date-fns';
 
 const PATH_MAX_WIDTH = 40;
@@ -26,6 +27,7 @@ interface ArtifactRowProps {
  * - #: row index (muted)
  * - TYPE: artifact type as color-coded badge
  * - PATH: truncated path, flex fill
+ * - SIZE bar: proportional fill bar (SizeBar component)
  * - SIZE: formatBytes (italic dimColor if calculating)
  * - AGE: formatAge with age-tier color
  */
@@ -33,7 +35,7 @@ export function ArtifactRow({
   artifact,
   index,
   isCursor,
-  maxSizeBytes: _maxSizeBytes, // reserved for future size bar in 02-02
+  maxSizeBytes,
 }: ArtifactRowProps): React.ReactElement {
   const typeColor = typeBadgeColor[artifact.type] ?? theme.subtext0;
   const typePadded = artifact.type.slice(0, TYPE_WIDTH).padEnd(TYPE_WIDTH);
@@ -55,6 +57,25 @@ export function ArtifactRow({
 
   const indexStr = String(index).padStart(3);
 
+  const rowContent = (
+    <>
+      <Text dimColor>{`${indexStr} `}</Text>
+      <Text color={typeColor}>{typePadded}</Text>
+      <Text>{' '}</Text>
+      <Text>{pathPadded}</Text>
+      <Text>{' '}</Text>
+      <SizeBar bytes={artifact.sizeBytes} maxBytes={maxSizeBytes} />
+      <Text>{' '}</Text>
+      {artifact.sizeBytes === null ? (
+        <Text italic dimColor>{sizeCol}</Text>
+      ) : (
+        <Text color={sizeTextColor}>{sizeCol}</Text>
+      )}
+      <Text>{' '}</Text>
+      <Text color={ageTextColor}>{ageCol}</Text>
+    </>
+  );
+
   if (isCursor) {
     return (
       <Box
@@ -66,18 +87,7 @@ export function ArtifactRow({
         borderLeftColor={theme.blue}
       >
         <Text color={theme.blue}>{'›'}</Text>
-        <Text dimColor>{`${indexStr} `}</Text>
-        <Text color={typeColor}>{typePadded}</Text>
-        <Text>{' '}</Text>
-        <Text>{pathPadded}</Text>
-        <Text>{' '}</Text>
-        {artifact.sizeBytes === null ? (
-          <Text italic dimColor>{sizeCol}</Text>
-        ) : (
-          <Text color={sizeTextColor}>{sizeCol}</Text>
-        )}
-        <Text>{' '}</Text>
-        <Text color={ageTextColor}>{ageCol}</Text>
+        {rowContent}
       </Box>
     );
   }
@@ -85,18 +95,7 @@ export function ArtifactRow({
   return (
     <Box>
       <Text>{' '}</Text>
-      <Text dimColor>{`${indexStr} `}</Text>
-      <Text color={typeColor}>{typePadded}</Text>
-      <Text>{' '}</Text>
-      <Text>{pathPadded}</Text>
-      <Text>{' '}</Text>
-      {artifact.sizeBytes === null ? (
-        <Text italic dimColor>{sizeCol}</Text>
-      ) : (
-        <Text color={sizeTextColor}>{sizeCol}</Text>
-      )}
-      <Text>{' '}</Text>
-      <Text color={ageTextColor}>{ageCol}</Text>
+      {rowContent}
     </Box>
   );
 }

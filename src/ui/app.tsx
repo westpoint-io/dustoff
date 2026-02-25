@@ -4,6 +4,10 @@ import Spinner from 'ink-spinner';
 import type { ScanResult } from '../scanner/types.js';
 import { useScan } from './hooks/useScan.js';
 import { ArtifactTable } from './components/ArtifactTable.js';
+import { Header } from './components/Header.js';
+import { StatusBar } from './components/StatusBar.js';
+import { ShortcutBar } from './components/ShortcutBar.js';
+import { DetailPanel } from './components/DetailPanel.js';
 import { theme } from './theme.js';
 
 // ---------------------------------------------------------------------------
@@ -252,57 +256,57 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     return <LaunchScreen rootPath={rootPath} />;
   }
 
-  // Calculate total reclaimable size
-  const totalReclaimable = state.artifacts.reduce(
+  // Compute derived values from state
+  const totalBytes = state.artifacts.reduce(
     (sum, a) => sum + (a.sizeBytes ?? 0),
     0,
   );
+  const oldestMtimeMs = state.artifacts.reduce<number | undefined>((oldest, a) => {
+    if (a.mtimeMs === undefined) return oldest;
+    if (oldest === undefined) return a.mtimeMs;
+    return a.mtimeMs < oldest ? a.mtimeMs : oldest;
+  }, undefined);
 
-  // Build status line
-  const statusText =
-    state.scanStatus === 'complete'
-      ? `Scan complete in ${state.scanDurationMs}ms`
-      : `Scanning... ${state.directoriesScanned} directories visited`;
+  // Detail panel width: ~35% of terminal, minimum 30 chars
+  const detailWidth = Math.max(30, Math.floor(process.stdout.columns * 0.35));
+
+  // The cursor artifact for the detail panel (using sorted order from state)
+  const cursorArtifact = state.artifacts[state.cursorIndex];
 
   return (
-    <Box flexDirection="column" flexGrow={1}>
-      {/* Header */}
-      <Box borderStyle="single" borderColor={theme.surface1} paddingX={1}>
-        <Text bold color={theme.peach}>{'DUSTOFF'}</Text>
-        <Text>{' · '}</Text>
-        <Text color={theme.yellow}>{`${state.artifacts.length} artifacts`}</Text>
-        {totalReclaimable > 0 && (
-          <>
-            <Text>{' · '}</Text>
-            <Text color={theme.red}>{`${totalReclaimable.toLocaleString()} bytes reclaimable`}</Text>
-          </>
+    <Box flexDirection="column" height="100%">
+      {/* Stats header */}
+      <Header
+        totalBytes={totalBytes}
+        artifactCount={state.artifacts.length}
+        oldestMtimeMs={oldestMtimeMs}
+      />
+
+      {/* Main content area: table + optional detail panel */}
+      <Box flexGrow={1}>
+        <Box flexGrow={1}>
+          <ArtifactTable
+            state={state}
+            dispatch={dispatch}
+            onVisibleCountChange={setVisibleCount}
+          />
+        </Box>
+        {state.detailVisible && cursorArtifact !== undefined && (
+          <DetailPanel artifact={cursorArtifact} width={detailWidth} />
         )}
       </Box>
 
-      {/* Table */}
-      <ArtifactTable
-        state={state}
-        dispatch={dispatch}
-        onVisibleCountChange={setVisibleCount}
+      {/* Status bar */}
+      <StatusBar
+        scanStatus={state.scanStatus}
+        scanDurationMs={state.scanDurationMs}
+        directoriesScanned={state.directoriesScanned}
+        cursorIndex={state.cursorIndex}
+        totalArtifacts={state.artifacts.length}
       />
 
-      {/* Status bar */}
-      <Box borderStyle="single" borderColor={theme.surface1} paddingX={1}>
-        <Text color={state.scanStatus === 'complete' ? theme.green : theme.blue}>
-          {statusText}
-        </Text>
-        <Text>{' · '}</Text>
-        <Text color={theme.subtext0}>
-          {`Row ${state.cursorIndex + 1} of ${state.artifacts.length}`}
-        </Text>
-      </Box>
-
       {/* Shortcut bar */}
-      <Box paddingX={1}>
-        <Text dimColor>
-          {'↑↓ navigate · s/1-3 sort · Tab detail · q quit'}
-        </Text>
-      </Box>
+      <ShortcutBar />
     </Box>
   );
 }

@@ -6,7 +6,7 @@ import { ArtifactRow } from './ArtifactRow.js';
 import { useWindow } from '../hooks/useWindow.js';
 import { theme } from '../theme.js';
 
-const RESERVED_ROWS = 7; // header border (2) + table column header + status border (2) + shortcut bar + padding
+const RESERVED_ROWS = 9; // header border (3) + table column header (1) + status border (3) + shortcut bar (1) + padding (1)
 
 interface ArtifactTableProps {
   state: AppState;

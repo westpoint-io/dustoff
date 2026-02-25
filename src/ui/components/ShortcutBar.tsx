@@ -2,32 +2,30 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { theme } from '../theme.js';
 
-interface ShortcutEntry {
+interface ShortcutDef {
   key: string;
   desc: string;
 }
 
-const SHORTCUTS: ShortcutEntry[] = [
+const SHORTCUTS: ShortcutDef[] = [
   { key: '↑↓', desc: 'navigate' },
-  { key: 'PgUp/PgDn', desc: 'page' },
+  { key: 'Space', desc: 'select' },
   { key: 'Tab', desc: 'detail' },
   { key: 's', desc: 'sort' },
-  { key: '/', desc: 'filter (soon)' },
+  { key: '/', desc: 'filter' },
   { key: 'q', desc: 'quit' },
 ];
 
 /**
- * Static shortcut hint bar at the bottom of the TUI.
- * Shows available keybindings — key in blue, description in dim.
+ * Shortcut bar matching mockup: keys in surface0 "kbd" style, descriptions in dim.
  */
 export function ShortcutBar(): React.ReactElement {
   return (
-    <Box gap={2} paddingX={1}>
+    <Box paddingX={1} gap={2} borderStyle="single" borderColor={theme.surface0} borderTop={true} borderBottom={false} borderLeft={false} borderRight={false}>
       {SHORTCUTS.map(({ key, desc }) => (
-        <Box key={key}>
-          <Text color={theme.blue}>{key}</Text>
-          <Text>{' '}</Text>
-          <Text dimColor>{desc}</Text>
+        <Box key={key} gap={0}>
+          <Text backgroundColor={theme.surface0} color={theme.subtext1}>{` ${key} `}</Text>
+          <Text color={theme.overlay0}>{` ${desc}`}</Text>
         </Box>
       ))}
     </Box>

@@ -2,8 +2,8 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { basename } from 'node:path';
 import type { ScanResult } from '../../scanner/types.js';
-import { theme, typeBadgeColor } from '../theme.js';
-import { formatBytes, formatAge } from '../formatters.js';
+import { theme, typeBadgeColor, sizeColor, ageColor } from '../theme.js';
+import { formatBytes, formatAge, ageDays } from '../formatters.js';
 
 interface DetailPanelProps {
   artifact: ScanResult;
@@ -11,71 +11,76 @@ interface DetailPanelProps {
 }
 
 /**
- * Right-side detail panel shown when Tab is pressed.
- * Displays artifact name, path, type, size, and last-modified info.
- * Contents tree and breakdown bar are Phase 3 stubs — placeholder text shown.
+ * Detail panel matching mockup layout:
+ * - Panel header: name + type badge
+ * - Path section
+ * - Info section: Type, Size, Files, Last modified, Pkg manager
+ * - Heaviest section (stub)
+ * - Safe to delete? section (stub)
  */
 export function DetailPanel({ artifact, width }: DetailPanelProps): React.ReactElement {
   const name = basename(artifact.path);
   const typeColor = typeBadgeColor[artifact.type] ?? theme.subtext0;
   const sizeText = formatBytes(artifact.sizeBytes);
+  const sizeClr = sizeColor(artifact.sizeBytes);
+  const days = ageDays(artifact.mtimeMs);
   const ageText = formatAge(artifact.mtimeMs);
-  const modifiedDate = artifact.mtimeMs !== undefined
-    ? new Date(artifact.mtimeMs).toLocaleDateString()
-    : 'unknown';
+  const ageClr = ageColor(days);
 
   return (
     <Box
       flexDirection="column"
       width={width}
       borderStyle="single"
-      borderColor={theme.surface1}
-      paddingX={1}
+      borderColor={theme.surface0}
+      borderLeft={true}
+      borderRight={false}
+      borderTop={false}
+      borderBottom={false}
     >
-      {/* Header */}
-      <Box marginBottom={1}>
-        <Text bold>{name}</Text>
-        <Text>{' '}</Text>
-        <Text color={typeColor}>{`[${artifact.type}]`}</Text>
+      {/* Panel header */}
+      <Box paddingX={1} paddingY={0} justifyContent="space-between" borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
+        <Text color={theme.blue} bold>{name}</Text>
+        <Text color={typeColor}>{artifact.type}</Text>
       </Box>
 
-      {/* Path */}
-      <Box flexDirection="column" marginBottom={1}>
-        <Text color={theme.subtext0} dimColor>{'Path'}</Text>
-        <Text color={theme.blue} wrap="wrap">{artifact.path}</Text>
+      {/* Path section */}
+      <Box flexDirection="column" paddingX={1} paddingY={0} borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
+        <Text color={theme.surface2}>{'PATH'}</Text>
+        <Text color={theme.blue} wrap="truncate-end">{artifact.path}</Text>
       </Box>
 
-      {/* Info */}
-      <Box flexDirection="column" marginBottom={1}>
-        <Text color={theme.subtext0} dimColor>{'Info'}</Text>
-        <Box>
-          <Text dimColor>{'Type  '}</Text>
+      {/* Info section */}
+      <Box flexDirection="column" paddingX={1} paddingY={0} borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
+        <Text color={theme.surface2}>{'INFO'}</Text>
+        <Box justifyContent="space-between">
+          <Text color={theme.overlay0}>{'Type'}</Text>
           <Text color={typeColor}>{artifact.type}</Text>
         </Box>
-        <Box>
-          <Text dimColor>{'Size  '}</Text>
+        <Box justifyContent="space-between">
+          <Text color={theme.overlay0}>{'Size'}</Text>
           {artifact.sizeBytes === null ? (
-            <Text italic dimColor>{'calculating...'}</Text>
+            <Text italic color={theme.overlay0}>{'calculating...'}</Text>
           ) : (
-            <Text>{sizeText}</Text>
+            <Text color={sizeClr} bold>{sizeText}</Text>
           )}
         </Box>
-        <Box>
-          <Text dimColor>{'Mtime '}</Text>
-          <Text>{`${modifiedDate} (${ageText})`}</Text>
+        <Box justifyContent="space-between">
+          <Text color={theme.overlay0}>{'Last modified'}</Text>
+          <Text color={ageClr}>{`${ageText} ago`}</Text>
         </Box>
+      </Box>
+
+      {/* Heaviest / Contents — stub for Phase 3 */}
+      <Box flexDirection="column" paddingX={1} paddingY={0} borderStyle="single" borderColor={theme.surface0} borderBottom={true} borderTop={false} borderLeft={false} borderRight={false}>
+        <Text color={theme.surface2}>{'CONTENTS'}</Text>
+        <Text color={theme.overlay0} italic>{'Run detail scan for breakdown'}</Text>
       </Box>
 
       {/* Safe to delete? */}
-      <Box flexDirection="column" marginBottom={1}>
-        <Text color={theme.subtext0} dimColor>{'Safe to delete?'}</Text>
-        <Text dimColor>{'Analysis available after selection'}</Text>
-      </Box>
-
-      {/* Contents — Phase 3 stub */}
-      <Box flexDirection="column">
-        <Text color={theme.subtext0} dimColor>{'Contents'}</Text>
-        <Text dimColor>{'Run detail scan for breakdown'}</Text>
+      <Box flexDirection="column" paddingX={1} paddingY={0}>
+        <Text color={theme.surface2}>{'SAFE TO DELETE?'}</Text>
+        <Text color={theme.overlay0} italic>{'Analysis available after selection'}</Text>
       </Box>
     </Box>
   );

@@ -2,100 +2,88 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import type { ScanResult } from '../../scanner/types.js';
 import { theme, sizeColor, ageColor, typeBadgeColor } from '../theme.js';
-import { formatBytes, formatAge, truncatePath } from '../formatters.js';
+import { formatBytes, formatAge, ageDays, truncatePath } from '../formatters.js';
 import { SizeBar } from './SizeBar.js';
-import { differenceInDays } from 'date-fns';
-
-const PATH_MAX_WIDTH = 40;
-const TYPE_WIDTH = 12;
 
 interface ArtifactRowProps {
   artifact: ScanResult;
-  index: number;       // 1-based display row number
+  index: number;
   isCursor: boolean;
   isEven: boolean;
   maxSizeBytes: number;
 }
 
 /**
- * Renders a single artifact row in the table.
+ * Single artifact row matching the mockup layout:
+ * [#] [TYPE badge] [PATH] [SIZE bar] [SIZE text] [AGE]
  *
- * Cursor row gets a blue left-border (Ink's borderLeft) and › glyph indicator.
- * Non-cursor rows have a plain space in place of the glyph, no border.
- *
- * Columns:
- * - #: row index (muted)
- * - TYPE: artifact type as color-coded badge
- * - PATH: truncated path, flex fill
- * - SIZE bar: proportional fill bar (SizeBar component)
- * - SIZE: formatBytes (italic dimColor if calculating)
- * - AGE: formatAge with age-tier color
+ * Cursor row: blue left border + › glyph + highlighted background
+ * Even rows: subtle surface0 tint background
  */
 export function ArtifactRow({
   artifact,
   index,
   isCursor,
+  isEven,
   maxSizeBytes,
 }: ArtifactRowProps): React.ReactElement {
   const typeColor = typeBadgeColor[artifact.type] ?? theme.subtext0;
-  const typePadded = artifact.type.slice(0, TYPE_WIDTH).padEnd(TYPE_WIDTH);
-
-  const pathTruncated = truncatePath(artifact.path, PATH_MAX_WIDTH);
-  const pathPadded = pathTruncated.padEnd(PATH_MAX_WIDTH);
-
-  const sizeText = formatBytes(artifact.sizeBytes);
-  const sizeCol = sizeText.padStart(14);
-  const sizeTextColor = sizeColor(artifact.sizeBytes);
-
-  const ageDays =
-    artifact.mtimeMs !== undefined
-      ? differenceInDays(Date.now(), new Date(artifact.mtimeMs))
-      : 999;
+  const days = ageDays(artifact.mtimeMs);
   const ageText = formatAge(artifact.mtimeMs);
-  const ageCol = ageText.padStart(14);
-  const ageTextColor = ageColor(ageDays);
+  const ageClr = ageColor(days);
+  const sizeText = formatBytes(artifact.sizeBytes);
+  const sizeClr = sizeColor(artifact.sizeBytes);
 
-  const indexStr = String(index).padStart(3);
-
-  const rowContent = (
-    <>
-      <Text dimColor>{`${indexStr} `}</Text>
-      <Text color={typeColor}>{typePadded}</Text>
-      <Text>{' '}</Text>
-      <Text>{pathPadded}</Text>
-      <Text>{' '}</Text>
-      <SizeBar bytes={artifact.sizeBytes} maxBytes={maxSizeBytes} />
-      <Text>{' '}</Text>
-      {artifact.sizeBytes === null ? (
-        <Text italic dimColor>{sizeCol}</Text>
-      ) : (
-        <Text color={sizeTextColor}>{sizeCol}</Text>
-      )}
-      <Text>{' '}</Text>
-      <Text color={ageTextColor}>{ageCol}</Text>
-    </>
-  );
-
-  if (isCursor) {
-    return (
-      <Box
-        borderStyle="single"
-        borderLeft={true}
-        borderRight={false}
-        borderTop={false}
-        borderBottom={false}
-        borderLeftColor={theme.blue}
-      >
-        <Text color={theme.blue}>{'›'}</Text>
-        {rowContent}
-      </Box>
-    );
-  }
+  // Row background: cursor gets surface0, even rows get subtle tint
+  const bgColor = isCursor ? theme.surface0 : undefined;
 
   return (
-    <Box>
-      <Text>{' '}</Text>
-      {rowContent}
+    <Box
+      paddingX={1}
+      borderStyle={isCursor ? 'single' : undefined}
+      borderLeft={isCursor}
+      borderRight={false}
+      borderTop={false}
+      borderBottom={false}
+      borderColor={theme.blue}
+    >
+      {/* # column */}
+      <Box width={4}>
+        {isCursor ? (
+          <Text color={theme.blue} bold>{'›'}{String(index)}</Text>
+        ) : (
+          <Text color={theme.overlay0}>{String(index).padStart(2)}</Text>
+        )}
+      </Box>
+
+      {/* TYPE column - badge style */}
+      <Box width={14}>
+        <Text color={typeColor}>{artifact.type}</Text>
+      </Box>
+
+      {/* PATH column - flex fill */}
+      <Box flexGrow={1}>
+        <Text>{truncatePath(artifact.path, process.stdout.columns ? Math.floor(process.stdout.columns * 0.35) : 40)}</Text>
+      </Box>
+
+      {/* SIZE bar column */}
+      <Box width={10}>
+        <SizeBar bytes={artifact.sizeBytes} maxBytes={maxSizeBytes} />
+      </Box>
+
+      {/* SIZE text column */}
+      <Box width={12} justifyContent="flex-end">
+        {artifact.sizeBytes === null ? (
+          <Text italic color={theme.overlay0}>{'calculating...'}</Text>
+        ) : (
+          <Text color={sizeClr} bold={artifact.sizeBytes >= 1024 * 1024 * 1024}>{sizeText}</Text>
+        )}
+      </Box>
+
+      {/* AGE column */}
+      <Box width={6} justifyContent="flex-end">
+        <Text color={ageClr} bold={days >= 90}>{ageText}</Text>
+      </Box>
     </Box>
   );
 }

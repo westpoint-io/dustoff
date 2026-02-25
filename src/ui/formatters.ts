@@ -1,5 +1,5 @@
 import prettyBytes from 'pretty-bytes';
-import { formatDistanceToNow } from 'date-fns';
+import { differenceInDays, differenceInHours } from 'date-fns';
 
 /**
  * Formats a byte count as a human-readable string.
@@ -11,12 +11,23 @@ export function formatBytes(bytes: number | null): string {
 }
 
 /**
- * Formats a last-modified timestamp as a relative age string.
- * Returns "unknown" for undefined mtimeMs.
+ * Compact age format matching mockup: "120d", "92d", "14d", "2h", "<1h"
  */
 export function formatAge(mtimeMs: number | undefined): string {
-  if (mtimeMs === undefined) return 'unknown';
-  return formatDistanceToNow(new Date(mtimeMs), { addSuffix: true });
+  if (mtimeMs === undefined) return '—';
+  const days = differenceInDays(Date.now(), new Date(mtimeMs));
+  if (days >= 1) return `${days}d`;
+  const hours = differenceInHours(Date.now(), new Date(mtimeMs));
+  if (hours >= 1) return `${hours}h`;
+  return '<1h';
+}
+
+/**
+ * Returns the number of days since mtimeMs for age-tier coloring.
+ */
+export function ageDays(mtimeMs: number | undefined): number {
+  if (mtimeMs === undefined) return 999;
+  return differenceInDays(Date.now(), new Date(mtimeMs));
 }
 
 /**

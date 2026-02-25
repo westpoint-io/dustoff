@@ -65,9 +65,10 @@ describe('ArtifactRow', () => {
         isCursor={false}
         isEven={false}
         maxSizeBytes={0}
-      />
+      />,
+      { columns: 120 },
     );
-    expect(lastFrame()).toContain('calculating...');
+    expect(lastFrame()).toContain('calculating');
   });
 
   it('shows formatted size when sizeBytes is set', () => {
@@ -147,9 +148,19 @@ describe('SizeBar', () => {
 });
 
 describe('Header', () => {
+  const headerProps = {
+    totalBytes: 0,
+    artifactCount: 0,
+    oldestMtimeMs: undefined as number | undefined,
+    oldestPath: undefined as string | undefined,
+    scanStatus: 'scanning' as const,
+    typeCount: 0,
+  };
+
   it('shows artifact count', () => {
     const { lastFrame } = render(
-      <Header totalBytes={0} artifactCount={42} oldestMtimeMs={undefined} />
+      <Header {...headerProps} artifactCount={42} />,
+      { columns: 120 },
     );
     expect(lastFrame()).toContain('42');
   });
@@ -157,21 +168,25 @@ describe('Header', () => {
   it('shows reclaimable total as formatted bytes', () => {
     const totalBytes = 2 * 1024 * 1024 * 1024; // 2 GB
     const { lastFrame } = render(
-      <Header totalBytes={totalBytes} artifactCount={5} oldestMtimeMs={undefined} />
+      <Header {...headerProps} totalBytes={totalBytes} artifactCount={5} />,
+      { columns: 120 },
     );
     expect(lastFrame()).toContain('GB');
   });
 
-  it('shows DUSTOFF logo', () => {
+  it('shows DUSTOFF ASCII art', () => {
     const { lastFrame } = render(
-      <Header totalBytes={0} artifactCount={0} oldestMtimeMs={undefined} />
+      <Header {...headerProps} />,
+      { columns: 120 },
     );
-    expect(lastFrame()).toContain('DUSTOFF');
+    // ASCII art contains the block letter pattern
+    expect(lastFrame()).toContain('██');
   });
 
   it('shows dash when totalBytes is 0', () => {
     const { lastFrame } = render(
-      <Header totalBytes={0} artifactCount={0} oldestMtimeMs={undefined} />
+      <Header {...headerProps} />,
+      { columns: 120 },
     );
     expect(lastFrame()).toContain('—');
   });

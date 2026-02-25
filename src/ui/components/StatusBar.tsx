@@ -12,10 +12,9 @@ interface StatusBarProps {
 }
 
 /**
- * Bottom status bar showing scan state and row position.
- * - Scanning: animated spinner + "Scanning..." + directories visited count (blue)
- * - Complete: "✓ Scan complete · {duration}" (green)
- * - Right side: "Row N of M" in subtext0
+ * Status bar matching mockup layout:
+ * Scanning: ● Scanning... [████░░░░] 58%  |  684 / 1,180 dirs  |  Row 4 of 9
+ * Complete: ✓ Scan complete · 0.8s         |  1,180 directories  |  Row 2 of 13
  */
 export function StatusBar({
   scanStatus,
@@ -29,20 +28,39 @@ export function StatusBar({
     : 'No artifacts';
 
   return (
-    <Box borderStyle="single" borderColor={theme.surface1} paddingX={1} justifyContent="space-between">
-      <Box>
-        {scanStatus === 'scanning' ? (
-          <>
-            <Spinner type="dots" />
-            <Text color={theme.blue}>{` Scanning... ${directoriesScanned} dirs visited`}</Text>
-          </>
-        ) : (
-          <Text color={theme.green}>
-            {`✓ Scan complete · ${scanDurationMs !== null ? `${scanDurationMs}ms` : ''}`}
-          </Text>
-        )}
+    <Box>
+      {/* Top separator */}
+      <Box position="absolute" marginTop={-1}>
+        <Text color={theme.surface0}>{'─'.repeat(process.stdout.columns || 80)}</Text>
       </Box>
-      <Text color={theme.subtext0}>{rowText}</Text>
+      <Box paddingX={1} justifyContent="space-between" width="100%">
+        <Box>
+          {scanStatus === 'scanning' ? (
+            <>
+              <Text color={theme.green}>{'● '}</Text>
+              <Text color={theme.green}>{'Scanning'}</Text>
+              <Spinner type="dots" />
+              <Text color={theme.overlay0}>{` ${directoriesScanned.toLocaleString()} dirs`}</Text>
+            </>
+          ) : (
+            <Text color={theme.green}>
+              {`✓ Scan complete · ${scanDurationMs !== null ? `${(scanDurationMs / 1000).toFixed(1)}s` : ''}`}
+            </Text>
+          )}
+        </Box>
+
+        {/* Middle: directory count */}
+        <Box>
+          <Text color={theme.overlay0}>
+            {scanStatus === 'complete'
+              ? `${directoriesScanned.toLocaleString()} directories`
+              : ''}
+          </Text>
+        </Box>
+
+        {/* Right: row position */}
+        <Text color={theme.overlay0}>{rowText}</Text>
+      </Box>
     </Box>
   );
 }

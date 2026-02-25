@@ -23,7 +23,7 @@ export interface AppState {
   sortKey: 'size' | 'path' | 'age';
   sortDir: 'asc' | 'desc';
   detailVisible: boolean;
-  maxSizeBytes: number; // track largest size for proportional bars
+  maxSizeBytes: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -49,10 +49,9 @@ export type AppAction =
 
 const SORT_CYCLE_ORDER: Array<'size' | 'path' | 'age'> = ['size', 'path', 'age'];
 
-// Natural sort direction for each key
 function naturalDir(key: 'size' | 'path' | 'age'): 'asc' | 'desc' {
   if (key === 'path') return 'asc';
-  return 'desc'; // size and age default to descending
+  return 'desc';
 }
 
 const initialState: AppState = {
@@ -62,8 +61,8 @@ const initialState: AppState = {
   directoriesScanned: 0,
   cursorIndex: 0,
   sortKey: 'size',
-  sortDir: 'desc', // default: size descending
-  detailVisible: false,
+  sortDir: 'desc',
+  detailVisible: true, // detail panel visible by default per mockup
   maxSizeBytes: 0,
 };
 
@@ -143,14 +142,12 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'SORT_TO': {
       if (state.sortKey === action.key) {
-        // Already on this key — toggle direction
         return {
           ...state,
           sortDir: state.sortDir === 'asc' ? 'desc' : 'asc',
           cursorIndex: 0,
         };
       }
-      // Switching to a new key — use provided direction (natural for this key)
       return {
         ...state,
         sortKey: action.key,
@@ -173,6 +170,18 @@ export function reducer(state: AppState, action: AppAction): AppState {
 // Launch splash screen
 // ---------------------------------------------------------------------------
 
+// Gradient ASCII art for launch screen
+const LAUNCH_ASCII = [
+  '██████╗ ██╗   ██╗███████╗████████╗ ██████╗ ███████╗███████╗',
+  '██╔══██╗██║   ██║██╔════╝╚══██╔══╝██╔═══██╗██╔════╝██╔════╝',
+  '██║  ██║██║   ██║███████╗   ██║   ██║   ██║█████╗  █████╗  ',
+  '██║  ██║██║   ██║╚════██║   ██║   ██║   ██║██╔══╝  ██╔══╝  ',
+  '██████╔╝╚██████╔╝███████║   ██║   ╚██████╔╝██║     ██║     ',
+  '╚═════╝  ╚═════╝ ╚══════╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝     ',
+];
+
+const LAUNCH_COLORS = [theme.teal, theme.sky, theme.blue, theme.blue, theme.mauve, theme.mauve];
+
 interface LaunchScreenProps {
   rootPath: string;
 }
@@ -185,20 +194,38 @@ function LaunchScreen({ rootPath }: LaunchScreenProps): React.ReactElement {
       justifyContent="center"
       flexGrow={1}
     >
-      <Text bold color={theme.peach}>
-        {'DUSTOFF'}
-      </Text>
-      <Text dimColor>
-        {'JS/TS artifact scanner & cleaner'}
-      </Text>
+      {/* Gradient ASCII art */}
+      <Box flexDirection="column" alignItems="center">
+        {LAUNCH_ASCII.map((line, i) => (
+          <Text key={`launch-${i}`} color={LAUNCH_COLORS[i]} bold>{line}</Text>
+        ))}
+      </Box>
+
+      <Box marginTop={1}>
+        <Text color={theme.overlay0}>{'JS/TS artifact scanner & cleaner'}</Text>
+      </Box>
+
+      {/* Divider */}
+      <Box marginTop={1}>
+        <Text color={theme.surface0}>{'────────────────────────────'}</Text>
+      </Box>
+
+      {/* Scan path */}
+      <Box marginTop={1}>
+        <Text color={theme.overlay0}>{'scan  '}</Text>
+        <Text color={theme.blue}>{rootPath}</Text>
+      </Box>
+
+      {/* Scanning indicator */}
       <Box marginTop={1}>
         <Spinner type="dots" />
-        <Text color={theme.blue}>{' Initializing scanner...'}</Text>
+        <Text color={theme.blue}>{' Scanning...'}</Text>
       </Box>
+
       <Box marginTop={1}>
-        <Text color={theme.subtext0} dimColor>
-          {rootPath}
-        </Text>
+        <Text color={theme.surface2}>{'Press '}</Text>
+        <Text backgroundColor={theme.surface0} color={theme.subtext1}>{' q '}</Text>
+        <Text color={theme.surface2}>{' to quit'}</Text>
       </Box>
     </Box>
   );
@@ -215,14 +242,10 @@ interface AppProps {
 export default function App({ rootPath = process.cwd() }: AppProps): React.ReactElement {
   const [state, dispatch] = React.useReducer(reducer, initialState);
   const { exit } = useApp();
-
-  // Track visibleCount for page navigation — will be set by ArtifactTable
   const [visibleCount, setVisibleCount] = React.useState(10);
 
-  // Start streaming scan
   useScan(rootPath, dispatch);
 
-  // Keyboard input handler
   useInput((input, key) => {
     if (key.upArrow) {
       dispatch({ type: 'CURSOR_UP' });
@@ -243,9 +266,9 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     } else if (input === '3') {
       dispatch({ type: 'SORT_TO', key: 'age', dir: 'desc' });
     } else if (input === '4' || input === '5' || input === '6') {
-      // No-op: future column placeholders — swallow to avoid terminal bleed
+      // No-op: future column placeholders
     } else if (input === '/') {
-      // No-op: filter mode is a future feature — swallow
+      // No-op: filter mode future feature
     } else if (input === 'q') {
       exit();
     }
@@ -256,33 +279,50 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     return <LaunchScreen rootPath={rootPath} />;
   }
 
-  // Compute derived values from state
+  // Compute derived values
   const totalBytes = state.artifacts.reduce(
     (sum, a) => sum + (a.sizeBytes ?? 0),
     0,
   );
-  const oldestMtimeMs = state.artifacts.reduce<number | undefined>((oldest, a) => {
-    if (a.mtimeMs === undefined) return oldest;
-    if (oldest === undefined) return a.mtimeMs;
-    return a.mtimeMs < oldest ? a.mtimeMs : oldest;
-  }, undefined);
 
-  // Detail panel width: ~35% of terminal, minimum 30 chars
-  const detailWidth = Math.max(30, Math.floor(process.stdout.columns * 0.35));
+  // Find oldest artifact info
+  let oldestMtimeMs: number | undefined;
+  let oldestPath: string | undefined;
+  for (const a of state.artifacts) {
+    if (a.mtimeMs !== undefined) {
+      if (oldestMtimeMs === undefined || a.mtimeMs < oldestMtimeMs) {
+        oldestMtimeMs = a.mtimeMs;
+        oldestPath = a.path;
+      }
+    }
+  }
+  // Show relative path for oldest
+  if (oldestPath) {
+    const cwd = rootPath.endsWith('/') ? rootPath : rootPath + '/';
+    if (oldestPath.startsWith(cwd)) {
+      oldestPath = oldestPath.slice(cwd.length);
+    }
+  }
 
-  // The cursor artifact for the detail panel (using sorted order from state)
+  // Count unique types
+  const typeCount = new Set(state.artifacts.map(a => a.type)).size;
+
+  const detailWidth = Math.max(30, Math.floor((process.stdout.columns || 80) * 0.3));
   const cursorArtifact = state.artifacts[state.cursorIndex];
 
   return (
     <Box flexDirection="column" height="100%">
-      {/* Stats header */}
+      {/* Stats header with ASCII logo */}
       <Header
         totalBytes={totalBytes}
         artifactCount={state.artifacts.length}
         oldestMtimeMs={oldestMtimeMs}
+        oldestPath={oldestPath}
+        scanStatus={state.scanStatus}
+        typeCount={typeCount}
       />
 
-      {/* Main content area: table + optional detail panel */}
+      {/* Main content: table + detail panel in split layout */}
       <Box flexGrow={1}>
         <Box flexGrow={1}>
           <ArtifactTable

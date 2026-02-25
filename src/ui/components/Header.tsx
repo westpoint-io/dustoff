@@ -3,14 +3,12 @@ import { Box, Text, useStdout } from 'ink';
 import { theme } from '../theme.js';
 import { formatBytes, formatAge } from '../formatters.js';
 
-// Compact ASCII art — 6 lines, dimmed peach to match mockup header-ascii
+// Compact 3-line DUSTOFF logo using half-block chars — mimics the mockup's
+// 6.5px ASCII art (half body font). Full 6-line art is too tall for terminal header.
 const LOGO = [
-  '██████╗ ██╗   ██╗███████╗████████╗ ██████╗ ███████╗███████╗',
-  '██╔══██╗██║   ██║██╔════╝╚══██╔══╝██╔═══██╗██╔════╝██╔════╝',
-  '██║  ██║██║   ██║███████╗   ██║   ██║   ██║█████╗  █████╗  ',
-  '██║  ██║██║   ██║╚════██║   ██║   ██║   ██║██╔══╝  ██╔══╝  ',
-  '██████╔╝╚██████╔╝███████║   ██║   ╚██████╔╝██║     ██║     ',
-  '╚═════╝  ╚═════╝ ╚══════╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝     ',
+  '█▀▄ █ █ ▄▀▀ ▀█▀ ▄▀▄ █▀▀ █▀▀',
+  '█▄▀ █▄█ ▄▄▀  █  █▄█ █▀  █▀ ',
+  '▀    ▀  ▀▀▀  ▀   ▀  ▀   ▀  ',
 ];
 
 interface HeaderProps {
@@ -36,56 +34,38 @@ export function Header({
   const oldest = formatAge(oldestMtimeMs);
   const reclaimSub = scanStatus === 'scanning' ? 'updating...' : `${artifactCount} artifacts`;
   const artifactSub = scanStatus === 'scanning' ? 'scanning...' : `${typeCount} types`;
-  const oldestSub = oldestPath ? oldestPath.slice(0, 20) : '';
-
-  // Stat column width
-  const statW = 16;
+  const oldestSub = oldestPath ? oldestPath.slice(0, 22) : '';
 
   return (
     <Box flexDirection="column">
-      {/* Stats row + logo */}
       <Box>
-        {/* Stats area */}
-        <Box>
-          {/* Reclaimable */}
-          <Box flexDirection="column" width={statW}>
-            <Text color={theme.surface2}>{'RECLAIMABLE'}</Text>
-            <Text color={theme.yellow} bold>{reclaimable}</Text>
-            <Text color={theme.overlay0}>{reclaimSub}</Text>
-          </Box>
-          <Box flexDirection="column" width={1} marginRight={1}>
-            <Text color={theme.surface0}>{'│'}</Text>
-            <Text color={theme.surface0}>{'│'}</Text>
-            <Text color={theme.surface0}>{'│'}</Text>
-          </Box>
-          {/* Artifacts */}
-          <Box flexDirection="column" width={statW}>
-            <Text color={theme.surface2}>{'ARTIFACTS'}</Text>
-            <Text color={theme.blue} bold>{String(artifactCount)}</Text>
-            <Text color={theme.overlay0}>{artifactSub}</Text>
-          </Box>
-          <Box flexDirection="column" width={1} marginRight={1}>
-            <Text color={theme.surface0}>{'│'}</Text>
-            <Text color={theme.surface0}>{'│'}</Text>
-            <Text color={theme.surface0}>{'│'}</Text>
-          </Box>
-          {/* Oldest */}
-          <Box flexDirection="column" width={statW}>
-            <Text color={theme.surface2}>{'OLDEST'}</Text>
-            <Text color={theme.red} bold>{oldest}</Text>
-            <Text color={theme.overlay0}>{oldestSub}</Text>
-          </Box>
+        {/* Stat cells */}
+        <Box width={16} flexDirection="column">
+          <Text color={theme.surface2}>{'RECLAIMABLE'}</Text>
+          <Text color={theme.yellow} bold>{reclaimable}</Text>
+          <Text color={theme.overlay0}>{reclaimSub}</Text>
         </Box>
-        {/* Spacer */}
+        <Text color={theme.surface0}>{'│ '}</Text>
+        <Box width={16} flexDirection="column">
+          <Text color={theme.surface2}>{'ARTIFACTS'}</Text>
+          <Text color={theme.blue} bold>{String(artifactCount)}</Text>
+          <Text color={theme.overlay0}>{artifactSub}</Text>
+        </Box>
+        <Text color={theme.surface0}>{'│ '}</Text>
+        <Box width={22} flexDirection="column">
+          <Text color={theme.surface2}>{'OLDEST'}</Text>
+          <Text color={theme.red} bold>{oldest}</Text>
+          <Text color={theme.overlay0}>{oldestSub}</Text>
+        </Box>
+
+        {/* Spacer + Logo */}
         <Box flexGrow={1} />
-        {/* ASCII logo - right aligned, dimmed */}
-        <Box flexDirection="column">
+        <Box flexDirection="column" alignItems="flex-end">
           {LOGO.map((line, i) => (
-            <Text key={`h${i}`} color={theme.peach} dimColor>{line}</Text>
+            <Text key={`l${i}`} color={theme.peach} dimColor>{line}</Text>
           ))}
         </Box>
       </Box>
-      {/* Bottom separator */}
       <Text color={theme.surface0}>{'─'.repeat(cols)}</Text>
     </Box>
   );

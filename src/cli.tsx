@@ -18,6 +18,5 @@ process.on('SIGINT', () => {
 });
 
 render(<App rootPath={process.cwd()} />, {
-  incrementalRendering: true,
   exitOnCtrlC: true,
 });

@@ -10,73 +10,58 @@ interface DetailPanelProps {
   width: number;
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
-  return (
-    <Box flexDirection="column" paddingX={1}>
-      <Text color={theme.surface0}>{'─'.repeat(40)}</Text>
-      <Text color={theme.surface2}>{label}</Text>
-      {children}
-    </Box>
-  );
-}
-
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
-  return (
-    <Box justifyContent="space-between">
-      <Text color={theme.overlay0}>{label}</Text>
-      {children}
-    </Box>
-  );
-}
-
 export function DetailPanel({ artifact, width }: DetailPanelProps): React.ReactElement {
   const name = basename(artifact.path);
   const typeColor = typeBadgeColor[artifact.type] ?? theme.subtext0;
   const sizeText = formatBytes(artifact.sizeBytes);
   const sizeClr = sizeColor(artifact.sizeBytes);
   const days = ageDays(artifact.mtimeMs);
-  const ageText = formatAge(artifact.mtimeMs);
+  const ageText = `${formatAge(artifact.mtimeMs)} ago`;
   const ageClr = ageColor(days);
+  const sep = '─'.repeat(width - 2);
 
   return (
-    <Box flexDirection="column" width={width}>
-      {/* Panel header: name + type badge */}
-      <Box paddingX={1} justifyContent="space-between">
+    <Box flexDirection="column" width={width} paddingLeft={1}>
+      {/* Panel header */}
+      <Box justifyContent="space-between">
         <Text color={theme.blue} bold>{name}</Text>
         <Text color={typeColor}>{artifact.type}</Text>
       </Box>
+      <Text color={theme.surface0}>{sep}</Text>
 
       {/* PATH */}
-      <Section label="PATH">
-        <Text color={theme.blue} wrap="truncate-end">{artifact.path}</Text>
-      </Section>
+      <Text color={theme.surface2}>{'PATH'}</Text>
+      <Text color={theme.blue} wrap="truncate-end">{artifact.path}</Text>
+      <Text color={theme.surface0}>{sep}</Text>
 
       {/* INFO */}
-      <Section label="INFO">
-        <InfoRow label="Type">
-          <Text color={typeColor}>{artifact.type}</Text>
-        </InfoRow>
-        <InfoRow label="Size">
-          {artifact.sizeBytes === null ? (
-            <Text italic color={theme.overlay0}>{'calculating...'}</Text>
-          ) : (
-            <Text color={sizeClr} bold>{sizeText}</Text>
-          )}
-        </InfoRow>
-        <InfoRow label="Last modified">
-          <Text color={ageClr}>{`${ageText} ago`}</Text>
-        </InfoRow>
-      </Section>
+      <Text color={theme.surface2}>{'INFO'}</Text>
+      <Box justifyContent="space-between">
+        <Text color={theme.overlay0}>{'Type'}</Text>
+        <Text color={typeColor}>{artifact.type}</Text>
+      </Box>
+      <Box justifyContent="space-between">
+        <Text color={theme.overlay0}>{'Size'}</Text>
+        {artifact.sizeBytes === null ? (
+          <Text italic color={theme.overlay0}>{'calculating...'}</Text>
+        ) : (
+          <Text color={sizeClr} bold>{sizeText}</Text>
+        )}
+      </Box>
+      <Box justifyContent="space-between">
+        <Text color={theme.overlay0}>{'Last modified'}</Text>
+        <Text color={ageClr}>{ageText}</Text>
+      </Box>
+      <Text color={theme.surface0}>{sep}</Text>
 
       {/* CONTENTS — stub */}
-      <Section label="CONTENTS">
-        <Text color={theme.overlay0} italic>{'Run detail scan for breakdown'}</Text>
-      </Section>
+      <Text color={theme.surface2}>{'CONTENTS'}</Text>
+      <Text color={theme.overlay0} italic>{'Run detail scan for breakdown'}</Text>
+      <Text color={theme.surface0}>{sep}</Text>
 
       {/* SAFE TO DELETE? — stub */}
-      <Section label="SAFE TO DELETE?">
-        <Text color={theme.overlay0} italic>{'Analysis available after selection'}</Text>
-      </Section>
+      <Text color={theme.surface2}>{'SAFE TO DELETE?'}</Text>
+      <Text color={theme.overlay0} italic>{'Analysis available after selection'}</Text>
     </Box>
   );
 }

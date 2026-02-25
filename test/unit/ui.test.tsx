@@ -174,13 +174,13 @@ describe('Header', () => {
     expect(lastFrame()).toContain('GB');
   });
 
-  it('shows DUSTOFF ASCII art', () => {
+  it('shows DUSTOFF logo', () => {
     const { lastFrame } = render(
       <Header {...headerProps} />,
       { columns: 120 },
     );
-    // ASCII art contains the block letter pattern
-    expect(lastFrame()).toContain('██');
+    // Compact logo uses half-block characters
+    expect(lastFrame()).toContain('█▀▄');
   });
 
   it('shows dash when totalBytes is 0', () => {

@@ -14,7 +14,7 @@ const BASE_SHORTCUTS = [
   { key: '\u21E5', desc: 'detail' },
   { key: 's', desc: 'sort' },
   { key: 'f', desc: 'filter' },
-  { key: 'g', desc: 'group' },
+  { key: 'x', desc: 'group' },
   { key: 't', desc: 'theme' },
   { key: 'q', desc: 'quit' },
 ];
@@ -26,7 +26,7 @@ const DELETE_SHORTCUTS = [
   { key: 'a', desc: 'select all' },
   { key: 'd', desc: 'delete' },
   { key: 'f', desc: 'filter' },
-  { key: 'g', desc: 'group' },
+  { key: 'x', desc: 'group' },
   { key: 'esc', desc: 'clear' },
   { key: 'q', desc: 'quit' },
 ];
@@ -37,7 +37,7 @@ const FILTER_SHORTCUTS = [
   { key: 'a', desc: 'select all' },
   { key: 's', desc: 'sort' },
   { key: 'f', desc: 'filter' },
-  { key: 'g', desc: 'group' },
+  { key: 'x', desc: 'group' },
   { key: '/', desc: 'edit filter' },
   { key: 'esc', desc: 'clear filter' },
   { key: 'q', desc: 'quit' },

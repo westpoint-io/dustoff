@@ -327,9 +327,11 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       dispatch({ type: 'CYCLE_THEME' });
       // Flash will be set via the effect below
     } else if (input === 'g' && !key.shift) {
-      dispatch({ type: 'TOGGLE_GROUPING' });
+      dispatch({ type: 'CURSOR_HOME' });
     } else if (input === 'G') {
       dispatch({ type: 'CURSOR_END', itemCount: effectiveItemCount });
+    } else if (input === 'x') {
+      dispatch({ type: 'TOGGLE_GROUPING' });
     } else if (input === 'q') {
       // Immediate exit — bypass Ink's graceful shutdown which stalls
       // while the scanner's async generator and size calculations drain.

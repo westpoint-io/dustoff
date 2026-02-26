@@ -62,10 +62,13 @@ export const ArtifactRow = memo(function ArtifactRow({
         )}
       </Text>
       <Box flexGrow={1} />
+      <Text>{' '}</Text>
       <SizeBar sizeBytes={artifact.sizeBytes} maxSizeBytes={maxSizeBytes} isCursor={isCursor} />
+      <Text>{' '}</Text>
       <Text color={sizeFg} bold={!isCursor}>
         {formatBytes(artifact.sizeBytes).padStart(SIZE_W)}
       </Text>
+      <Text>{' '}</Text>
       <Text color={ageFg}>
         {formatAge(artifact.mtimeMs).padStart(AGE_W)}
       </Text>

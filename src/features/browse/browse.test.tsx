@@ -189,28 +189,28 @@ describe('DetailPanel', () => {
 
   it('shows artifact name', () => {
     const { lastFrame } = render(
-      <DetailPanel artifact={artifact} width={32} />
+      <DetailPanel artifact={artifact} width={32} rootPath="/home/user/projects" />
     );
     expect(lastFrame()).toContain('node_modules');
   });
 
   it('shows size', () => {
     const { lastFrame } = render(
-      <DetailPanel artifact={artifact} width={32} />
+      <DetailPanel artifact={artifact} width={32} rootPath="/home/user/projects" />
     );
     expect(lastFrame()).toContain('GB');
   });
 
   it('shows path', () => {
     const { lastFrame } = render(
-      <DetailPanel artifact={artifact} width={50} />
+      <DetailPanel artifact={artifact} width={50} rootPath="/home/user/projects" />
     );
     expect(lastFrame()).toContain('webapp');
   });
 
   it('shows type label', () => {
     const { lastFrame } = render(
-      <DetailPanel artifact={artifact} width={32} />
+      <DetailPanel artifact={artifact} width={32} rootPath="/home/user/projects" />
     );
     expect(lastFrame()).toContain('Type');
   });

@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Text } from 'ink';
-import { basename } from 'node:path';
+import { basename, relative } from 'node:path';
+import { readdirSync } from 'node:fs';
 import type { ScanResult } from '../scanning/types.js';
 import { theme, accent, typeBadgeColor, sizeColor, ageColor } from '../../shared/theme.js';
-import { formatBytes, formatAge, ageDays } from '../../shared/formatters.js';
+import { formatBytes, formatAge, ageDays, truncatePath } from '../../shared/formatters.js';
 
 interface DetailPanelProps {
   artifact: ScanResult;
   width: number;
+  rootPath: string;
 }
 
-export function DetailPanel({ artifact, width }: DetailPanelProps): React.ReactElement {
+export function DetailPanel({ artifact, width, rootPath }: DetailPanelProps): React.ReactElement {
   const name = basename(artifact.path);
   const innerW = Math.max(1, width - 4);
   const sep = '─'.repeat(innerW);
@@ -18,6 +20,26 @@ export function DetailPanel({ artifact, width }: DetailPanelProps): React.ReactE
   const sizeClr = sizeColor(artifact.sizeBytes);
   const days = ageDays(artifact.mtimeMs);
   const ageClr = ageColor(days);
+
+  // Relative path from root
+  const relativePath = relative(rootPath, artifact.path);
+
+  // Last modified date
+  const lastModDate = useMemo(() => {
+    if (!artifact.mtimeMs) return '—';
+    const date = new Date(artifact.mtimeMs);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }, [artifact.mtimeMs]);
+
+  // Item count in directory
+  const itemCount = useMemo(() => {
+    try {
+      const items = readdirSync(artifact.path, { withFileTypes: true });
+      return items.length;
+    } catch {
+      return null;
+    }
+  }, [artifact.path]);
 
   return (
     <Box flexDirection="column" width={width} borderStyle="round" borderColor={theme.surface2} paddingX={1}>
@@ -27,10 +49,17 @@ export function DetailPanel({ artifact, width }: DetailPanelProps): React.ReactE
       <Box><Text color={theme.overlay0}>{'Type'}</Text><Box flexGrow={1} /><Text color={typeColor}>{artifact.type}</Text></Box>
       <Box><Text color={theme.overlay0}>{'Size'}</Text><Box flexGrow={1} /><Text color={sizeClr} bold>{formatBytes(artifact.sizeBytes)}</Text></Box>
       <Box><Text color={theme.overlay0}>{'Age'}</Text><Box flexGrow={1} /><Text color={ageClr}>{formatAge(artifact.mtimeMs)}</Text></Box>
+      {itemCount !== null && (
+        <Box><Text color={theme.overlay0}>{'Items'}</Text><Box flexGrow={1} /><Text color={theme.text}>{itemCount}</Text></Box>
+      )}
+      <Box><Text color={theme.overlay0}>{'Modified'}</Text><Box flexGrow={1} /><Text color={theme.text}>{lastModDate}</Text></Box>
       <Text color={theme.surface0}>{sep}</Text>
 
-      <Text color={theme.overlay0}>{'Path'}</Text>
-      <Text color={theme.blue} wrap="truncate-end">{artifact.path}</Text>
+      <Text color={theme.overlay0}>{'Relative Path'}</Text>
+      <Text color={theme.blue}>{truncatePath(relativePath, innerW)}</Text>
+
+      <Text color={theme.overlay0} marginTop={1}>{'Full Path'}</Text>
+      <Text color={theme.blue}>{truncatePath(artifact.path, innerW)}</Text>
     </Box>
   );
 }

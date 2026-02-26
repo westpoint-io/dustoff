@@ -273,7 +273,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
         {/* Detail panel */}
         {state.detailVisible && cursorArtifact !== undefined && (
-          <DetailPanel artifact={cursorArtifact} width={detailWidth} />
+          <DetailPanel artifact={cursorArtifact} width={detailWidth} rootPath={rootPath} />
         )}
       </Box>
 

@@ -21,6 +21,7 @@ export interface AppState {
   deleteProgress: { done: number; total: number; freedBytes: number } | null;
   isSearchMode: boolean;
   searchQuery: string;
+  deleteConfirmFocus: 'yes' | 'cancel';
 }
 
 // ---------------------------------------------------------------------------
@@ -46,7 +47,8 @@ export type AppAction =
   | { type: 'DELETE_PROGRESS'; done: number; total: number; freedBytes: number }
   | { type: 'DELETE_COMPLETE'; deletedPaths: string[] }
   | { type: 'SET_SEARCH_MODE'; enabled: boolean }
-  | { type: 'SET_SEARCH_QUERY'; query: string };
+  | { type: 'SET_SEARCH_QUERY'; query: string }
+  | { type: 'DELETE_CONFIRM_FOCUS'; focus: 'yes' | 'cancel' };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -74,6 +76,7 @@ export const initialState: AppState = {
   deleteProgress: null,
   isSearchMode: false,
   searchQuery: '',
+  deleteConfirmFocus: 'yes',
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -228,6 +231,10 @@ export function reducer(state: AppState, action: AppAction): AppState {
         searchQuery: action.query,
         cursorIndex: 0,
       };
+    }
+
+    case 'DELETE_CONFIRM_FOCUS': {
+      return { ...state, deleteConfirmFocus: action.focus };
     }
 
     default: {

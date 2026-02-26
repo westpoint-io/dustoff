@@ -58,12 +58,21 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
   );
 
   useInput((input, key) => {
-    // Confirm delete dialog — modal focus, only Yes/Cancel allowed
+    // Confirm delete dialog — navigate between Yes/Cancel
     if (state.viewMode === 'confirm-delete') {
       if (key.return) {
-        executeDelete();
+        // Execute based on focused button
+        if (state.deleteConfirmFocus === 'yes') {
+          executeDelete();
+        } else {
+          dispatch({ type: 'SET_VIEW_MODE', mode: 'browse' });
+        }
       } else if (key.escape || input === 'n') {
         dispatch({ type: 'SET_VIEW_MODE', mode: 'browse' });
+      } else if (key.leftArrow || key.rightArrow || key.tab) {
+        // Toggle focus between Yes and Cancel
+        const newFocus = state.deleteConfirmFocus === 'yes' ? 'cancel' : 'yes';
+        dispatch({ type: 'DELETE_CONFIRM_FOCUS', focus: newFocus });
       }
       // Block all other input (navigation, selection, etc.)
       return;
@@ -280,7 +289,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
       {/* Delete confirmation — prominent bar above status */}
       {state.viewMode === 'confirm-delete' && (
-        <DeleteConfirm selectedCount={state.selectedPaths.size} selectedBytes={selectedBytes} />
+        <DeleteConfirm selectedCount={state.selectedPaths.size} selectedBytes={selectedBytes} focus={state.deleteConfirmFocus} />
       )}
 
       {/* Delete progress — prominent bar above status */}

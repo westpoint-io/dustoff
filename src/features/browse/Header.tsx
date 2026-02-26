@@ -43,7 +43,7 @@ export function Header({
 
   return (
     <Box alignItems="flex-end" marginLeft={1}>
-      {/* Context info — left side */}
+      {/* Left column — Scan, Artifacts, Reclaimable */}
       <Box flexDirection="column">
         <Box>
           <Text color={theme.text} bold>{'Scan:'.padEnd(LABEL_W)}</Text>
@@ -57,6 +57,10 @@ export function Header({
           <Text color={theme.text} bold>{'Reclaimable:'.padEnd(LABEL_W)}</Text>
           <Text color={theme.yellow} bold>{reclaimable}</Text>
         </Box>
+      </Box>
+
+      {/* Right column — Oldest, Sort, Selected */}
+      <Box flexDirection="column" marginLeft={3}>
         <Box>
           <Text color={theme.text} bold>{'Oldest:'.padEnd(LABEL_W)}</Text>
           <Text color={theme.red}>{oldest}</Text>
@@ -65,18 +69,14 @@ export function Header({
           <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
           <Text color={theme.yellow}>{sortLabel}</Text>
         </Box>
-      </Box>
-
-      {/* Spacer */}
-      <Box flexGrow={1} />
-
-      {/* Selection info — middle right */}
-      <Box flexDirection="column" marginRight={2}>
         <Box>
           <Text color={theme.text} bold>{'Selected:'.padEnd(LABEL_W)}</Text>
           <Text color={theme.blue}>{selectedLabel}</Text>
         </Box>
       </Box>
+
+      {/* Spacer */}
+      <Box flexGrow={1} />
 
       {/* ASCII logo — far right */}
       <Box flexDirection="column" alignItems="flex-end">

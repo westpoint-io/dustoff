@@ -4,6 +4,7 @@ import { render } from 'ink-testing-library';
 import { ArtifactRow } from './ArtifactRow.js';
 import { Header } from './Header.js';
 import { DetailPanel } from './DetailPanel.js';
+import { SearchBox } from './SearchBox.js';
 import { ShortcutBar } from '../../app/ShortcutBar.js';
 import { StatusBar } from '../../app/StatusBar.js';
 
@@ -261,5 +262,35 @@ describe('ArtifactRow — selection', () => {
       <ArtifactRow artifact={artifact} isCursor={false} isSelected={true} rootPath="/home/user" />
     );
     expect(lastFrame()).toContain('[x]');
+  });
+});
+
+// ─── SearchBox tests ────────────────────────────────────────────────────────
+
+describe('SearchBox', () => {
+  it('does not render when query is empty and not active', () => {
+    const { lastFrame } = render(<SearchBox query="" isActive={false} totalResults={0} />);
+    expect(lastFrame()).toBe('');
+  });
+
+  it('renders when isActive is true', () => {
+    const { lastFrame } = render(<SearchBox query="" isActive={true} totalResults={0} />);
+    const output = lastFrame();
+    expect(output).toContain('/');
+    expect(output).toContain('Search');
+  });
+
+  it('renders when query has content', () => {
+    const { lastFrame } = render(<SearchBox query="node" isActive={false} totalResults={2} />);
+    const output = lastFrame();
+    expect(output).toContain('Search');
+    expect(output).toContain('node');
+    expect(output).toContain('2 results');
+  });
+
+  it('displays result count when query matches artifacts', () => {
+    const { lastFrame } = render(<SearchBox query="dist" isActive={false} totalResults={5} />);
+    const output = lastFrame();
+    expect(output).toContain('5 results');
   });
 });

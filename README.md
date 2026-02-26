@@ -3,11 +3,11 @@
 > Easily find and remove JavaScript/TypeScript build artifacts wasting disk space
 
 ```
-   _____ __            __
-  / ___// /___  ______/ /____  ____
-  \__ \/ __/ / / / __  / __ \/ __ \
- ___/ / /_/ /_/ / /_/ / /_/ / / / /
-/____/\__/\__,_/\__,_/\____/_/ /_/
+ ____  _   _ ____ _____ ___  _____ _____
+|  _ \| | | / ___|_   _/ _ \|  ___|  ___|
+| | | | | | \___ \ | || | | | |_  | |_
+| |_| | |_| |___) || || |_| |  _| |  _|
+|____/ \___/|____/ |_| \___/|_|   |_|
 ```
 
 Scan your filesystem for JavaScript/TypeScript build artifacts — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, `.parcel-cache` and more — then interactively browse, sort, select, and safely delete them to reclaim disk space.

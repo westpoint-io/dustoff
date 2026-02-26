@@ -10,7 +10,7 @@ interface DeleteConfirmProps {
 
 export function DeleteConfirm({ selectedCount, selectedBytes }: DeleteConfirmProps): React.ReactElement {
   return (
-    <Box borderStyle="single" borderColor={theme.red} justifyContent="center" paddingX={2}>
+    <Box borderStyle="single" borderColor={theme.red} justifyContent="center" paddingX={2} marginTop={-1}>
       <Text color={theme.red} bold>
         {`  Delete ${selectedCount} artifact${selectedCount > 1 ? 's' : ''}?  `}
       </Text>

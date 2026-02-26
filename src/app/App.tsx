@@ -58,13 +58,14 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
   );
 
   useInput((input, key) => {
-    // Confirm delete dialog
+    // Confirm delete dialog — modal focus, only Yes/Cancel allowed
     if (state.viewMode === 'confirm-delete') {
       if (key.return) {
         executeDelete();
       } else if (key.escape || input === 'n') {
         dispatch({ type: 'SET_VIEW_MODE', mode: 'browse' });
       }
+      // Block all other input (navigation, selection, etc.)
       return;
     }
 

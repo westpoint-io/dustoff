@@ -1,48 +1,29 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import type { Dispatch } from 'react';
-import { Box, Text, useStdout } from 'ink';
+import { Box, Text } from 'ink';
 import type { AppState, AppAction } from '../app.js';
+import { getSortedArtifacts } from '../app.js';
 import { ArtifactRow } from './ArtifactRow.js';
 import { useWindow } from '../hooks/useWindow.js';
-import { theme } from '../theme.js';
+import { accent, headerColor, TYPE_W, SIZE_W, AGE_W } from '../theme.js';
 
-const RESERVED_ROWS = 12; // header(6+1sep) + table header(1) + blue line(1) + status(1) + shortcut(1) + buffer(1)
+// Header(5 logo) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11 overhead
+const RESERVED_ROWS = 11;
 
 interface ArtifactTableProps {
   state: AppState;
   dispatch: Dispatch<AppAction>;
+  rootPath: string;
   onVisibleCountChange?: (count: number) => void;
 }
 
 export function ArtifactTable({
   state,
   dispatch,
+  rootPath,
   onVisibleCountChange,
 }: ArtifactTableProps): React.ReactElement {
-  const { stdout } = useStdout();
-  const cols = stdout?.columns ?? 80;
-
-  const sortedArtifacts = useMemo(() => {
-    const sorted = [...state.artifacts];
-    sorted.sort((a, b) => {
-      if (state.sortKey === 'size') {
-        const aSize = a.sizeBytes ?? -1;
-        const bSize = b.sizeBytes ?? -1;
-        return state.sortDir === 'desc' ? bSize - aSize : aSize - bSize;
-      }
-      if (state.sortKey === 'path') {
-        const cmp = a.path.localeCompare(b.path);
-        return state.sortDir === 'asc' ? cmp : -cmp;
-      }
-      if (state.sortKey === 'age') {
-        const aMtime = a.mtimeMs ?? 0;
-        const bMtime = b.mtimeMs ?? 0;
-        return state.sortDir === 'desc' ? aMtime - bMtime : bMtime - aMtime;
-      }
-      return 0;
-    });
-    return sorted;
-  }, [state.artifacts, state.sortKey, state.sortDir]);
+  const sortedArtifacts = getSortedArtifacts(state);
 
   const { visibleItems, scrollOffset, visibleCount } = useWindow(
     sortedArtifacts,
@@ -54,45 +35,43 @@ export function ArtifactTable({
     onVisibleCountChange?.(visibleCount);
   }, [visibleCount, onVisibleCountChange]);
 
-  // Sort arrow on active column
-  const sizeLabel = state.sortKey === 'size' ? `SIZE ${state.sortDir === 'desc' ? '↓' : '↑'}` : 'SIZE';
-  const ageLabel = state.sortKey === 'age' ? `AGE ${state.sortDir === 'desc' ? '↓' : '↑'}` : 'AGE';
+  // Sort indicator on active column
+  const arrow = state.sortDir === 'desc' ? '↓' : '↑';
+  const sizeLabel = state.sortKey === 'size' ? `SIZE ${arrow}` : 'SIZE';
+  const ageLabel = state.sortKey === 'age' ? `AGE ${arrow}` : 'AGE';
 
   return (
-    <Box flexDirection="column" flexGrow={1}>
-      {/* Column header */}
+    <Box flexDirection="column" flexGrow={1} borderStyle="round" borderColor={accent}>
+      {/* Column headers */}
       <Box>
-        <Text color={theme.blue} bold>
-          {' # '}
+        <Text color={headerColor} bold>
+          {'     '}{('TYPE').padEnd(TYPE_W)}{'PATH'}
         </Text>
-        <Box width={14}><Text color={theme.blue} bold>{'TYPE'}</Text></Box>
-        <Box flexGrow={1}><Text color={theme.blue} bold>{'PATH'}</Text></Box>
-        <Box width={10}><Text color={theme.blue} bold>{'SIZE'}</Text></Box>
-        <Box width={10} justifyContent="flex-end"><Text color={theme.blue} bold>{sizeLabel}</Text></Box>
-        <Box width={6} justifyContent="flex-end"><Text color={theme.blue} bold>{ageLabel}</Text></Box>
+        <Box flexGrow={1} />
+        <Text color={headerColor} bold>
+          {sizeLabel.padStart(SIZE_W)}{ageLabel.padStart(AGE_W)}{' '}
+        </Text>
       </Box>
-      {/* Blue underline */}
-      <Text color={theme.blue}>{'━'.repeat(cols)}</Text>
 
-      {/* Rows */}
+      {/* Rows — full-row cursor highlight */}
       {visibleItems.map((artifact, i) => {
         const absoluteIndex = scrollOffset + i;
         return (
           <ArtifactRow
             key={artifact.path}
             artifact={artifact}
-            index={absoluteIndex + 1}
             isCursor={absoluteIndex === state.cursorIndex}
-            isEven={absoluteIndex % 2 === 0}
-            maxSizeBytes={state.maxSizeBytes}
+            isSelected={state.selectedPaths.has(artifact.path)}
+            rootPath={rootPath}
           />
         );
       })}
 
+      {/* Pad remaining space */}
+      <Box flexGrow={1} />
+
       {state.artifacts.length === 0 && (
-        <Box paddingX={2} marginTop={1}>
-          <Text dimColor>{'No artifacts found.'}</Text>
-        </Box>
+        <Text dimColor>{'  No artifacts found.'}</Text>
       )}
     </Box>
   );

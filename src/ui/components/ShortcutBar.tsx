@@ -1,31 +1,39 @@
 import React from 'react';
-import { Box, Text, useStdout } from 'ink';
+import { Box, Text } from 'ink';
 import { theme } from '../theme.js';
 
-const SHORTCUTS = [
+interface ShortcutBarProps {
+  hasSelection: boolean;
+}
+
+const BASE_SHORTCUTS = [
   { key: '↑↓', desc: 'navigate' },
-  { key: 'Tab', desc: 'toggle detail' },
-  { key: '1-6', desc: 'sort column' },
-  { key: '/', desc: 'filter' },
-  { key: '?', desc: 'help' },
+  { key: 'Space', desc: 'select' },
+  { key: 'Tab', desc: 'detail' },
+  { key: 's', desc: 'sort' },
   { key: 'q', desc: 'quit' },
 ];
 
-export function ShortcutBar(): React.ReactElement {
-  const { stdout } = useStdout();
-  const cols = stdout?.columns ?? 80;
+const SELECTION_SHORTCUTS = [
+  { key: '↑↓', desc: 'navigate' },
+  { key: 'Space', desc: 'select' },
+  { key: 'd', desc: 'delete' },
+  { key: 'a', desc: 'select all' },
+  { key: 'Esc', desc: 'clear' },
+  { key: 'q', desc: 'quit' },
+];
+
+export function ShortcutBar({ hasSelection }: ShortcutBarProps): React.ReactElement {
+  const shortcuts = hasSelection ? SELECTION_SHORTCUTS : BASE_SHORTCUTS;
 
   return (
-    <Box flexDirection="column">
-      <Text color={theme.surface0}>{'─'.repeat(cols)}</Text>
-      <Box gap={2}>
-        {SHORTCUTS.map(({ key, desc }) => (
-          <Box key={key}>
-            <Text backgroundColor={theme.surface0} color={theme.subtext1}>{` ${key} `}</Text>
-            <Text color={theme.overlay0}>{` ${desc}`}</Text>
-          </Box>
-        ))}
-      </Box>
+    <Box gap={2} marginLeft={1}>
+      {shortcuts.map(({ key, desc }) => (
+        <Box key={key}>
+          <Text bold color="black" backgroundColor="green">{` ${key} `}</Text>
+          <Text color={theme.overlay0}>{` ${desc}`}</Text>
+        </Box>
+      ))}
     </Box>
   );
 }

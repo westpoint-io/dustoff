@@ -21,6 +21,7 @@ export function useScan(rootPath: string, dispatch: Dispatch<AppAction>): void {
 
     async function run(): Promise<void> {
       const startMs = Date.now();
+      const sizePromises: Promise<void>[] = [];
 
       const generator = scan(rootPath, {
         signal: controller.signal,
@@ -32,15 +33,21 @@ export function useScan(rootPath: string, dispatch: Dispatch<AppAction>): void {
       for await (const artifact of generator) {
         dispatch({ type: 'ARTIFACT_FOUND', artifact });
 
-        // Fire-and-forget size calculation — no await here
-        calculateSizeWithTimeout(artifact.path).then((sizeBytes) => {
-          if (!controller.signal.aborted && sizeBytes !== null) {
-            dispatch({ type: 'SIZE_RESOLVED', path: artifact.path, sizeBytes });
+        // Collect size promises — await them all before SCAN_COMPLETE
+        const p = calculateSizeWithTimeout(artifact.path, 30_000).then((sizeBytes) => {
+          if (!controller.signal.aborted) {
+            dispatch({ type: 'SIZE_RESOLVED', path: artifact.path, sizeBytes: sizeBytes ?? 0 });
           }
         }).catch(() => {
-          // Swallow errors from size calculation — size stays null
+          if (!controller.signal.aborted) {
+            dispatch({ type: 'SIZE_RESOLVED', path: artifact.path, sizeBytes: 0 });
+          }
         });
+        sizePromises.push(p);
       }
+
+      // Wait for all size calculations to finish before completing
+      await Promise.all(sizePromises);
 
       dispatch({ type: 'SCAN_COMPLETE', durationMs: Date.now() - startMs });
     }

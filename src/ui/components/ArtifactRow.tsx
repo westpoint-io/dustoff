@@ -1,72 +1,54 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import type { ScanResult } from '../../scanner/types.js';
-import { theme, sizeColor, ageColor, typeBadgeColor } from '../theme.js';
-import { formatBytes, formatAge, ageDays, truncatePath } from '../formatters.js';
-import { SizeBar } from './SizeBar.js';
+import { theme, cursorBg, sizeColor, ageColor, typeBadgeColor, TYPE_W, SIZE_W, AGE_W } from '../theme.js';
+import { formatBytes, formatAge, ageDays } from '../formatters.js';
 
 interface ArtifactRowProps {
   artifact: ScanResult;
-  index: number;
   isCursor: boolean;
-  isEven: boolean;
-  maxSizeBytes: number;
+  isSelected: boolean;
+  rootPath: string;
 }
 
-export function ArtifactRow({
+// Memoized row — prevents re-render on every cursor move for non-cursor rows
+export const ArtifactRow = memo(function ArtifactRow({
   artifact,
-  index,
   isCursor,
-  isEven,
-  maxSizeBytes,
+  isSelected,
+  rootPath,
 }: ArtifactRowProps): React.ReactElement {
-  const typeColor = typeBadgeColor[artifact.type] ?? theme.subtext0;
+  // Full-row highlight: when cursor, dark text on accent bg
+  const bg = isCursor ? cursorBg : undefined;
+  const cursorFg = 'black';
+  const fg = isCursor ? cursorFg : theme.text;
+  const typeFg = isCursor ? cursorFg : (typeBadgeColor[artifact.type] ?? theme.subtext0);
+  const sizeFg = isCursor ? cursorFg : sizeColor(artifact.sizeBytes);
   const days = ageDays(artifact.mtimeMs);
-  const ageText = formatAge(artifact.mtimeMs);
-  const ageClr = ageColor(days);
-  const sizeText = formatBytes(artifact.sizeBytes);
-  const sizeClr = sizeColor(artifact.sizeBytes);
-  const pathWidth = Math.max(20, Math.floor((process.stdout.columns || 80) * 0.35));
+  const ageFg = isCursor ? cursorFg : ageColor(days);
+  const checkFg = isCursor ? cursorFg : (isSelected ? theme.green : theme.overlay0);
 
-  // Cursor indicator
-  const cursorGlyph = isCursor ? '›' : ' ';
-  const idxColor = isCursor ? theme.blue : theme.overlay0;
+  // Strip rootPath prefix for compact display
+  const prefix = rootPath.endsWith('/') ? rootPath : rootPath + '/';
+  const displayPath = artifact.path.startsWith(prefix)
+    ? artifact.path.slice(prefix.length)
+    : artifact.path;
+
+  const checkbox = isSelected ? '[x]' : '[ ]';
 
   return (
     <Box>
-      {/* Cursor + # */}
-      <Text color={isCursor ? theme.blue : theme.overlay0} bold={isCursor}>
-        {`${cursorGlyph}${String(index).padStart(2)} `}
+      <Text backgroundColor={bg} color={checkFg}>{` ${checkbox} `}</Text>
+      <Text backgroundColor={bg} color={typeFg}>{artifact.type.padEnd(TYPE_W)}</Text>
+      <Text backgroundColor={bg} color={fg} wrap="truncate-end">{displayPath}</Text>
+      <Box flexGrow={1}><Text backgroundColor={bg}>{' '}</Text></Box>
+      <Text backgroundColor={bg} color={sizeFg} bold={!isCursor}>
+        {formatBytes(artifact.sizeBytes).padStart(SIZE_W)}
       </Text>
-
-      {/* TYPE badge */}
-      <Box width={14}>
-        <Text backgroundColor={isCursor ? undefined : undefined} color={typeColor}>{artifact.type.padEnd(13)}</Text>
-      </Box>
-
-      {/* PATH */}
-      <Box flexGrow={1}>
-        <Text>{truncatePath(artifact.path, pathWidth)}</Text>
-      </Box>
-
-      {/* SIZE bar */}
-      <Box width={10}>
-        <SizeBar bytes={artifact.sizeBytes} maxBytes={maxSizeBytes} />
-      </Box>
-
-      {/* SIZE text */}
-      <Box width={10} justifyContent="flex-end">
-        {artifact.sizeBytes === null ? (
-          <Text italic color={theme.overlay0}>{'calculating...'}</Text>
-        ) : (
-          <Text color={sizeClr} bold={artifact.sizeBytes >= 1024 * 1024 * 1024}>{sizeText}</Text>
-        )}
-      </Box>
-
-      {/* AGE */}
-      <Box width={6} justifyContent="flex-end">
-        <Text color={ageClr} bold={days >= 90}>{ageText}</Text>
-      </Box>
+      <Text backgroundColor={bg} color={ageFg}>
+        {formatAge(artifact.mtimeMs).padStart(AGE_W)}
+      </Text>
+      <Text backgroundColor={bg}>{' '}</Text>
     </Box>
   );
-}
+});

@@ -221,6 +221,32 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     }
 
     // Browse mode
+
+    // Range select — must be checked before regular cursor movement
+    if (key.shift && key.upArrow && state.viewMode === 'browse' && !state.isSearchMode && !state.isTypeFilterMode) {
+      const anchor = state.selectionAnchor ?? state.cursorIndex;
+      const newCursor = Math.max(0, state.cursorIndex - 1);
+      const start = Math.min(anchor, newCursor);
+      const end = Math.max(anchor, newCursor);
+      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
+      dispatch({ type: 'SELECT_PATHS', paths });
+      dispatch({ type: 'SET_SELECTION_ANCHOR', anchor });
+      dispatch({ type: 'SET_CURSOR', index: newCursor });
+      return;
+    }
+
+    if (key.shift && key.downArrow && state.viewMode === 'browse' && !state.isSearchMode && !state.isTypeFilterMode) {
+      const anchor = state.selectionAnchor ?? state.cursorIndex;
+      const newCursor = Math.min(sortedArtifacts.length - 1, state.cursorIndex + 1);
+      const start = Math.min(anchor, newCursor);
+      const end = Math.max(anchor, newCursor);
+      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
+      dispatch({ type: 'SELECT_PATHS', paths });
+      dispatch({ type: 'SET_SELECTION_ANCHOR', anchor });
+      dispatch({ type: 'SET_CURSOR', index: newCursor });
+      return;
+    }
+
     const effectiveItemCount = state.groupingEnabled && flatItems.length > 0 ? flatItems.length : undefined;
     if (key.upArrow || input === 'k') {
       dispatch({ type: 'CURSOR_UP' });
@@ -247,6 +273,12 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       if (item?.kind === 'group-header' && !state.collapsedGroups.has(item.group.key)) {
         dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
       }
+    } else if (input === ' ' && key.shift && state.selectionAnchor !== null) {
+      const start = Math.min(state.selectionAnchor, state.cursorIndex);
+      const end = Math.max(state.selectionAnchor, state.cursorIndex);
+      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
+      dispatch({ type: 'SELECT_PATHS', paths });
+      return;
     } else if (input === ' ') {
       if (state.groupingEnabled) {
         const item = getCursorFlatItem();

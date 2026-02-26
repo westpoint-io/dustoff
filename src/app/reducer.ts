@@ -30,6 +30,7 @@ export interface AppState {
   typeFilter: Set<string> | null;
   isTypeFilterMode: boolean;
   typeFilterCursor: number;
+  selectionAnchor: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -70,7 +71,9 @@ export type AppAction =
   | { type: 'TOGGLE_TYPE_FILTER'; artifactType: string }
   | { type: 'TYPE_FILTER_CURSOR_UP' }
   | { type: 'TYPE_FILTER_CURSOR_DOWN'; typeCount: number }
-  | { type: 'CLEAR_TYPE_FILTER' };
+  | { type: 'CLEAR_TYPE_FILTER' }
+  | { type: 'SET_CURSOR'; index: number }
+  | { type: 'SET_SELECTION_ANCHOR'; anchor: number };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -106,6 +109,7 @@ export const initialState: AppState = {
   typeFilter: null,
   isTypeFilterMode: false,
   typeFilterCursor: 0,
+  selectionAnchor: null,
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -144,6 +148,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         cursorIndex: Math.max(0, state.cursorIndex - 1),
+        selectionAnchor: null,
       };
     }
 
@@ -152,11 +157,12 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         cursorIndex: Math.min(max, state.cursorIndex + 1),
+        selectionAnchor: null,
       };
     }
 
     case 'CURSOR_HOME': {
-      return { ...state, cursorIndex: 0 };
+      return { ...state, cursorIndex: 0, selectionAnchor: null };
     }
 
     case 'CURSOR_END': {
@@ -164,6 +170,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         cursorIndex: Math.max(0, max),
+        selectionAnchor: null,
       };
     }
 
@@ -171,6 +178,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         cursorIndex: Math.max(0, state.cursorIndex - action.visibleCount),
+        selectionAnchor: null,
       };
     }
 
@@ -179,6 +187,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         cursorIndex: Math.min(max, state.cursorIndex + action.visibleCount),
+        selectionAnchor: null,
       };
     }
 
@@ -377,6 +386,14 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'CLEAR_TYPE_FILTER': {
       return { ...state, typeFilter: null, cursorIndex: 0 };
+    }
+
+    case 'SET_CURSOR': {
+      return { ...state, cursorIndex: action.index };
+    }
+
+    case 'SET_SELECTION_ANCHOR': {
+      return { ...state, selectionAnchor: action.anchor };
     }
 
     default: {

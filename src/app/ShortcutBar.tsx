@@ -22,6 +22,7 @@ const BASE_SHORTCUTS = [
 const DELETE_SHORTCUTS = [
   { key: '\u25B2\u25BC', desc: 'navigate' },
   { key: '\u2423', desc: 'select' },
+  { key: 'S+\u25B2\u25BC', desc: 'range' },
   { key: 'a', desc: 'select all' },
   { key: 'd', desc: 'delete' },
   { key: 'f', desc: 'filter' },

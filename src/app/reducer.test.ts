@@ -69,6 +69,7 @@ describe('reducer — selection', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('TOGGLE_SELECT adds a path', () => {
@@ -154,6 +155,7 @@ describe('CURSOR_HOME action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('sets cursorIndex to 0', () => {
@@ -196,6 +198,7 @@ describe('CURSOR_END action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('sets cursorIndex to last artifact', () => {
@@ -240,6 +243,7 @@ describe('SET_SEARCH_MODE action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('enables search mode', () => {
@@ -280,6 +284,7 @@ describe('SET_SEARCH_QUERY action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('updates search query', () => {
@@ -334,6 +339,7 @@ describe('DELETE_COMPLETE sets toast', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('sets deleteToast with count and freed bytes', () => {
@@ -391,6 +397,7 @@ describe('DISMISS_TOAST action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('clears deleteToast', () => {
@@ -429,6 +436,7 @@ describe('getSortedArtifacts with search filter', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('returns all artifacts when searchQuery is empty', () => {
@@ -518,6 +526,7 @@ describe('TOGGLE_GROUPING action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('enables grouping', () => {
@@ -567,6 +576,7 @@ describe('TOGGLE_GROUP_COLLAPSE action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('adds key to collapsed groups', () => {
@@ -609,6 +619,7 @@ describe('SELECT_PATHS action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('adds multiple paths to selection', () => {
@@ -654,6 +665,7 @@ describe('DESELECT_PATHS action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('removes multiple paths from selection', () => {
@@ -700,6 +712,7 @@ describe('SET_TYPE_FILTER_MODE action', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('enables type filter mode', () => {
@@ -748,6 +761,7 @@ describe('TOGGLE_TYPE_FILTER action', () => {
     typeFilter: null,
     isTypeFilterMode: true,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('creates set excluding toggled type from null', () => {
@@ -852,6 +866,7 @@ describe('CLEAR_TYPE_FILTER action', () => {
     typeFilter: new Set(['node_modules']),
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('resets typeFilter to null', () => {
@@ -888,6 +903,7 @@ describe('getSortedArtifacts with type filter', () => {
     typeFilter: null,
     isTypeFilterMode: false,
     typeFilterCursor: 0,
+    selectionAnchor: null,
   };
 
   it('returns all artifacts when typeFilter is null', () => {
@@ -917,5 +933,144 @@ describe('getSortedArtifacts with type filter', () => {
     const state = { ...baseState, typeFilter: new Set(['nonexistent']) };
     const result = getSortedArtifacts(state);
     expect(result).toHaveLength(0);
+  });
+});
+
+// ─── Selection anchor & SET_CURSOR reducer tests ────────────────────────────
+
+describe('SET_CURSOR action', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 200,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
+    selectionAnchor: null,
+  };
+
+  it('sets cursorIndex to the given index', () => {
+    const next = reducer(baseState, { type: 'SET_CURSOR', index: 1 });
+    expect(next.cursorIndex).toBe(1);
+  });
+
+  it('does not clear selectionAnchor', () => {
+    const state = { ...baseState, selectionAnchor: 0 };
+    const next = reducer(state, { type: 'SET_CURSOR', index: 1 });
+    expect(next.selectionAnchor).toBe(0);
+  });
+});
+
+describe('SET_SELECTION_ANCHOR action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
+    selectionAnchor: null,
+  };
+
+  it('sets selectionAnchor', () => {
+    const next = reducer(baseState, { type: 'SET_SELECTION_ANCHOR', anchor: 3 });
+    expect(next.selectionAnchor).toBe(3);
+  });
+});
+
+describe('cursor movement clears selectionAnchor', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 1,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 300,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
+    selectionAnchor: 0,
+  };
+
+  it('CURSOR_UP clears selectionAnchor', () => {
+    const next = reducer(baseState, { type: 'CURSOR_UP' });
+    expect(next.selectionAnchor).toBeNull();
+  });
+
+  it('CURSOR_DOWN clears selectionAnchor', () => {
+    const next = reducer(baseState, { type: 'CURSOR_DOWN' });
+    expect(next.selectionAnchor).toBeNull();
+  });
+
+  it('CURSOR_HOME clears selectionAnchor', () => {
+    const next = reducer(baseState, { type: 'CURSOR_HOME' });
+    expect(next.selectionAnchor).toBeNull();
+  });
+
+  it('CURSOR_END clears selectionAnchor', () => {
+    const next = reducer(baseState, { type: 'CURSOR_END' });
+    expect(next.selectionAnchor).toBeNull();
+  });
+
+  it('CURSOR_PAGE_UP clears selectionAnchor', () => {
+    const next = reducer(baseState, { type: 'CURSOR_PAGE_UP', visibleCount: 5 });
+    expect(next.selectionAnchor).toBeNull();
+  });
+
+  it('CURSOR_PAGE_DOWN clears selectionAnchor', () => {
+    const next = reducer(baseState, { type: 'CURSOR_PAGE_DOWN', visibleCount: 5 });
+    expect(next.selectionAnchor).toBeNull();
   });
 });

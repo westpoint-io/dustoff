@@ -305,6 +305,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           sortDir={state.sortDir}
           selectedCount={state.selectedPaths.size}
           selectedBytes={selectedBytes}
+          termHeight={termSize.height}
         />
 
         {/* Search box — shows when searching or has active filter */}
@@ -320,6 +321,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
             state={state}
             dispatch={dispatch}
             rootPath={rootPath}
+            termHeight={termSize.height}
             onVisibleCountChange={setVisibleCount}
           />
 

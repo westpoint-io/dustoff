@@ -14,6 +14,7 @@ interface HeaderProps {
   sortDir: 'asc' | 'desc';
   selectedCount?: number;
   selectedBytes?: number;
+  termHeight?: number;
 }
 
 // Fixed-width label column for alignment
@@ -35,11 +36,28 @@ export function Header({
   sortDir,
   selectedCount = 0,
   selectedBytes = 0,
+  termHeight = 40,
 }: HeaderProps): React.ReactElement {
   const theme = useTheme();
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
-  const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
   const displayPath = truncatePath(rootPath.replace(process.env.HOME || '', '~'), 50);
+
+  // Compact single-line header for short terminals
+  if (termHeight < 30) {
+    return (
+      <Box marginLeft={1}>
+        <Text color={theme.accent} bold>{'DUSTOFF'}</Text>
+        <Text color={theme.overlay0}>{' | '}</Text>
+        <Text color={theme.sky}>{displayPath}</Text>
+        <Text color={theme.overlay0}>{' | '}</Text>
+        <Text color={theme.text}>{`${artifactCount} artifacts`}</Text>
+        <Text color={theme.overlay0}>{' | '}</Text>
+        <Text color={theme.yellow} bold>{`${reclaimable} reclaimable`}</Text>
+      </Box>
+    );
+  }
+
+  const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
   const sortLabel = `${SORT_LABELS[sortKey]} ${sortDir === 'desc' ? '↓' : '↑'}`;
   const selectedLabel = selectedCount > 0 ? `${selectedCount} selected (${formatBytes(selectedBytes)})` : 'None';
 

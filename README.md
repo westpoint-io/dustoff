@@ -12,6 +12,12 @@
 
 Scan your filesystem for JavaScript/TypeScript build artifacts — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, `.parcel-cache` and more — then interactively browse, sort, select, and safely delete them to reclaim disk space.
 
+## About
+
+Scan for JavaScript/TypeScript build artifacts (`node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, `.parcel-cache`, and more) cluttering your filesystem. See how much space each one is wasting, then select and delete them to reclaim disk space. 🧹
+
+🔗 [dustoff on npm](https://www.npmjs.com/package/dustoff)
+
 ## Features
 
 - 🔍 **Fast BFS scanning** - Efficiently traverse your filesystem using breadth-first search

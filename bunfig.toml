@@ -1,0 +1,5 @@
+[test]
+preload = []
+
+[test.coverage]
+enabled = false

@@ -18,11 +18,10 @@
     "node": ">=18.18.0"
   },
   "scripts": {
-    "test": "vitest run",
-    "test:unit": "vitest run test/unit/",
-    "test:integration": "vitest run test/integration/",
-    "test:watch": "vitest",
-    "build": "tsc",
+    "test": "bun test",
+    "test:unit": "bun test src/features/",
+    "test:integration": "bun test test/integration/",
+    "build": "bun build src/cli.tsx --outfile dist/cli.js --target node --packages external",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -30,8 +29,7 @@
     "@types/react": "^19.2.14",
     "ink-testing-library": "^4.0.0",
     "memfs": "^4.0.0",
-    "typescript": "^5.8.0",
-    "vitest": "^3.2.4"
+    "typescript": "^5.8.0"
   },
   "dependencies": {
     "date-fns": "^3.6.0",

@@ -37,18 +37,18 @@ export const ArtifactRow = memo(function ArtifactRow({
   const checkbox = isSelected ? '[x]' : '[ ]';
 
   return (
-    <Box>
-      <Text backgroundColor={bg} color={checkFg}>{` ${checkbox} `}</Text>
-      <Text backgroundColor={bg} color={typeFg}>{artifact.type.padEnd(TYPE_W)}</Text>
-      <Text backgroundColor={bg} color={fg} wrap="truncate-end">{displayPath}</Text>
-      <Box flexGrow={1}><Text backgroundColor={bg}>{' '}</Text></Box>
-      <Text backgroundColor={bg} color={sizeFg} bold={!isCursor}>
+    <Box backgroundColor={bg}>
+      <Text color={checkFg}>{` ${checkbox} `}</Text>
+      <Text color={typeFg}>{artifact.type.padEnd(TYPE_W)}</Text>
+      <Text color={fg} wrap="truncate-end">{displayPath}</Text>
+      <Box flexGrow={1} />
+      <Text color={sizeFg} bold={!isCursor}>
         {formatBytes(artifact.sizeBytes).padStart(SIZE_W)}
       </Text>
-      <Text backgroundColor={bg} color={ageFg}>
+      <Text color={ageFg}>
         {formatAge(artifact.mtimeMs).padStart(AGE_W)}
       </Text>
-      <Text backgroundColor={bg}>{' '}</Text>
+      <Text>{' '}</Text>
     </Box>
   );
 });

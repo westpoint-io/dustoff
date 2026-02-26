@@ -113,3 +113,75 @@ describe('reducer — selection', () => {
     expect(next.viewMode).toBe('browse');
   });
 });
+
+describe('SET_SEARCH_MODE action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+  };
+
+  it('enables search mode', () => {
+    const action = { type: 'SET_SEARCH_MODE' as const, enabled: true };
+    const nextState = reducer(baseState, action);
+    expect(nextState.isSearchMode).toBe(true);
+  });
+
+  it('disables search mode', () => {
+    const state = { ...baseState, isSearchMode: true };
+    const action = { type: 'SET_SEARCH_MODE' as const, enabled: false };
+    const nextState = reducer(state, action);
+    expect(nextState.isSearchMode).toBe(false);
+  });
+});
+
+describe('SET_SEARCH_QUERY action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+  };
+
+  it('updates search query', () => {
+    const action = { type: 'SET_SEARCH_QUERY' as const, query: 'node' };
+    const nextState = reducer(baseState, action);
+    expect(nextState.searchQuery).toBe('node');
+  });
+
+  it('resets cursor to 0 when search query changes', () => {
+    const state = { ...baseState, cursorIndex: 5 };
+    const action = { type: 'SET_SEARCH_QUERY' as const, query: 'test' };
+    const nextState = reducer(state, action);
+    expect(nextState.cursorIndex).toBe(0);
+    expect(nextState.searchQuery).toBe('test');
+  });
+
+  it('clears search with empty query', () => {
+    const state = { ...baseState, searchQuery: 'node' };
+    const action = { type: 'SET_SEARCH_QUERY' as const, query: '' };
+    const nextState = reducer(state, action);
+    expect(nextState.searchQuery).toBe('');
+  });
+});

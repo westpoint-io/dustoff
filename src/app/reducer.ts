@@ -19,6 +19,8 @@ export interface AppState {
   selectedPaths: Set<string>;
   viewMode: ViewMode;
   deleteProgress: { done: number; total: number; freedBytes: number } | null;
+  isSearchMode: boolean;
+  searchQuery: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -42,7 +44,9 @@ export type AppAction =
   | { type: 'CLEAR_SELECTION' }
   | { type: 'SET_VIEW_MODE'; mode: ViewMode }
   | { type: 'DELETE_PROGRESS'; done: number; total: number; freedBytes: number }
-  | { type: 'DELETE_COMPLETE'; deletedPaths: string[] };
+  | { type: 'DELETE_COMPLETE'; deletedPaths: string[] }
+  | { type: 'SET_SEARCH_MODE'; enabled: boolean }
+  | { type: 'SET_SEARCH_QUERY'; query: string };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -68,6 +72,8 @@ export const initialState: AppState = {
   selectedPaths: new Set(),
   viewMode: 'browse',
   deleteProgress: null,
+  isSearchMode: false,
+  searchQuery: '',
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -209,6 +215,18 @@ export function reducer(state: AppState, action: AppAction): AppState {
         viewMode: 'browse',
         deleteProgress: null,
         cursorIndex: Math.min(state.cursorIndex, Math.max(0, remaining.length - 1)),
+      };
+    }
+
+    case 'SET_SEARCH_MODE': {
+      return { ...state, isSearchMode: action.enabled };
+    }
+
+    case 'SET_SEARCH_QUERY': {
+      return {
+        ...state,
+        searchQuery: action.query,
+        cursorIndex: 0,
       };
     }
 

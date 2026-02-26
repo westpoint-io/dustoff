@@ -80,8 +80,8 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         // Clear search and exit search mode
         dispatch({ type: 'SET_SEARCH_QUERY', query: '' });
         dispatch({ type: 'SET_SEARCH_MODE', enabled: false });
-      } else if (key.backspace) {
-        // Backspace — remove last character
+      } else if (input === '\u0008' || input === '\u007f') {
+        // Backspace — remove last character (0x08 = backspace, 0x7f = delete)
         dispatch({
           type: 'SET_SEARCH_QUERY',
           query: state.searchQuery.slice(0, -1),

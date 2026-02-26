@@ -15,14 +15,14 @@ export function SearchBox({ query, isActive, totalResults }: SearchBoxProps): Re
   }
 
   return (
-    <Box marginBottom={1}>
-      <Text color={theme.blue}>
-        / Search:{' '}
-        <Text bold>{query || '_'}</Text>
-        {query.length > 0 && (
-          <Text color={theme.overlay0}> ({totalResults} results)</Text>
-        )}
+    <Box borderStyle="single" borderColor={theme.blue} justifyContent="flex-start" paddingX={2} marginBottom={1}>
+      <Text color={theme.blue} bold>
+        {' / Search: '}
       </Text>
+      <Text bold>{query || '_'}</Text>
+      {query.length > 0 && (
+        <Text color={theme.overlay0}>{` (${totalResults} results)`}</Text>
+      )}
     </Box>
   );
 }

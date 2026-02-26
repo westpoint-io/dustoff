@@ -201,7 +201,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
   // Splash screen — shown during entire scan
   if (state.scanStatus === 'scanning') {
-    const BAR_W = 40;
+    const BAR_W = 43; // Match LOGO width (43 chars)
     const BLOCK_W = 8;
     // Bounce the filled block back and forth
     const cycle = (BAR_W - BLOCK_W) * 2;

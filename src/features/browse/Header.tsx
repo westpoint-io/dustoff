@@ -39,7 +39,7 @@ export function Header({
   const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
   const displayPath = rootPath.replace(process.env.HOME || '', '~');
   const sortLabel = `${SORT_LABELS[sortKey]} ${sortDir === 'desc' ? '↓' : '↑'}`;
-  const selectedLabel = selectedCount > 0 ? `${selectedCount} selected (${formatBytes(selectedBytes)})` : '—';
+  const selectedLabel = selectedCount > 0 ? `${selectedCount} selected (${formatBytes(selectedBytes)})` : 'None';
 
   return (
     <Box alignItems="flex-end" marginLeft={1}>
@@ -65,18 +65,20 @@ export function Header({
           <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
           <Text color={theme.yellow}>{sortLabel}</Text>
         </Box>
-        {selectedCount > 0 && (
-          <Box>
-            <Text color={theme.text} bold>{'Selected:'.padEnd(LABEL_W)}</Text>
-            <Text color={theme.blue}>{selectedLabel}</Text>
-          </Box>
-        )}
       </Box>
 
       {/* Spacer */}
       <Box flexGrow={1} />
 
-      {/* ASCII logo — right side */}
+      {/* Selection info — middle right */}
+      <Box flexDirection="column" marginRight={2}>
+        <Box>
+          <Text color={theme.text} bold>{'Selected:'.padEnd(LABEL_W)}</Text>
+          <Text color={theme.blue}>{selectedLabel}</Text>
+        </Box>
+      </Box>
+
+      {/* ASCII logo — far right */}
       <Box flexDirection="column" alignItems="flex-end">
         {LOGO.map((line, i) => (
           <Text key={`logo-${i}`} color={logoColors[i]}>{line}</Text>

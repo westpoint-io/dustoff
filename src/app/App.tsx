@@ -8,6 +8,7 @@ import { useDelete } from '../features/deletion/useDelete.js';
 import { DeleteConfirm } from '../features/deletion/DeleteConfirm.js';
 import { DeleteProgress } from '../features/deletion/DeleteProgress.js';
 import { ShortcutBar } from './ShortcutBar.js';
+import { SearchBox } from '../features/browse/SearchBox.js';
 import { theme, LOGO, logoColors } from '../shared/theme.js';
 import { formatBytes } from '../shared/formatters.js';
 import { reducer, initialState, getSortedArtifacts } from './reducer.js';
@@ -70,6 +71,31 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     // Deleting in progress — no input
     if (state.viewMode === 'deleting') return;
 
+    // Search mode input
+    if (state.isSearchMode) {
+      if (key.return) {
+        // Apply filter and exit search mode
+        dispatch({ type: 'SET_SEARCH_MODE', enabled: false });
+      } else if (key.escape) {
+        // Clear search and exit search mode
+        dispatch({ type: 'SET_SEARCH_QUERY', query: '' });
+        dispatch({ type: 'SET_SEARCH_MODE', enabled: false });
+      } else if (key.backspace) {
+        // Backspace — remove last character
+        dispatch({
+          type: 'SET_SEARCH_QUERY',
+          query: state.searchQuery.slice(0, -1),
+        });
+      } else if (input && input.length === 1 && !key.ctrl && !key.meta && !key.shift) {
+        // Regular character — append to search
+        dispatch({
+          type: 'SET_SEARCH_QUERY',
+          query: state.searchQuery + input,
+        });
+      }
+      return; // Don't process other commands while searching
+    }
+
     // Browse mode
     if (key.upArrow) {
       dispatch({ type: 'CURSOR_UP' });
@@ -102,6 +128,8 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       dispatch({ type: 'SORT_TO', key: 'path', dir: 'asc' });
     } else if (input === '3') {
       dispatch({ type: 'SORT_TO', key: 'age', dir: 'desc' });
+    } else if (input === '/') {
+      dispatch({ type: 'SET_SEARCH_MODE', enabled: true });
     } else if (input === 'q') {
       // Immediate exit — bypass Ink's graceful shutdown which stalls
       // while the scanner's async generator and size calculations drain.
@@ -198,6 +226,13 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         scanStatus={state.scanStatus}
         sortKey={state.sortKey}
         sortDir={state.sortDir}
+      />
+
+      {/* Search box — shows when searching or has active filter */}
+      <SearchBox
+        query={state.searchQuery}
+        isActive={state.isSearchMode}
+        totalResults={sortedArtifacts.length}
       />
 
       {/* Table — always visible */}

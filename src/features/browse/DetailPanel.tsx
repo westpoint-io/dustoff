@@ -58,7 +58,7 @@ export function DetailPanel({ artifact, width, rootPath }: DetailPanelProps): Re
       <Text color={theme.text}>{'Relative Path'}</Text>
       <Text color={theme.blue}>{truncatePath(relativePath, innerW)}</Text>
 
-      <Text color={theme.overlay0} marginTop={1}>{'Full Path'}</Text>
+      <Box marginTop={1}><Text color={theme.overlay0}>{'Full Path'}</Text></Box>
       <Text color={theme.blue}>{truncatePath(artifact.path, innerW)}</Text>
     </Box>
   );

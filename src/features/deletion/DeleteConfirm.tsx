@@ -10,8 +10,8 @@ interface DeleteConfirmProps {
 }
 
 export function DeleteConfirm({ selectedCount, selectedBytes, focus }: DeleteConfirmProps): React.ReactElement {
-  const yesColor = focus === 'yes' ? 'green' : 'gray';
-  const cancelColor = focus === 'cancel' ? 'green' : 'gray';
+  const yesColor = focus === 'yes' ? 'green' : theme.white;
+  const cancelColor = focus === 'cancel' ? 'green' : theme.white;
 
   return (
     <Box borderStyle="single" borderColor={theme.red} justifyContent="center" paddingX={2} marginTop={-1}>

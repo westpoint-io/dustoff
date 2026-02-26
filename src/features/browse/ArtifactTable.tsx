@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import type { Dispatch } from 'react';
 import { Box, Text } from 'ink';
 import type { AppState, AppAction } from '../../app/reducer.js';
@@ -10,6 +10,27 @@ import { TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
 
 // Header(5 logo) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11 overhead
 const RESERVED_ROWS = 11;
+
+/**
+ * Renders a scrollbar track as an array of single characters.
+ * ▓ = thumb (visible portion), ░ = track (rest).
+ */
+export function renderScrollbar(
+  visibleCount: number,
+  totalItems: number,
+  scrollOffset: number,
+): string[] {
+  const trackHeight = visibleCount;
+  const thumbHeight = Math.max(1, Math.round((visibleCount / totalItems) * trackHeight));
+  const maxOffset = Math.max(1, totalItems - visibleCount);
+  const thumbPosition = Math.round((scrollOffset / maxOffset) * (trackHeight - thumbHeight));
+
+  const chars: string[] = [];
+  for (let i = 0; i < trackHeight; i++) {
+    chars.push(i >= thumbPosition && i < thumbPosition + thumbHeight ? '▓' : '░');
+  }
+  return chars;
+}
 
 interface ArtifactTableProps {
   state: AppState;
@@ -37,6 +58,15 @@ export function ArtifactTable({
     onVisibleCountChange?.(visibleCount);
   }, [visibleCount, onVisibleCountChange]);
 
+  const showScrollbar = sortedArtifacts.length > visibleCount;
+  const scrollbarChars = useMemo(
+    () =>
+      showScrollbar
+        ? renderScrollbar(visibleCount, sortedArtifacts.length, scrollOffset)
+        : [],
+    [showScrollbar, visibleCount, sortedArtifacts.length, scrollOffset],
+  );
+
   // Sort indicator on active column
   const arrow = state.sortDir === 'desc' ? '↓' : '↑';
   const sizeLabel = state.sortKey === 'size' ? `SIZE ${arrow}` : 'SIZE';
@@ -59,14 +89,20 @@ export function ArtifactTable({
       {visibleItems.map((artifact, i) => {
         const absoluteIndex = scrollOffset + i;
         return (
-          <ArtifactRow
-            key={artifact.path}
-            artifact={artifact}
-            isCursor={absoluteIndex === state.cursorIndex}
-            isSelected={state.selectedPaths.has(artifact.path)}
-            rootPath={rootPath}
-            themeName={state.themeName}
-          />
+          <Box key={artifact.path}>
+            <Box flexGrow={1}>
+              <ArtifactRow
+                artifact={artifact}
+                isCursor={absoluteIndex === state.cursorIndex}
+                isSelected={state.selectedPaths.has(artifact.path)}
+                rootPath={rootPath}
+                themeName={state.themeName}
+              />
+            </Box>
+            {showScrollbar && (
+              <Text color={theme.overlay0}>{scrollbarChars[i]}</Text>
+            )}
+          </Box>
         );
       })}
 

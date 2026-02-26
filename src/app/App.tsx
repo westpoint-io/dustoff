@@ -132,9 +132,9 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     }
 
     // Browse mode
-    if (key.upArrow) {
+    if (key.upArrow || input === 'k') {
       dispatch({ type: 'CURSOR_UP' });
-    } else if (key.downArrow) {
+    } else if (key.downArrow || input === 'j') {
       dispatch({ type: 'CURSOR_DOWN' });
     } else if (key.pageUp) {
       dispatch({ type: 'CURSOR_PAGE_UP', visibleCount });

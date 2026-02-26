@@ -25,6 +25,8 @@ export interface AppState {
   deleteConfirmFocus: 'yes' | 'cancel';
   themeName: string;
   deleteToast: { count: number; freedBytes: number } | null;
+  groupingEnabled: boolean;
+  collapsedGroups: Set<string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -37,9 +39,9 @@ export type AppAction =
   | { type: 'SCAN_COMPLETE'; durationMs: number }
   | { type: 'DIRS_SCANNED'; count: number }
   | { type: 'CURSOR_UP' }
-  | { type: 'CURSOR_DOWN' }
-  | { type: 'CURSOR_PAGE_UP'; visibleCount: number }
-  | { type: 'CURSOR_PAGE_DOWN'; visibleCount: number }
+  | { type: 'CURSOR_DOWN'; itemCount?: number }
+  | { type: 'CURSOR_PAGE_UP'; visibleCount: number; itemCount?: number }
+  | { type: 'CURSOR_PAGE_DOWN'; visibleCount: number; itemCount?: number }
   | { type: 'SORT_CYCLE' }
   | { type: 'SORT_TO'; key: 'size' | 'path' | 'age'; dir: 'asc' | 'desc' }
   | { type: 'DETAIL_TOGGLE' }
@@ -53,10 +55,14 @@ export type AppAction =
   | { type: 'SET_SEARCH_QUERY'; query: string }
   | { type: 'DELETE_CONFIRM_FOCUS'; focus: 'yes' | 'cancel' }
   | { type: 'CURSOR_HOME' }
-  | { type: 'CURSOR_END' }
+  | { type: 'CURSOR_END'; itemCount?: number }
   | { type: 'CYCLE_THEME' }
   | { type: 'SET_THEME'; name: string }
-  | { type: 'DISMISS_TOAST' };
+  | { type: 'DISMISS_TOAST' }
+  | { type: 'TOGGLE_GROUPING' }
+  | { type: 'TOGGLE_GROUP_COLLAPSE'; key: string }
+  | { type: 'SELECT_PATHS'; paths: string[] }
+  | { type: 'DESELECT_PATHS'; paths: string[] };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -87,6 +93,8 @@ export const initialState: AppState = {
   deleteConfirmFocus: 'yes',
   themeName: DEFAULT_THEME_NAME,
   deleteToast: null,
+  groupingEnabled: false,
+  collapsedGroups: new Set(),
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -129,9 +137,10 @@ export function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'CURSOR_DOWN': {
+      const max = (action.itemCount ?? state.artifacts.length) - 1;
       return {
         ...state,
-        cursorIndex: Math.min(state.artifacts.length - 1, state.cursorIndex + 1),
+        cursorIndex: Math.min(max, state.cursorIndex + 1),
       };
     }
 
@@ -140,9 +149,10 @@ export function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'CURSOR_END': {
+      const max = (action.itemCount ?? state.artifacts.length) - 1;
       return {
         ...state,
-        cursorIndex: Math.max(0, state.artifacts.length - 1),
+        cursorIndex: Math.max(0, max),
       };
     }
 
@@ -154,12 +164,10 @@ export function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'CURSOR_PAGE_DOWN': {
+      const max = (action.itemCount ?? state.artifacts.length) - 1;
       return {
         ...state,
-        cursorIndex: Math.min(
-          state.artifacts.length - 1,
-          state.cursorIndex + action.visibleCount,
-        ),
+        cursorIndex: Math.min(max, state.cursorIndex + action.visibleCount),
       };
     }
 
@@ -275,6 +283,41 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'DISMISS_TOAST': {
       return { ...state, deleteToast: null };
+    }
+
+    case 'TOGGLE_GROUPING': {
+      return {
+        ...state,
+        groupingEnabled: !state.groupingEnabled,
+        collapsedGroups: new Set(),
+        cursorIndex: 0,
+      };
+    }
+
+    case 'TOGGLE_GROUP_COLLAPSE': {
+      const next = new Set(state.collapsedGroups);
+      if (next.has(action.key)) {
+        next.delete(action.key);
+      } else {
+        next.add(action.key);
+      }
+      return { ...state, collapsedGroups: next };
+    }
+
+    case 'SELECT_PATHS': {
+      const next = new Set(state.selectedPaths);
+      for (const p of action.paths) {
+        next.add(p);
+      }
+      return { ...state, selectedPaths: next };
+    }
+
+    case 'DESELECT_PATHS': {
+      const next = new Set(state.selectedPaths);
+      for (const p of action.paths) {
+        next.delete(p);
+      }
+      return { ...state, selectedPaths: next };
     }
 
     default: {

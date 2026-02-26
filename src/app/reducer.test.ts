@@ -64,6 +64,8 @@ describe('reducer — selection', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('TOGGLE_SELECT adds a path', () => {
@@ -144,6 +146,8 @@ describe('CURSOR_HOME action', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('sets cursorIndex to 0', () => {
@@ -181,6 +185,8 @@ describe('CURSOR_END action', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('sets cursorIndex to last artifact', () => {
@@ -220,6 +226,8 @@ describe('SET_SEARCH_MODE action', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('enables search mode', () => {
@@ -255,6 +263,8 @@ describe('SET_SEARCH_QUERY action', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('updates search query', () => {
@@ -304,6 +314,8 @@ describe('DELETE_COMPLETE sets toast', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('sets deleteToast with count and freed bytes', () => {
@@ -356,6 +368,8 @@ describe('DISMISS_TOAST action', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: { count: 2, freedBytes: 800 },
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('clears deleteToast', () => {
@@ -389,6 +403,8 @@ describe('getSortedArtifacts with search filter', () => {
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
     deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
   };
 
   it('returns all artifacts when searchQuery is empty', () => {
@@ -447,5 +463,177 @@ describe('getSortedArtifacts with search filter', () => {
     // Should be sorted by size ascending: 100, then 300
     expect(result[0]?.sizeBytes).toBe(100);
     expect(result[1]?.sizeBytes).toBe(300);
+  });
+});
+
+// ─── Grouping reducer tests ─────────────────────────────────────────────────
+
+describe('TOGGLE_GROUPING action', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 5,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 100,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+  };
+
+  it('enables grouping', () => {
+    const next = reducer(baseState, { type: 'TOGGLE_GROUPING' });
+    expect(next.groupingEnabled).toBe(true);
+  });
+
+  it('disables grouping', () => {
+    const state = { ...baseState, groupingEnabled: true };
+    const next = reducer(state, { type: 'TOGGLE_GROUPING' });
+    expect(next.groupingEnabled).toBe(false);
+  });
+
+  it('resets cursor to 0', () => {
+    const next = reducer(baseState, { type: 'TOGGLE_GROUPING' });
+    expect(next.cursorIndex).toBe(0);
+  });
+
+  it('clears collapsed groups', () => {
+    const state = { ...baseState, groupingEnabled: true, collapsedGroups: new Set(['a', 'b']) };
+    const next = reducer(state, { type: 'TOGGLE_GROUPING' });
+    expect(next.collapsedGroups.size).toBe(0);
+  });
+});
+
+describe('TOGGLE_GROUP_COLLAPSE action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: true,
+    collapsedGroups: new Set(),
+  };
+
+  it('adds key to collapsed groups', () => {
+    const next = reducer(baseState, { type: 'TOGGLE_GROUP_COLLAPSE', key: 'frontend' });
+    expect(next.collapsedGroups.has('frontend')).toBe(true);
+  });
+
+  it('removes key from collapsed groups', () => {
+    const state = { ...baseState, collapsedGroups: new Set(['frontend']) };
+    const next = reducer(state, { type: 'TOGGLE_GROUP_COLLAPSE', key: 'frontend' });
+    expect(next.collapsedGroups.has('frontend')).toBe(false);
+  });
+});
+
+describe('SELECT_PATHS action', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/a/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/b/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 300,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: true,
+    collapsedGroups: new Set(),
+  };
+
+  it('adds multiple paths to selection', () => {
+    const next = reducer(baseState, {
+      type: 'SELECT_PATHS',
+      paths: ['/a/node_modules', '/a/dist'],
+    });
+    expect(next.selectedPaths.size).toBe(2);
+    expect(next.selectedPaths.has('/a/node_modules')).toBe(true);
+    expect(next.selectedPaths.has('/a/dist')).toBe(true);
+  });
+
+  it('preserves existing selections', () => {
+    const state = { ...baseState, selectedPaths: new Set(['/b/.next']) };
+    const next = reducer(state, { type: 'SELECT_PATHS', paths: ['/a/node_modules'] });
+    expect(next.selectedPaths.size).toBe(2);
+    expect(next.selectedPaths.has('/b/.next')).toBe(true);
+    expect(next.selectedPaths.has('/a/node_modules')).toBe(true);
+  });
+});
+
+describe('DESELECT_PATHS action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(['/a/node_modules', '/a/dist', '/b/.next']),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: true,
+    collapsedGroups: new Set(),
+  };
+
+  it('removes multiple paths from selection', () => {
+    const next = reducer(baseState, {
+      type: 'DESELECT_PATHS',
+      paths: ['/a/node_modules', '/a/dist'],
+    });
+    expect(next.selectedPaths.size).toBe(1);
+    expect(next.selectedPaths.has('/b/.next')).toBe(true);
+  });
+
+  it('handles deselecting paths not in selection gracefully', () => {
+    const next = reducer(baseState, {
+      type: 'DESELECT_PATHS',
+      paths: ['/nonexistent'],
+    });
+    expect(next.selectedPaths.size).toBe(3);
   });
 });

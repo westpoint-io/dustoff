@@ -8,29 +8,32 @@ interface ShortcutBarProps {
 }
 
 const BASE_SHORTCUTS = [
-  { key: '▲▼', desc: 'navigate' },
-  { key: '␣', desc: 'select' },
+  { key: '\u25B2\u25BC', desc: 'navigate' },
+  { key: '\u2423', desc: 'select' },
   { key: 'a', desc: 'select all' },
-  { key: '⇥', desc: 'detail' },
+  { key: '\u21E5', desc: 'detail' },
   { key: 's', desc: 'sort' },
+  { key: 'g', desc: 'group' },
   { key: 't', desc: 'theme' },
   { key: 'q', desc: 'quit' },
 ];
 
 const DELETE_SHORTCUTS = [
-  { key: '▲▼', desc: 'navigate' },
-  { key: '␣', desc: 'select' },
+  { key: '\u25B2\u25BC', desc: 'navigate' },
+  { key: '\u2423', desc: 'select' },
   { key: 'a', desc: 'select all' },
   { key: 'd', desc: 'delete' },
+  { key: 'g', desc: 'group' },
   { key: 'esc', desc: 'clear' },
   { key: 'q', desc: 'quit' },
 ];
 
 const FILTER_SHORTCUTS = [
-  { key: '▲▼', desc: 'navigate' },
-  { key: '␣', desc: 'select' },
+  { key: '\u25B2\u25BC', desc: 'navigate' },
+  { key: '\u2423', desc: 'select' },
   { key: 'a', desc: 'select all' },
   { key: 's', desc: 'sort' },
+  { key: 'g', desc: 'group' },
   { key: '/', desc: 'edit filter' },
   { key: 'esc', desc: 'clear filter' },
   { key: 'q', desc: 'quit' },

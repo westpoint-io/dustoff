@@ -4,10 +4,13 @@ import { Box, Text } from 'ink';
 import type { AppState, AppAction } from '../../app/reducer.js';
 import { getSortedArtifacts } from '../../app/reducer.js';
 import { ArtifactRow } from './ArtifactRow.js';
+import { GroupRow } from './GroupRow.js';
 import { useWindow } from './useWindow.js';
 import { useTheme } from '../../shared/ThemeContext.js';
 import { TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
 import { findCommonDirPrefix } from '../../shared/pathUtils.js';
+import { groupArtifacts, flattenGroups } from './grouping.js';
+import type { FlatItem } from './grouping.js';
 
 // Full header (5 logo lines) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11
 const RESERVED_ROWS_FULL = 11;
@@ -41,6 +44,7 @@ interface ArtifactTableProps {
   rootPath: string;
   termHeight?: number;
   onVisibleCountChange?: (count: number) => void;
+  flatItems?: FlatItem[];
 }
 
 export function ArtifactTable({
@@ -49,28 +53,44 @@ export function ArtifactTable({
   rootPath,
   termHeight = 40,
   onVisibleCountChange,
+  flatItems,
 }: ArtifactTableProps): React.ReactElement {
   const theme = useTheme();
   const sortedArtifacts = getSortedArtifacts(state);
   const reservedRows = termHeight >= 30 ? RESERVED_ROWS_FULL : RESERVED_ROWS_COMPACT;
 
-  const { visibleItems, scrollOffset, visibleCount } = useWindow(
+  // In grouping mode, use flat items; otherwise use sorted artifacts
+  const totalItemCount = state.groupingEnabled && flatItems
+    ? flatItems.length
+    : sortedArtifacts.length;
+
+  const { visibleItems: visibleFlatItems, scrollOffset, visibleCount } = useWindow<FlatItem>(
+    state.groupingEnabled && flatItems ? flatItems : sortedArtifacts.map((a) => ({ kind: 'artifact' as const, artifact: a, indented: false })),
+    state.cursorIndex,
+    reservedRows,
+  );
+
+  const { visibleItems: visibleArtifacts, scrollOffset: artScrollOffset, visibleCount: artVisibleCount } = useWindow(
     sortedArtifacts,
     state.cursorIndex,
     reservedRows,
   );
 
-  useEffect(() => {
-    onVisibleCountChange?.(visibleCount);
-  }, [visibleCount, onVisibleCountChange]);
+  // Use the right values depending on mode
+  const effectiveVisibleCount = state.groupingEnabled && flatItems ? visibleCount : artVisibleCount;
+  const effectiveScrollOffset = state.groupingEnabled && flatItems ? scrollOffset : artScrollOffset;
 
-  const showScrollbar = sortedArtifacts.length > visibleCount;
+  useEffect(() => {
+    onVisibleCountChange?.(effectiveVisibleCount);
+  }, [effectiveVisibleCount, onVisibleCountChange]);
+
+  const showScrollbar = totalItemCount > effectiveVisibleCount;
   const scrollbarChars = useMemo(
     () =>
       showScrollbar
-        ? renderScrollbar(visibleCount, sortedArtifacts.length, scrollOffset)
+        ? renderScrollbar(effectiveVisibleCount, totalItemCount, effectiveScrollOffset)
         : [],
-    [showScrollbar, visibleCount, sortedArtifacts.length, scrollOffset],
+    [showScrollbar, effectiveVisibleCount, totalItemCount, effectiveScrollOffset],
   );
 
   // Compute display paths and common prefix for dim-prefix rendering
@@ -83,7 +103,7 @@ export function ArtifactTable({
   }, [sortedArtifacts, rootPath]);
 
   // Sort indicator on active column
-  const arrow = state.sortDir === 'desc' ? '↓' : '↑';
+  const arrow = state.sortDir === 'desc' ? '\u2193' : '\u2191';
   const sizeLabel = state.sortKey === 'size' ? `SIZE ${arrow}` : 'SIZE';
   const ageLabel = state.sortKey === 'age' ? `AGE ${arrow}` : 'AGE';
 
@@ -107,33 +127,76 @@ export function ArtifactTable({
       </Box>
 
       {/* Rows — full-row cursor highlight */}
-      {visibleItems.map((artifact, i) => {
-        const absoluteIndex = scrollOffset + i;
-        return (
-          <Box key={artifact.path}>
-            <Box flexGrow={1}>
-              <ArtifactRow
-                artifact={artifact}
-                isCursor={absoluteIndex === state.cursorIndex}
-                isSelected={state.selectedPaths.has(artifact.path)}
-                rootPath={rootPath}
-                maxSizeBytes={state.maxSizeBytes}
-                commonPrefix={commonPrefix}
-                themeName={state.themeName}
-              />
+      {state.groupingEnabled && flatItems ? (
+        // Grouped mode: render flat items
+        visibleFlatItems.map((item, i) => {
+          const absoluteIndex = effectiveScrollOffset + i;
+          const key = item.kind === 'group-header'
+            ? `group-${item.group.key}`
+            : `art-${item.artifact.path}`;
+
+          return (
+            <Box key={key}>
+              <Box flexGrow={1}>
+                {item.kind === 'group-header' ? (
+                  <GroupRow
+                    group={item.group}
+                    isCollapsed={state.collapsedGroups.has(item.group.key)}
+                    isCursor={absoluteIndex === state.cursorIndex}
+                    allSelected={item.group.children.every((c) => state.selectedPaths.has(c.path))}
+                    someSelected={item.group.children.some((c) => state.selectedPaths.has(c.path))}
+                  />
+                ) : (
+                  <Box>
+                    {item.indented && <Text>{'  '}</Text>}
+                    <ArtifactRow
+                      artifact={item.artifact}
+                      isCursor={absoluteIndex === state.cursorIndex}
+                      isSelected={state.selectedPaths.has(item.artifact.path)}
+                      rootPath={rootPath}
+                      maxSizeBytes={state.maxSizeBytes}
+                      commonPrefix={commonPrefix}
+                      themeName={state.themeName}
+                    />
+                  </Box>
+                )}
+              </Box>
+              {showScrollbar && (
+                <Text color={theme.overlay0}>{scrollbarChars[i]}</Text>
+              )}
             </Box>
-            {showScrollbar && (
-              <Text color={theme.overlay0}>{scrollbarChars[i]}</Text>
-            )}
-          </Box>
-        );
-      })}
+          );
+        })
+      ) : (
+        // Normal mode: render artifact rows
+        visibleArtifacts.map((artifact, i) => {
+          const absoluteIndex = artScrollOffset + i;
+          return (
+            <Box key={artifact.path}>
+              <Box flexGrow={1}>
+                <ArtifactRow
+                  artifact={artifact}
+                  isCursor={absoluteIndex === state.cursorIndex}
+                  isSelected={state.selectedPaths.has(artifact.path)}
+                  rootPath={rootPath}
+                  maxSizeBytes={state.maxSizeBytes}
+                  commonPrefix={commonPrefix}
+                  themeName={state.themeName}
+                />
+              </Box>
+              {showScrollbar && (
+                <Text color={theme.overlay0}>{scrollbarChars[i]}</Text>
+              )}
+            </Box>
+          );
+        })
+      )}
 
       {/* Pad remaining space */}
       <Box flexGrow={1} />
 
       {/* Contextual tip in empty table space */}
-      {sortedArtifacts.length > 0 && sortedArtifacts.length < visibleCount && (
+      {sortedArtifacts.length > 0 && sortedArtifacts.length < effectiveVisibleCount && (
         <Box justifyContent="center">
           <Text dimColor>
             {state.selectedPaths.size > 0

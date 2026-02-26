@@ -15,6 +15,8 @@ import { ThemeProvider } from '../shared/ThemeContext.js';
 import { formatBytes } from '../shared/formatters.js';
 import { reducer, initialState, getSortedArtifacts } from './reducer.js';
 import { loadThemeName, saveThemeName } from '../shared/config.js';
+import { groupArtifacts, flattenGroups } from '../features/browse/grouping.js';
+import type { FlatItem } from '../features/browse/grouping.js';
 
 // ---------------------------------------------------------------------------
 // App root
@@ -98,6 +100,19 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     [state.artifacts, state.sortKey, state.sortDir, state.searchQuery],
   );
 
+  // Compute flat items for grouping mode
+  const flatItems: FlatItem[] = useMemo(() => {
+    if (!state.groupingEnabled) return [];
+    const groups = groupArtifacts(sortedArtifacts, rootPath);
+    return flattenGroups(groups, state.collapsedGroups);
+  }, [state.groupingEnabled, sortedArtifacts, rootPath, state.collapsedGroups]);
+
+  // Helper to get current flat item at cursor
+  const getCursorFlatItem = (): FlatItem | undefined => {
+    if (!state.groupingEnabled || flatItems.length === 0) return undefined;
+    return flatItems[state.cursorIndex];
+  };
+
   useInput((input, key) => {
     // Confirm delete dialog — navigate between Yes/Cancel
     if (state.viewMode === 'confirm-delete') {
@@ -173,20 +188,51 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     }
 
     // Browse mode
+    const effectiveItemCount = state.groupingEnabled && flatItems.length > 0 ? flatItems.length : undefined;
     if (key.upArrow || input === 'k') {
       dispatch({ type: 'CURSOR_UP' });
     } else if (key.downArrow || input === 'j') {
-      dispatch({ type: 'CURSOR_DOWN' });
+      dispatch({ type: 'CURSOR_DOWN', itemCount: effectiveItemCount });
     } else if (key.pageUp) {
-      dispatch({ type: 'CURSOR_PAGE_UP', visibleCount });
+      dispatch({ type: 'CURSOR_PAGE_UP', visibleCount, itemCount: effectiveItemCount });
     } else if (key.pageDown) {
-      dispatch({ type: 'CURSOR_PAGE_DOWN', visibleCount });
+      dispatch({ type: 'CURSOR_PAGE_DOWN', visibleCount, itemCount: effectiveItemCount });
     } else if (key.tab) {
       dispatch({ type: 'DETAIL_TOGGLE' });
+    } else if (key.return && state.groupingEnabled) {
+      const item = getCursorFlatItem();
+      if (item?.kind === 'group-header') {
+        dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      }
+    } else if (key.rightArrow && state.groupingEnabled) {
+      const item = getCursorFlatItem();
+      if (item?.kind === 'group-header' && state.collapsedGroups.has(item.group.key)) {
+        dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      }
+    } else if (key.leftArrow && state.groupingEnabled) {
+      const item = getCursorFlatItem();
+      if (item?.kind === 'group-header' && !state.collapsedGroups.has(item.group.key)) {
+        dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      }
     } else if (input === ' ') {
-      const artifact = sortedArtifacts[state.cursorIndex];
-      if (artifact) {
-        dispatch({ type: 'TOGGLE_SELECT', path: artifact.path });
+      if (state.groupingEnabled) {
+        const item = getCursorFlatItem();
+        if (item?.kind === 'group-header') {
+          const paths = item.group.children.map((c) => c.path);
+          const allSelected = paths.every((p) => state.selectedPaths.has(p));
+          if (allSelected) {
+            dispatch({ type: 'DESELECT_PATHS', paths });
+          } else {
+            dispatch({ type: 'SELECT_PATHS', paths });
+          }
+        } else if (item?.kind === 'artifact') {
+          dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
+        }
+      } else {
+        const artifact = sortedArtifacts[state.cursorIndex];
+        if (artifact) {
+          dispatch({ type: 'TOGGLE_SELECT', path: artifact.path });
+        }
       }
     } else if (input === 'a') {
       dispatch({ type: 'SELECT_ALL' });
@@ -214,9 +260,9 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       dispatch({ type: 'CYCLE_THEME' });
       // Flash will be set via the effect below
     } else if (input === 'g' && !key.shift) {
-      dispatch({ type: 'CURSOR_HOME' });
+      dispatch({ type: 'TOGGLE_GROUPING' });
     } else if (input === 'G') {
-      dispatch({ type: 'CURSOR_END' });
+      dispatch({ type: 'CURSOR_END', itemCount: effectiveItemCount });
     } else if (input === 'q') {
       // Immediate exit — bypass Ink's graceful shutdown which stalls
       // while the scanner's async generator and size calculations drain.
@@ -250,8 +296,15 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     ? Math.max(28, Math.floor(termSize.width * 0.22))
     : 0;
 
-  // Get cursor artifact from sorted list
-  const cursorArtifact = sortedArtifacts[state.cursorIndex];
+  // Get cursor artifact from sorted list (or from flat items if grouping)
+  const cursorArtifact = useMemo(() => {
+    if (state.groupingEnabled && flatItems.length > 0) {
+      const item = flatItems[state.cursorIndex];
+      if (item?.kind === 'artifact') return item.artifact;
+      return undefined;
+    }
+    return sortedArtifacts[state.cursorIndex];
+  }, [state.groupingEnabled, flatItems, sortedArtifacts, state.cursorIndex]);
 
   // Animated progress bar position (indeterminate bounce)
   const [barTick, setBarTick] = useState(0);
@@ -337,6 +390,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
             rootPath={rootPath}
             termHeight={termSize.height}
             onVisibleCountChange={setVisibleCount}
+            flatItems={state.groupingEnabled ? flatItems : undefined}
           />
 
           {/* Detail panel */}
@@ -365,7 +419,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           scanDurationMs={state.scanDurationMs}
           directoriesScanned={state.directoriesScanned}
           cursorIndex={state.cursorIndex}
-          totalArtifacts={sortedArtifacts.length}
+          totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : sortedArtifacts.length}
         />
 
         {/* Theme flash indicator */}

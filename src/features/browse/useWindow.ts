@@ -1,8 +1,7 @@
 import { useStdout } from 'ink';
-import type { ScanResult } from '../scanning/types.js';
 
-export interface WindowResult {
-  visibleItems: ScanResult[];
+export interface WindowResult<T> {
+  visibleItems: T[];
   scrollOffset: number;
   visibleCount: number;
 }
@@ -13,15 +12,15 @@ export interface WindowResult {
  * Ink has no built-in scroll. This hook slices items to the visible terminal
  * height, tracking scroll offset to keep the cursor centered in the viewport.
  *
- * @param items - The full sorted artifact list
+ * @param items - The full sorted item list
  * @param cursorIndex - Current cursor position in the full list
  * @param reservedRows - Rows consumed by header, table header, status bar, etc. (default: 7)
  */
-export function useWindow(
-  items: ScanResult[],
+export function useWindow<T>(
+  items: T[],
   cursorIndex: number,
   reservedRows: number = 7,
-): WindowResult {
+): WindowResult<T> {
   const { stdout } = useStdout();
   const rows = stdout?.rows ?? 24;
   const visibleCount = Math.max(1, rows - reservedRows);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Box, Text, useInput, useApp, useStdout } from 'ink';
 import { useScan } from '../features/scanning/useScan.js';
 import { ArtifactTable } from '../features/browse/ArtifactTable.js';
@@ -8,6 +8,7 @@ import { useDelete } from '../features/deletion/useDelete.js';
 import { DeleteConfirm } from '../features/deletion/DeleteConfirm.js';
 import { DeleteProgress } from '../features/deletion/DeleteProgress.js';
 import { ShortcutBar } from './ShortcutBar.js';
+import { StatusBar } from './StatusBar.js';
 import { SearchBox } from '../features/browse/SearchBox.js';
 import { LOGO, getThemeByName } from '../shared/themes.js';
 import { ThemeProvider } from '../shared/ThemeContext.js';
@@ -68,6 +69,19 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
   }, [stdout]);
 
   useScan(rootPath, dispatch);
+
+  // Auto-show detail panel on wide terminals when scan completes
+  const autoDetailFired = useRef(false);
+  useEffect(() => {
+    if (
+      state.scanStatus === 'complete' &&
+      termSize.width >= 120 &&
+      !autoDetailFired.current
+    ) {
+      autoDetailFired.current = true;
+      dispatch({ type: 'DETAIL_TOGGLE' });
+    }
+  }, [state.scanStatus, termSize.width]);
 
   // Delete handler
   const executeDelete = useDelete(state.artifacts, state.selectedPaths, dispatch);
@@ -188,6 +202,10 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     } else if (input === 't') {
       dispatch({ type: 'CYCLE_THEME' });
       // Flash will be set via the effect below
+    } else if (input === 'g' && !key.shift) {
+      dispatch({ type: 'CURSOR_HOME' });
+    } else if (input === 'G') {
+      dispatch({ type: 'CURSOR_END' });
     } else if (input === 'q') {
       // Immediate exit — bypass Ink's graceful shutdown which stalls
       // while the scanner's async generator and size calculations drain.
@@ -324,6 +342,15 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
             freedBytes={state.deleteProgress.freedBytes}
           />
         )}
+
+        {/* Status bar */}
+        <StatusBar
+          scanStatus={state.scanStatus}
+          scanDurationMs={state.scanDurationMs}
+          directoriesScanned={state.directoriesScanned}
+          cursorIndex={state.cursorIndex}
+          totalArtifacts={sortedArtifacts.length}
+        />
 
         {/* Theme flash indicator */}
         {themeFlash !== null && (

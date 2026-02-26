@@ -24,6 +24,7 @@ export interface AppState {
   searchQuery: string;
   deleteConfirmFocus: 'yes' | 'cancel';
   themeName: string;
+  deleteToast: { count: number; freedBytes: number } | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -54,7 +55,8 @@ export type AppAction =
   | { type: 'CURSOR_HOME' }
   | { type: 'CURSOR_END' }
   | { type: 'CYCLE_THEME' }
-  | { type: 'SET_THEME'; name: string };
+  | { type: 'SET_THEME'; name: string }
+  | { type: 'DISMISS_TOAST' };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -84,6 +86,7 @@ export const initialState: AppState = {
   searchQuery: '',
   deleteConfirmFocus: 'yes',
   themeName: DEFAULT_THEME_NAME,
+  deleteToast: null,
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -228,7 +231,11 @@ export function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'DELETE_COMPLETE': {
-      const remaining = state.artifacts.filter((a) => !action.deletedPaths.includes(a.path));
+      const deletedSet = new Set(action.deletedPaths);
+      const freedBytes = state.artifacts
+        .filter((a) => deletedSet.has(a.path))
+        .reduce((sum, a) => sum + (a.sizeBytes ?? 0), 0);
+      const remaining = state.artifacts.filter((a) => !deletedSet.has(a.path));
       return {
         ...state,
         artifacts: remaining,
@@ -236,6 +243,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
         viewMode: 'browse',
         deleteProgress: null,
         cursorIndex: Math.min(state.cursorIndex, Math.max(0, remaining.length - 1)),
+        deleteToast: { count: action.deletedPaths.length, freedBytes },
       };
     }
 
@@ -263,6 +271,10 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_THEME': {
       return { ...state, themeName: action.name };
+    }
+
+    case 'DISMISS_TOAST': {
+      return { ...state, deleteToast: null };
     }
 
     default: {

@@ -59,6 +59,11 @@ describe('reducer — selection', () => {
     selectedPaths: new Set(),
     viewMode: 'browse',
     deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
   };
 
   it('TOGGLE_SELECT adds a path', () => {
@@ -138,6 +143,7 @@ describe('CURSOR_HOME action', () => {
     searchQuery: '',
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
+    deleteToast: null,
   };
 
   it('sets cursorIndex to 0', () => {
@@ -174,6 +180,7 @@ describe('CURSOR_END action', () => {
     searchQuery: '',
     deleteConfirmFocus: 'yes',
     themeName: 'Catppuccin Mocha',
+    deleteToast: null,
   };
 
   it('sets cursorIndex to last artifact', () => {
@@ -210,6 +217,9 @@ describe('SET_SEARCH_MODE action', () => {
     deleteProgress: null,
     isSearchMode: false,
     searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
   };
 
   it('enables search mode', () => {
@@ -242,6 +252,9 @@ describe('SET_SEARCH_QUERY action', () => {
     deleteProgress: null,
     isSearchMode: false,
     searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
   };
 
   it('updates search query', () => {
@@ -266,6 +279,97 @@ describe('SET_SEARCH_QUERY action', () => {
   });
 });
 
+// ─── Delete toast reducer tests ──────────────────────────────────────────────
+
+describe('DELETE_COMPLETE sets toast', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 500, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', sizeBytes: 300, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', sizeBytes: 200, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 500,
+    selectedPaths: new Set(['/a/node_modules', '/b/dist']),
+    viewMode: 'deleting',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+  };
+
+  it('sets deleteToast with count and freed bytes', () => {
+    const next = reducer(baseState, {
+      type: 'DELETE_COMPLETE',
+      deletedPaths: ['/a/node_modules', '/b/dist'],
+    });
+    expect(next.deleteToast).toEqual({ count: 2, freedBytes: 800 });
+  });
+
+  it('computes freed bytes only for deleted paths', () => {
+    const next = reducer(baseState, {
+      type: 'DELETE_COMPLETE',
+      deletedPaths: ['/a/node_modules'],
+    });
+    expect(next.deleteToast).toEqual({ count: 1, freedBytes: 500 });
+  });
+
+  it('handles null sizeBytes when computing freed bytes', () => {
+    const stateWithNull: AppState = {
+      ...baseState,
+      artifacts: [
+        { path: '/a/node_modules', type: 'node_modules', sizeBytes: null, mtimeMs: Date.now() },
+      ],
+    };
+    const next = reducer(stateWithNull, {
+      type: 'DELETE_COMPLETE',
+      deletedPaths: ['/a/node_modules'],
+    });
+    expect(next.deleteToast).toEqual({ count: 1, freedBytes: 0 });
+  });
+});
+
+describe('DISMISS_TOAST action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: { count: 2, freedBytes: 800 },
+  };
+
+  it('clears deleteToast', () => {
+    const next = reducer(baseState, { type: 'DISMISS_TOAST' });
+    expect(next.deleteToast).toBeNull();
+  });
+
+  it('is a no-op when toast is already null', () => {
+    const state = { ...baseState, deleteToast: null };
+    const next = reducer(state, { type: 'DISMISS_TOAST' });
+    expect(next.deleteToast).toBeNull();
+  });
+});
+
 describe('getSortedArtifacts with search filter', () => {
   const baseState: AppState = {
     artifacts: [],
@@ -282,6 +386,9 @@ describe('getSortedArtifacts with search filter', () => {
     deleteProgress: null,
     isSearchMode: false,
     searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
   };
 
   it('returns all artifacts when searchQuery is empty', () => {

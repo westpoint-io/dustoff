@@ -92,11 +92,17 @@ export function ArtifactTable({
       {/* Column headers */}
       <Box>
         <Text color={theme.headerColor} bold>
-          {'     '}{('TYPE').padEnd(TYPE_W)}{'PATH'}
+          {'     '}{('TYPE').padEnd(TYPE_W)}{'PATH '}
         </Text>
+        <Text dimColor color={theme.overlay0}>{'[2]'}</Text>
         <Box flexGrow={1} />
+        <Text dimColor color={theme.overlay0}>{'[1] '}</Text>
         <Text color={theme.headerColor} bold>
-          {sizeLabel.padStart(SIZE_W)}{ageLabel.padStart(AGE_W)}{' '}
+          {sizeLabel.padStart(SIZE_W)}{' '}
+        </Text>
+        <Text dimColor color={theme.overlay0}>{'[3] '}</Text>
+        <Text color={theme.headerColor} bold>
+          {ageLabel}{'  '}
         </Text>
       </Box>
 
@@ -125,6 +131,17 @@ export function ArtifactTable({
 
       {/* Pad remaining space */}
       <Box flexGrow={1} />
+
+      {/* Contextual tip in empty table space */}
+      {sortedArtifacts.length > 0 && sortedArtifacts.length < visibleCount && (
+        <Box justifyContent="center">
+          <Text dimColor>
+            {state.selectedPaths.size > 0
+              ? 'Tip: Press d to delete selected, Esc to clear selection'
+              : 'Tip: Press Space to select, / to search, Tab for details'}
+          </Text>
+        </Box>
+      )}
 
       {state.artifacts.length === 0 && (
         <Text dimColor>{'  No artifacts found.'}</Text>

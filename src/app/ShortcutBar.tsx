@@ -4,6 +4,7 @@ import { useTheme } from '../shared/ThemeContext.js';
 
 interface ShortcutBarProps {
   hasSelection: boolean;
+  hasFilter?: boolean;
 }
 
 const BASE_SHORTCUTS = [
@@ -25,9 +26,26 @@ const DELETE_SHORTCUTS = [
   { key: 'q', desc: 'quit' },
 ];
 
-export function ShortcutBar({ hasSelection }: ShortcutBarProps): React.ReactElement {
+const FILTER_SHORTCUTS = [
+  { key: '▲▼', desc: 'navigate' },
+  { key: '␣', desc: 'select' },
+  { key: 'a', desc: 'select all' },
+  { key: 's', desc: 'sort' },
+  { key: '/', desc: 'edit filter' },
+  { key: 'esc', desc: 'clear filter' },
+  { key: 'q', desc: 'quit' },
+];
+
+export function ShortcutBar({ hasSelection, hasFilter = false }: ShortcutBarProps): React.ReactElement {
   const theme = useTheme();
-  const shortcuts = hasSelection ? DELETE_SHORTCUTS : BASE_SHORTCUTS;
+  let shortcuts: Array<{ key: string; desc: string }>;
+  if (hasSelection) {
+    shortcuts = DELETE_SHORTCUTS;
+  } else if (hasFilter) {
+    shortcuts = FILTER_SHORTCUTS;
+  } else {
+    shortcuts = BASE_SHORTCUTS;
+  }
 
   return (
     <Box gap={1} marginLeft={1}>

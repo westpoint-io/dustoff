@@ -15,6 +15,9 @@ interface HeaderProps {
   selectedCount?: number;
   selectedBytes?: number;
   termHeight?: number;
+  searchQuery?: string;
+  isSearchMode?: boolean;
+  filteredCount?: number;
 }
 
 // Fixed-width label column for alignment
@@ -37,6 +40,9 @@ export function Header({
   selectedCount = 0,
   selectedBytes = 0,
   termHeight = 40,
+  searchQuery = '',
+  isSearchMode = false,
+  filteredCount = 0,
 }: HeaderProps): React.ReactElement {
   const theme = useTheme();
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
@@ -59,51 +65,71 @@ export function Header({
 
   const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
   const sortLabel = `${SORT_LABELS[sortKey]} ${sortDir === 'desc' ? '↓' : '↑'}`;
-  const selectedLabel = selectedCount > 0 ? `${selectedCount} selected (${formatBytes(selectedBytes)})` : 'None';
+  const hasFilter = searchQuery.length > 0 && !isSearchMode;
+
+  // Task 11: selection percentage
+  let selectedLabel: string;
+  if (selectedCount > 0 && totalBytes > 0) {
+    const pct = (selectedBytes / totalBytes * 100).toFixed(1);
+    selectedLabel = `${selectedCount} selected (${formatBytes(selectedBytes)} / ${formatBytes(totalBytes)} — ${pct}%)`;
+  } else if (selectedCount > 0) {
+    selectedLabel = `${selectedCount} selected (${formatBytes(selectedBytes)})`;
+  } else {
+    selectedLabel = 'None';
+  }
 
   return (
-    <Box alignItems="flex-end" marginLeft={1}>
-      {/* Left column — Scan, Artifacts, Reclaimable */}
-      <Box flexDirection="column">
-        <Box>
-          <Text color={theme.text} bold>{'Scan:'.padEnd(LABEL_W)}</Text>
-          <Text color={theme.sky}>{displayPath}</Text>
+    <>
+      <Box alignItems="flex-end" marginLeft={1}>
+        {/* Left column — Scan, Artifacts, Reclaimable */}
+        <Box flexDirection="column">
+          <Box>
+            <Text color={theme.text} bold>{'Scan:'.padEnd(LABEL_W)}</Text>
+            <Text color={theme.sky}>{displayPath}</Text>
+          </Box>
+          <Box>
+            <Text color={theme.text} bold>{'Artifacts:'.padEnd(LABEL_W)}</Text>
+            <Text color={theme.text}>{String(artifactCount)}</Text>
+          </Box>
+          <Box>
+            <Text color={theme.text} bold>{'Reclaimable:'.padEnd(LABEL_W)}</Text>
+            <Text color={theme.yellow} bold>{reclaimable}</Text>
+          </Box>
         </Box>
-        <Box>
-          <Text color={theme.text} bold>{'Artifacts:'.padEnd(LABEL_W)}</Text>
-          <Text color={theme.text}>{String(artifactCount)}</Text>
+
+        {/* Right column — Oldest, Sort, Selected */}
+        <Box flexDirection="column" marginLeft={3}>
+          <Box>
+            <Text color={theme.text} bold>{'Oldest:'.padEnd(LABEL_W)}</Text>
+            <Text color={theme.red}>{oldest}</Text>
+          </Box>
+          <Box>
+            <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
+            <Text color={theme.yellow}>{sortLabel}</Text>
+          </Box>
+          <Box>
+            <Text color={theme.text} bold>{'Selected:'.padEnd(LABEL_W)}</Text>
+            <Text color={theme.blue}>{selectedLabel}</Text>
+          </Box>
         </Box>
-        <Box>
-          <Text color={theme.text} bold>{'Reclaimable:'.padEnd(LABEL_W)}</Text>
-          <Text color={theme.yellow} bold>{reclaimable}</Text>
+
+        {/* Spacer */}
+        <Box flexGrow={1} />
+
+        {/* ASCII logo — far right */}
+        <Box flexDirection="column" alignItems="flex-end">
+          {LOGO.map((line, i) => (
+            <Text key={`logo-${i}`} color={theme.logoColors[i]}>{line}</Text>
+          ))}
         </Box>
       </Box>
 
-      {/* Right column — Oldest, Sort, Selected */}
-      <Box flexDirection="column" marginLeft={3}>
-        <Box>
-          <Text color={theme.text} bold>{'Oldest:'.padEnd(LABEL_W)}</Text>
-          <Text color={theme.red}>{oldest}</Text>
+      {/* Filter persistence indicator */}
+      {hasFilter && (
+        <Box marginLeft={1}>
+          <Text color={theme.blue}>{`Filter: "${searchQuery}" (${filteredCount} results)`}</Text>
         </Box>
-        <Box>
-          <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
-          <Text color={theme.yellow}>{sortLabel}</Text>
-        </Box>
-        <Box>
-          <Text color={theme.text} bold>{'Selected:'.padEnd(LABEL_W)}</Text>
-          <Text color={theme.blue}>{selectedLabel}</Text>
-        </Box>
-      </Box>
-
-      {/* Spacer */}
-      <Box flexGrow={1} />
-
-      {/* ASCII logo — far right */}
-      <Box flexDirection="column" alignItems="flex-end">
-        {LOGO.map((line, i) => (
-          <Text key={`logo-${i}`} color={theme.logoColors[i]}>{line}</Text>
-        ))}
-      </Box>
-    </Box>
+      )}
+    </>
   );
 }

@@ -294,22 +294,22 @@ describe('DetailPanel', () => {
 
 describe('ShortcutBar', () => {
   it('shows navigate hint', () => {
-    const { lastFrame } = render(<ShortcutBar hasSelection={false} />);
+    const { lastFrame } = render(<ShortcutBar hasSelection={false} hasFilter={false} />);
     expect(lastFrame()).toContain('navigate');
   });
 
   it('shows select hint', () => {
-    const { lastFrame } = render(<ShortcutBar hasSelection={false} />);
+    const { lastFrame } = render(<ShortcutBar hasSelection={false} hasFilter={false} />);
     expect(lastFrame()).toContain('select');
   });
 
   it('shows delete hint when items are selected', () => {
-    const { lastFrame } = render(<ShortcutBar hasSelection={true} />);
+    const { lastFrame } = render(<ShortcutBar hasSelection={true} hasFilter={false} />);
     expect(lastFrame()).toContain('delete');
   });
 
   it('shows quit hint', () => {
-    const { lastFrame } = render(<ShortcutBar hasSelection={false} />);
+    const { lastFrame } = render(<ShortcutBar hasSelection={false} hasFilter={false} />);
     expect(lastFrame()).toContain('quit');
   });
 });

@@ -40,6 +40,13 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     [state.themeName],
   );
 
+  // Auto-dismiss delete toast after 3 seconds
+  useEffect(() => {
+    if (state.deleteToast === null) return;
+    const id = setTimeout(() => dispatch({ type: 'DISMISS_TOAST' }), 3000);
+    return () => clearTimeout(id);
+  }, [state.deleteToast]);
+
   // Persist theme when it changes and show flash
   useEffect(() => {
     saveThemeName(state.themeName);
@@ -188,7 +195,11 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         dispatch({ type: 'SET_VIEW_MODE', mode: 'confirm-delete' });
       }
     } else if (key.escape) {
-      dispatch({ type: 'CLEAR_SELECTION' });
+      if (state.selectedPaths.size > 0) {
+        dispatch({ type: 'CLEAR_SELECTION' });
+      } else if (state.searchQuery.length > 0) {
+        dispatch({ type: 'SET_SEARCH_QUERY', query: '' });
+      }
     } else if (input === 's') {
       dispatch({ type: 'SORT_CYCLE' });
     } else if (input === '1') {
@@ -306,6 +317,9 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           selectedCount={state.selectedPaths.size}
           selectedBytes={selectedBytes}
           termHeight={termSize.height}
+          searchQuery={state.searchQuery}
+          isSearchMode={state.isSearchMode}
+          filteredCount={sortedArtifacts.length}
         />
 
         {/* Search box — shows when searching or has active filter */}
@@ -361,8 +375,15 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           </Box>
         )}
 
+        {/* Post-delete toast */}
+        {state.deleteToast !== null && (
+          <Box justifyContent="center">
+            <Text color={currentTheme.green} bold>{`Deleted ${state.deleteToast.count} artifact(s), freed ${formatBytes(state.deleteToast.freedBytes)}`}</Text>
+          </Box>
+        )}
+
         {/* Shortcut bar */}
-        <ShortcutBar hasSelection={state.selectedPaths.size > 0} />
+        <ShortcutBar hasSelection={state.selectedPaths.size > 0} hasFilter={state.searchQuery.length > 0 && !state.isSearchMode} />
       </Box>
     </ThemeProvider>
   );

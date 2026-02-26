@@ -21,7 +21,7 @@ export function DeleteConfirm({ selectedCount, selectedBytes, focus }: DeleteCon
       <Text color={theme.yellow} bold>{`(${formatBytes(selectedBytes)} will be freed)  `}</Text>
       <Text backgroundColor={yesColor} color="black">{' Yes '}</Text>
       <Text>{' '}</Text>
-      <Text backgroundColor={cancelColor} color="white">{' Cancel '}</Text>
+      <Text backgroundColor={cancelColor} color="black">{' Cancel '}</Text>
     </Box>
   );
 }

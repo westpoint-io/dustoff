@@ -15,17 +15,10 @@ export function SearchBox({ query, isActive, totalResults }: SearchBoxProps): Re
   }
 
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor={theme.blue} paddingX={2}>
-      <Box>
-        <Text bold>{query || '_'}</Text>
-        {query.length > 0 && (
-          <Text color={theme.overlay0}>{` (${totalResults} results)`}</Text>
-        )}
-      </Box>
-      {isActive && (
-        <Text color={theme.overlay0} dimColor>
-          {'  Delete: Bksp | Ctrl+W word | Ctrl+U all'}
-        </Text>
+    <Box borderStyle="single" borderColor={theme.blue} paddingX={2}>
+      <Text bold>{query || '_'}</Text>
+      {query.length > 0 && (
+        <Text color={theme.overlay0}>{` (${totalResults} results)`}</Text>
       )}
     </Box>
   );

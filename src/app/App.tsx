@@ -54,7 +54,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
   const sortedArtifacts = useMemo(
     () => getSortedArtifacts(state),
-    [state.artifacts, state.sortKey, state.sortDir],
+    [state.artifacts, state.sortKey, state.sortDir, state.searchQuery],
   );
 
   useInput((input, key) => {

@@ -1,13 +1,13 @@
 import { vol } from 'memfs';
-import { vi, beforeEach, describe, test, expect } from 'vitest';
-import { calculateSize, calculateSizeWithTimeout } from '../../src/features/scanning/size.js';
+import { mock, beforeEach, describe, test, expect } from 'bun:test';
+import { calculateSize, calculateSizeWithTimeout } from './size.js';
 
-vi.mock('node:fs', async () => {
-  const memfs = await vi.importActual<typeof import('memfs')>('memfs');
+mock.module('node:fs', () => {
+  const memfs = require('memfs');
   return { default: memfs.fs, ...memfs.fs };
 });
-vi.mock('node:fs/promises', async () => {
-  const memfs = await vi.importActual<typeof import('memfs')>('memfs');
+mock.module('node:fs/promises', () => {
+  const memfs = require('memfs');
   return { default: memfs.fs.promises, ...memfs.fs.promises };
 });
 

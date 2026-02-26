@@ -14,12 +14,14 @@ import { mkdtemp, rm, writeFile, link, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import { calculateSize } from '../../src/features/scanning/size.js';
 
 // Hardlinks require elevated permissions on Windows (developer mode or admin).
 // Skip all tests on Windows to avoid platform-specific failures in CI.
-describe.skipIf(process.platform === 'win32')('calculateSize — real filesystem integration', () => {
+const describeUnix = process.platform === 'win32' ? describe.skip : describe;
+
+describeUnix('calculateSize — real filesystem integration', () => {
   let tmpDir: string;
 
   beforeEach(async () => {

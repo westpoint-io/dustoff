@@ -11,6 +11,8 @@ interface HeaderProps {
   scanStatus: 'scanning' | 'complete';
   sortKey: 'size' | 'path' | 'age';
   sortDir: 'asc' | 'desc';
+  selectedCount?: number;
+  selectedBytes?: number;
 }
 
 // Fixed-width label column for alignment
@@ -30,11 +32,14 @@ export function Header({
   scanStatus,
   sortKey,
   sortDir,
+  selectedCount = 0,
+  selectedBytes = 0,
 }: HeaderProps): React.ReactElement {
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
   const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
   const displayPath = rootPath.replace(process.env.HOME || '', '~');
   const sortLabel = `${SORT_LABELS[sortKey]} ${sortDir === 'desc' ? '↓' : '↑'}`;
+  const selectedLabel = selectedCount > 0 ? `${selectedCount} selected (${formatBytes(selectedBytes)})` : '—';
 
   return (
     <Box alignItems="flex-end" marginLeft={1}>
@@ -60,6 +65,12 @@ export function Header({
           <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
           <Text color={theme.yellow}>{sortLabel}</Text>
         </Box>
+        {selectedCount > 0 && (
+          <Box>
+            <Text color={theme.text} bold>{'Selected:'.padEnd(LABEL_W)}</Text>
+            <Text color={theme.blue}>{selectedLabel}</Text>
+          </Box>
+        )}
       </Box>
 
       {/* Spacer */}

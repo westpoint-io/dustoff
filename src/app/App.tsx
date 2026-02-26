@@ -251,6 +251,8 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         scanStatus={state.scanStatus}
         sortKey={state.sortKey}
         sortDir={state.sortDir}
+        selectedCount={state.selectedPaths.size}
+        selectedBytes={selectedBytes}
       />
 
       {/* Search box — shows when searching or has active filter */}
@@ -274,24 +276,6 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           <DetailPanel artifact={cursorArtifact} width={detailWidth} />
         )}
       </Box>
-
-      {/* Selection summary bar */}
-      {state.selectedPaths.size > 0 && state.viewMode === 'browse' && (
-        <Box justifyContent="space-between">
-          <Box>
-            <Text color={theme.blue} bold>{`${state.selectedPaths.size} selected`}</Text>
-            <Text color={theme.blue}>{` — ${formatBytes(selectedBytes)} total`}</Text>
-          </Box>
-          <Box>
-            <Text color={theme.overlay0}>
-              <Text color={theme.blue} bold>{' d '}</Text>
-              <Text color={theme.overlay0}>{' delete selected '}</Text>
-              <Text color={theme.white} bold>{' Esc '}</Text>
-              <Text color={theme.overlay0}>{' clear'}</Text>
-            </Text>
-          </Box>
-        </Box>
-      )}
 
       {/* Delete confirmation — prominent bar above status */}
       {state.viewMode === 'confirm-delete' && (

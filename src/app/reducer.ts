@@ -1,4 +1,5 @@
 import type { ScanResult } from '../features/scanning/types.js';
+import { THEMES, DEFAULT_THEME_NAME } from '../shared/themes.js';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -22,6 +23,7 @@ export interface AppState {
   isSearchMode: boolean;
   searchQuery: string;
   deleteConfirmFocus: 'yes' | 'cancel';
+  themeName: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -48,7 +50,9 @@ export type AppAction =
   | { type: 'DELETE_COMPLETE'; deletedPaths: string[] }
   | { type: 'SET_SEARCH_MODE'; enabled: boolean }
   | { type: 'SET_SEARCH_QUERY'; query: string }
-  | { type: 'DELETE_CONFIRM_FOCUS'; focus: 'yes' | 'cancel' };
+  | { type: 'DELETE_CONFIRM_FOCUS'; focus: 'yes' | 'cancel' }
+  | { type: 'CYCLE_THEME' }
+  | { type: 'SET_THEME'; name: string };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -77,6 +81,7 @@ export const initialState: AppState = {
   isSearchMode: false,
   searchQuery: '',
   deleteConfirmFocus: 'yes',
+  themeName: DEFAULT_THEME_NAME,
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -235,6 +240,16 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'DELETE_CONFIRM_FOCUS': {
       return { ...state, deleteConfirmFocus: action.focus };
+    }
+
+    case 'CYCLE_THEME': {
+      const currentIdx = THEMES.findIndex((t) => t.name === state.themeName);
+      const nextIdx = (currentIdx + 1) % THEMES.length;
+      return { ...state, themeName: THEMES[nextIdx]!.name };
+    }
+
+    case 'SET_THEME': {
+      return { ...state, themeName: action.name };
     }
 
     default: {

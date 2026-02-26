@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
-import { theme } from '../../shared/theme.js';
+import { useTheme } from '../../shared/ThemeContext.js';
 import { formatBytes } from '../../shared/formatters.js';
 
 interface DeleteProgressProps {
@@ -11,6 +11,7 @@ interface DeleteProgressProps {
 }
 
 export function DeleteProgress({ done, total, freedBytes }: DeleteProgressProps): React.ReactElement {
+  const theme = useTheme();
   return (
     <Box borderStyle="single" borderColor={theme.yellow} justifyContent="center" paddingX={2}>
       <Spinner type="dots" />

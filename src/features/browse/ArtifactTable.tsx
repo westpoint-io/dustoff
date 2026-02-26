@@ -5,7 +5,8 @@ import type { AppState, AppAction } from '../../app/reducer.js';
 import { getSortedArtifacts } from '../../app/reducer.js';
 import { ArtifactRow } from './ArtifactRow.js';
 import { useWindow } from './useWindow.js';
-import { accent, headerColor, TYPE_W, SIZE_W, AGE_W } from '../../shared/theme.js';
+import { useTheme } from '../../shared/ThemeContext.js';
+import { TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
 
 // Header(5 logo) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11 overhead
 const RESERVED_ROWS = 11;
@@ -23,6 +24,7 @@ export function ArtifactTable({
   rootPath,
   onVisibleCountChange,
 }: ArtifactTableProps): React.ReactElement {
+  const theme = useTheme();
   const sortedArtifacts = getSortedArtifacts(state);
 
   const { visibleItems, scrollOffset, visibleCount } = useWindow(
@@ -41,14 +43,14 @@ export function ArtifactTable({
   const ageLabel = state.sortKey === 'age' ? `AGE ${arrow}` : 'AGE';
 
   return (
-    <Box flexDirection="column" flexGrow={1} borderStyle="round" borderColor={accent}>
+    <Box flexDirection="column" flexGrow={1} borderStyle="round" borderColor={theme.accent}>
       {/* Column headers */}
       <Box>
-        <Text color={headerColor} bold>
+        <Text color={theme.headerColor} bold>
           {'     '}{('TYPE').padEnd(TYPE_W)}{'PATH'}
         </Text>
         <Box flexGrow={1} />
-        <Text color={headerColor} bold>
+        <Text color={theme.headerColor} bold>
           {sizeLabel.padStart(SIZE_W)}{ageLabel.padStart(AGE_W)}{' '}
         </Text>
       </Box>
@@ -63,6 +65,7 @@ export function ArtifactTable({
             isCursor={absoluteIndex === state.cursorIndex}
             isSelected={state.selectedPaths.has(artifact.path)}
             rootPath={rootPath}
+            themeName={state.themeName}
           />
         );
       })}

@@ -9,9 +9,11 @@ import { DeleteConfirm } from '../features/deletion/DeleteConfirm.js';
 import { DeleteProgress } from '../features/deletion/DeleteProgress.js';
 import { ShortcutBar } from './ShortcutBar.js';
 import { SearchBox } from '../features/browse/SearchBox.js';
-import { theme, LOGO, logoColors } from '../shared/theme.js';
+import { LOGO, getThemeByName } from '../shared/themes.js';
+import { ThemeProvider } from '../shared/ThemeContext.js';
 import { formatBytes } from '../shared/formatters.js';
 import { reducer, initialState, getSortedArtifacts } from './reducer.js';
+import { loadThemeName, saveThemeName } from '../shared/config.js';
 
 // ---------------------------------------------------------------------------
 // App root
@@ -22,10 +24,28 @@ interface AppProps {
 }
 
 export default function App({ rootPath = process.cwd() }: AppProps): React.ReactElement {
-  const [state, dispatch] = React.useReducer(reducer, initialState);
+  const [state, dispatch] = React.useReducer(reducer, {
+    ...initialState,
+    themeName: loadThemeName(),
+  });
   const { exit } = useApp();
   const { stdout } = useStdout();
   const [visibleCount, setVisibleCount] = useState(10);
+  const [themeFlash, setThemeFlash] = useState<string | null>(null);
+
+  // Resolve current theme palette from state
+  const currentTheme = useMemo(
+    () => getThemeByName(state.themeName),
+    [state.themeName],
+  );
+
+  // Persist theme when it changes and show flash
+  useEffect(() => {
+    saveThemeName(state.themeName);
+    setThemeFlash(state.themeName);
+    const id = setTimeout(() => setThemeFlash(null), 1500);
+    return () => clearTimeout(id);
+  }, [state.themeName]);
 
   // Terminal size with resize listener
   const [termSize, setTermSize] = useState(() => ({
@@ -165,6 +185,9 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       dispatch({ type: 'SORT_TO', key: 'age', dir: 'desc' });
     } else if (input === '/') {
       dispatch({ type: 'SET_SEARCH_MODE', enabled: true });
+    } else if (input === 't') {
+      dispatch({ type: 'CYCLE_THEME' });
+      // Flash will be set via the effect below
     } else if (input === 'q') {
       // Immediate exit — bypass Ink's graceful shutdown which stalls
       // while the scanner's async generator and size calculations drain.
@@ -223,25 +246,25 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       <Box flexDirection="column" height={termSize.height} paddingX={1} alignItems="center" justifyContent="center">
         <Box flexDirection="column" alignItems="center">
           {LOGO.map((line, i) => (
-            <Text key={`logo-${i}`} color={logoColors[i]}>{line}</Text>
+            <Text key={`logo-${i}`} color={currentTheme.logoColors[i]}>{line}</Text>
           ))}
         </Box>
         <Box marginTop={1}>
-          <Text color={theme.yellow}>{bar}</Text>
+          <Text color={currentTheme.yellow}>{bar}</Text>
         </Box>
         <Box marginTop={1} flexDirection="column" alignItems="center">
           {state.artifacts.length === 0 ? (
-            <Text color={theme.overlay0}>Scanning...</Text>
+            <Text color={currentTheme.overlay0}>Scanning...</Text>
           ) : (
             <>
-              <Text color={theme.text}>
+              <Text color={currentTheme.text}>
                 {`Found `}
-                <Text color={theme.yellow} bold>{String(state.artifacts.length)}</Text>
+                <Text color={currentTheme.yellow} bold>{String(state.artifacts.length)}</Text>
                 {` artifact${state.artifacts.length > 1 ? 's' : ''}`}
               </Text>
-              <Text color={theme.overlay0}>
+              <Text color={currentTheme.overlay0}>
                 {`Calculating sizes... ${sizedCount}/${state.artifacts.length} · `}
-                <Text color={theme.yellow} bold>{formatBytes(totalBytes)}</Text>
+                <Text color={currentTheme.yellow} bold>{formatBytes(totalBytes)}</Text>
               </Text>
             </>
           )}
@@ -251,58 +274,67 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
   }
 
   return (
-    <Box flexDirection="column" height={termSize.height} paddingX={1} paddingBottom={1}>
-      {/* Header: context left, logo right — no bottom gap */}
-      <Header
-        rootPath={rootPath}
-        totalBytes={totalBytes}
-        artifactCount={state.artifacts.length}
-        oldestMtimeMs={oldestMtimeMs}
-        scanStatus={state.scanStatus}
-        sortKey={state.sortKey}
-        sortDir={state.sortDir}
-        selectedCount={state.selectedPaths.size}
-        selectedBytes={selectedBytes}
-      />
-
-      {/* Search box — shows when searching or has active filter */}
-      <SearchBox
-        query={state.searchQuery}
-        isActive={state.isSearchMode}
-        totalResults={sortedArtifacts.length}
-      />
-
-      {/* Table — always visible */}
-      <Box flexGrow={1}>
-        <ArtifactTable
-          state={state}
-          dispatch={dispatch}
+    <ThemeProvider value={currentTheme}>
+      <Box flexDirection="column" height={termSize.height} paddingX={1} paddingBottom={1}>
+        {/* Header: context left, logo right — no bottom gap */}
+        <Header
           rootPath={rootPath}
-          onVisibleCountChange={setVisibleCount}
+          totalBytes={totalBytes}
+          artifactCount={state.artifacts.length}
+          oldestMtimeMs={oldestMtimeMs}
+          scanStatus={state.scanStatus}
+          sortKey={state.sortKey}
+          sortDir={state.sortDir}
+          selectedCount={state.selectedPaths.size}
+          selectedBytes={selectedBytes}
         />
 
-        {/* Detail panel */}
-        {state.detailVisible && cursorArtifact !== undefined && (
-          <DetailPanel artifact={cursorArtifact} width={detailWidth} rootPath={rootPath} />
+        {/* Search box — shows when searching or has active filter */}
+        <SearchBox
+          query={state.searchQuery}
+          isActive={state.isSearchMode}
+          totalResults={sortedArtifacts.length}
+        />
+
+        {/* Table — always visible */}
+        <Box flexGrow={1}>
+          <ArtifactTable
+            state={state}
+            dispatch={dispatch}
+            rootPath={rootPath}
+            onVisibleCountChange={setVisibleCount}
+          />
+
+          {/* Detail panel */}
+          {state.detailVisible && cursorArtifact !== undefined && (
+            <DetailPanel artifact={cursorArtifact} width={detailWidth} rootPath={rootPath} />
+          )}
+        </Box>
+
+        {/* Delete confirmation — prominent bar above status */}
+        {state.viewMode === 'confirm-delete' && (
+          <DeleteConfirm selectedCount={state.selectedPaths.size} selectedBytes={selectedBytes} focus={state.deleteConfirmFocus} />
         )}
+
+        {/* Delete progress — prominent bar above status */}
+        {state.viewMode === 'deleting' && state.deleteProgress && (
+          <DeleteProgress
+            done={state.deleteProgress.done}
+            total={state.deleteProgress.total}
+            freedBytes={state.deleteProgress.freedBytes}
+          />
+        )}
+
+        {/* Theme flash indicator */}
+        {themeFlash !== null && (
+          <Box justifyContent="center">
+            <Text color={currentTheme.accent} bold>{`Theme: ${themeFlash}`}</Text>
+          </Box>
+        )}
+
+        {/* Shortcut bar */}
+        <ShortcutBar hasSelection={state.selectedPaths.size > 0} />
       </Box>
-
-      {/* Delete confirmation — prominent bar above status */}
-      {state.viewMode === 'confirm-delete' && (
-        <DeleteConfirm selectedCount={state.selectedPaths.size} selectedBytes={selectedBytes} focus={state.deleteConfirmFocus} />
-      )}
-
-      {/* Delete progress — prominent bar above status */}
-      {state.viewMode === 'deleting' && state.deleteProgress && (
-        <DeleteProgress
-          done={state.deleteProgress.done}
-          total={state.deleteProgress.total}
-          freedBytes={state.deleteProgress.freedBytes}
-        />
-      )}
-
-      {/* Shortcut bar */}
-      <ShortcutBar hasSelection={state.selectedPaths.size > 0} />
-    </Box>
+    </ThemeProvider>
   );
 }

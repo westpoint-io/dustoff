@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { theme } from '../shared/theme.js';
+import { useTheme } from '../shared/ThemeContext.js';
 
 interface StatusBarProps {
   scanStatus: 'scanning' | 'complete';
@@ -17,6 +17,7 @@ export function StatusBar({
   cursorIndex,
   totalArtifacts,
 }: StatusBarProps): React.ReactElement {
+  const theme = useTheme();
   return (
     <Box justifyContent="space-between">
       {/* Left: spacer */}

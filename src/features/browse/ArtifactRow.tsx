@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import type { ScanResult } from '../scanning/types.js';
-import { theme, cursorBg, sizeColor, ageColor, typeBadgeColor, TYPE_W, SIZE_W, AGE_W } from '../../shared/theme.js';
+import { useTheme } from '../../shared/ThemeContext.js';
+import { sizeColor, ageColor, TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
 import { formatBytes, formatAge, ageDays } from '../../shared/formatters.js';
 
 interface ArtifactRowProps {
@@ -9,6 +10,7 @@ interface ArtifactRowProps {
   isCursor: boolean;
   isSelected: boolean;
   rootPath: string;
+  themeName: string;
 }
 
 // Memoized row — prevents re-render on every cursor move for non-cursor rows
@@ -18,15 +20,15 @@ export const ArtifactRow = memo(function ArtifactRow({
   isSelected,
   rootPath,
 }: ArtifactRowProps): React.ReactElement {
-  // Full-row highlight: cursor gets yellow bg, selected (non-cursor) gets muted bg
-  const bg = isCursor ? cursorBg : (isSelected ? '#3a3a3a' : undefined);
-  const cursorFg = 'black';
-  const fg = isCursor ? cursorFg : theme.text;
-  const typeFg = isCursor ? cursorFg : (typeBadgeColor[artifact.type] ?? theme.subtext0);
-  const sizeFg = isCursor ? cursorFg : sizeColor(artifact.sizeBytes);
+  const theme = useTheme();
+  // Full-row highlight: cursor gets accent bg, selected (non-cursor) gets muted bg
+  const bg = isCursor ? theme.cursorBg : (isSelected ? '#3a3a3a' : undefined);
+  const fg = isCursor ? theme.cursorFg : theme.text;
+  const typeFg = isCursor ? theme.cursorFg : (theme.typeBadgeColor[artifact.type] ?? theme.subtext0);
+  const sizeFg = isCursor ? theme.cursorFg : sizeColor(theme, artifact.sizeBytes);
   const days = ageDays(artifact.mtimeMs);
-  const ageFg = isCursor ? cursorFg : ageColor(days);
-  const checkFg = isCursor ? cursorFg : (isSelected ? theme.green : theme.overlay0);
+  const ageFg = isCursor ? theme.cursorFg : ageColor(theme, days);
+  const checkFg = isCursor ? theme.cursorFg : (isSelected ? theme.green : theme.overlay0);
 
   // Strip rootPath prefix for compact display
   const prefix = rootPath.endsWith('/') ? rootPath : rootPath + '/';

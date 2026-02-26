@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { theme, LOGO, logoColors } from '../../shared/theme.js';
+import { useTheme } from '../../shared/ThemeContext.js';
+import { LOGO } from '../../shared/themes.js';
 import { formatBytes, formatAge, truncatePath } from '../../shared/formatters.js';
 
 interface HeaderProps {
@@ -35,6 +36,7 @@ export function Header({
   selectedCount = 0,
   selectedBytes = 0,
 }: HeaderProps): React.ReactElement {
+  const theme = useTheme();
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
   const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
   const displayPath = truncatePath(rootPath.replace(process.env.HOME || '', '~'), 50);
@@ -81,7 +83,7 @@ export function Header({
       {/* ASCII logo — far right */}
       <Box flexDirection="column" alignItems="flex-end">
         {LOGO.map((line, i) => (
-          <Text key={`logo-${i}`} color={logoColors[i]}>{line}</Text>
+          <Text key={`logo-${i}`} color={theme.logoColors[i]}>{line}</Text>
         ))}
       </Box>
     </Box>

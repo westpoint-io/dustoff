@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { theme } from '../../shared/theme.js';
+import { useTheme } from '../../shared/ThemeContext.js';
 
 interface SearchBoxProps {
   query: string;
@@ -9,6 +9,7 @@ interface SearchBoxProps {
 }
 
 export function SearchBox({ query, isActive, totalResults }: SearchBoxProps): React.ReactElement | null {
+  const theme = useTheme();
   // Don't render if not active and no query
   if (!isActive && query.length === 0) {
     return null;

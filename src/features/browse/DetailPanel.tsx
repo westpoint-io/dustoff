@@ -3,7 +3,8 @@ import { Box, Text } from 'ink';
 import { basename, relative } from 'node:path';
 import { readdirSync } from 'node:fs';
 import type { ScanResult } from '../scanning/types.js';
-import { theme, accent, typeBadgeColor, sizeColor, ageColor } from '../../shared/theme.js';
+import { useTheme } from '../../shared/ThemeContext.js';
+import { sizeColor, ageColor } from '../../shared/themes.js';
 import { formatBytes, formatAge, ageDays, truncatePath } from '../../shared/formatters.js';
 
 interface DetailPanelProps {
@@ -13,13 +14,14 @@ interface DetailPanelProps {
 }
 
 export function DetailPanel({ artifact, width, rootPath }: DetailPanelProps): React.ReactElement {
+  const theme = useTheme();
   const name = basename(artifact.path);
   const innerW = Math.max(1, width - 4);
   const sep = '─'.repeat(innerW);
-  const typeColor = typeBadgeColor[artifact.type] ?? theme.subtext0;
-  const sizeClr = sizeColor(artifact.sizeBytes);
+  const typeColor = theme.typeBadgeColor[artifact.type] ?? theme.subtext0;
+  const sizeClr = sizeColor(theme, artifact.sizeBytes);
   const days = ageDays(artifact.mtimeMs);
-  const ageClr = ageColor(days);
+  const ageClr = ageColor(theme, days);
 
   // Relative path from root
   const relativePath = relative(rootPath, artifact.path);
@@ -43,8 +45,8 @@ export function DetailPanel({ artifact, width, rootPath }: DetailPanelProps): Re
 
   return (
     <Box flexDirection="column" width={width} borderStyle="round" borderColor={theme.red} paddingX={1}>
-      <Text color={accent} bold>{name}</Text>
-      <Text color={theme.surface0}>{sep}</Text>
+      <Text color={theme.accent} bold>{name}</Text>
+      <Text color={theme.overlay0}>{sep}</Text>
 
       <Box><Text color={theme.text}>{'Type'}</Text><Box flexGrow={1} /><Text color={typeColor}>{artifact.type}</Text></Box>
       <Box><Text color={theme.text}>{'Size'}</Text><Box flexGrow={1} /><Text color={sizeClr} bold>{formatBytes(artifact.sizeBytes)}</Text></Box>
@@ -53,7 +55,7 @@ export function DetailPanel({ artifact, width, rootPath }: DetailPanelProps): Re
         <Box><Text color={theme.text}>{'Items'}</Text><Box flexGrow={1} /><Text color={theme.text}>{itemCount}</Text></Box>
       )}
       <Box><Text color={theme.text}>{'Modified'}</Text><Box flexGrow={1} /><Text color={theme.text}>{lastModDate}</Text></Box>
-      <Text color={theme.surface0}>{sep}</Text>
+      <Text color={theme.overlay0}>{sep}</Text>
 
       <Text color={theme.text}>{'Relative Path'}</Text>
       <Text color={theme.blue}>{truncatePath(relativePath, innerW)}</Text>

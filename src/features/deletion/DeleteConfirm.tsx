@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { theme } from '../../shared/theme.js';
+import { useTheme } from '../../shared/ThemeContext.js';
 import { formatBytes } from '../../shared/formatters.js';
 
 interface DeleteConfirmProps {
@@ -10,6 +10,7 @@ interface DeleteConfirmProps {
 }
 
 export function DeleteConfirm({ selectedCount, selectedBytes, focus }: DeleteConfirmProps): React.ReactElement {
+  const theme = useTheme();
   const yesColor = focus === 'yes' ? 'green' : theme.white;
   const cancelColor = focus === 'cancel' ? 'green' : theme.white;
 

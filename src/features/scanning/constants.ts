@@ -1,6 +1,6 @@
 /**
  * Target directories to find — JS/TS artifact directories that can be safely deleted.
- * Matches comprehensive JS/TS artifact directories.
+ * Comprehensive list of JS/TS artifact directories.
  * Case-sensitive exact basename matching.
  */
 export const TARGET_DIRS: ReadonlySet<string> = new Set([

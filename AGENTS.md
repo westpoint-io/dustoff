@@ -20,7 +20,7 @@ Run these before pushing when you touch logic:
 
 ## What This Is
 
-Dustoff is a CLI tool (`npx dustoff`) that scans the filesystem for JavaScript/TypeScript build artifacts wasting disk space — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, `.parcel-cache`, and more. It presents an interactive TUI where users browse, sort, select, and safely delete artifacts to reclaim space. 
+Dustoff is a CLI tool (`npx dustoff`) that scans the filesystem for JavaScript/TypeScript build artifacts wasting disk space — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, `.parcel-cache`, and more. It presents an interactive TUI where users browse, sort, select, and safely delete artifacts to reclaim space.
 
 **Stack:** TypeScript 5.8, Ink 6.8 (React for terminals), React 19, Bun (tooling), bun:test, memfs (test FS mocking), Node.js >= 18.18.0 (runtime)
 

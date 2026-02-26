@@ -5,9 +5,8 @@
  * - Hardlinks (shared inodes between paths)
  * - Accurate stat.blocks values (actual disk allocation)
  *
- * Why this matters: dustoff counts hardlinked
- * packages once (not once per hardlink). These tests prove that
- * dedup works on actual filesystems.
+ * Why this matters: dustoff counts hardlinked packages once (not once per
+ * hardlink). These tests prove that dedup works on actual filesystems.
  */
 
 import { mkdtemp, rm, writeFile, link, stat } from 'node:fs/promises';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { theme, LOGO, logoColors } from '../../shared/theme.js';
-import { formatBytes, formatAge } from '../../shared/formatters.js';
+import { formatBytes, formatAge, truncatePath } from '../../shared/formatters.js';
 
 interface HeaderProps {
   rootPath: string;
@@ -37,7 +37,7 @@ export function Header({
 }: HeaderProps): React.ReactElement {
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
   const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
-  const displayPath = rootPath.replace(process.env.HOME || '', '~');
+  const displayPath = truncatePath(rootPath.replace(process.env.HOME || '', '~'), 50);
   const sortLabel = `${SORT_LABELS[sortKey]} ${sortDir === 'desc' ? '↓' : '↑'}`;
   const selectedLabel = selectedCount > 0 ? `${selectedCount} selected (${formatBytes(selectedBytes)})` : 'None';
 

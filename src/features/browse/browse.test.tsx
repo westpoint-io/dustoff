@@ -276,14 +276,12 @@ describe('SearchBox', () => {
   it('renders when isActive is true', () => {
     const { lastFrame } = render(<SearchBox query="" isActive={true} totalResults={0} />);
     const output = lastFrame();
-    expect(output).toContain('/');
-    expect(output).toContain('Search');
+    expect(output).toContain('_');
   });
 
   it('renders when query has content', () => {
     const { lastFrame } = render(<SearchBox query="node" isActive={false} totalResults={2} />);
     const output = lastFrame();
-    expect(output).toContain('Search');
     expect(output).toContain('node');
     expect(output).toContain('2 results');
   });

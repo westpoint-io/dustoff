@@ -73,6 +73,10 @@ export function ArtifactTable({
       {state.artifacts.length === 0 && (
         <Text dimColor>{'  No artifacts found.'}</Text>
       )}
+
+      {state.artifacts.length > 0 && sortedArtifacts.length === 0 && state.searchQuery.length > 0 && (
+        <Text dimColor>{`  No matches for "${state.searchQuery}"`}</Text>
+      )}
     </Box>
   );
 }

@@ -80,14 +80,19 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         // Clear search and exit search mode
         dispatch({ type: 'SET_SEARCH_QUERY', query: '' });
         dispatch({ type: 'SET_SEARCH_MODE', enabled: false });
-      } else if (input === '\u0008' || input === '\u007f') {
-        // Backspace — remove last character (0x08 = backspace, 0x7f = delete)
+      } else if (
+        input === '\u0008' ||
+        input === '\u007f' ||
+        (input && input.charCodeAt(0) === 8) ||
+        (input && input.charCodeAt(0) === 127)
+      ) {
+        // Backspace — remove last character (multiple detection methods)
         dispatch({
           type: 'SET_SEARCH_QUERY',
           query: state.searchQuery.slice(0, -1),
         });
-      } else if (input && input.length === 1 && !key.ctrl && !key.meta && !key.shift) {
-        // Regular character — append to search
+      } else if (input && input.length === 1 && !key.ctrl && !key.meta && !key.shift && input.charCodeAt(0) > 31) {
+        // Regular printable character — append to search
         dispatch({
           type: 'SET_SEARCH_QUERY',
           query: state.searchQuery + input,

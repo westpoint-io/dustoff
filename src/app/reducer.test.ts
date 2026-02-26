@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { formatBytes } from '../shared/formatters.js';
 import { sizeColor, theme } from '../shared/theme.js';
-import { reducer } from './reducer.js';
+import { reducer, getSortedArtifacts } from './reducer.js';
 import type { AppState } from './reducer.js';
 
 // ─── Pure function tests (no Ink render required) ───────────────────────────
@@ -183,5 +183,82 @@ describe('SET_SEARCH_QUERY action', () => {
     const action = { type: 'SET_SEARCH_QUERY' as const, query: '' };
     const nextState = reducer(state, action);
     expect(nextState.searchQuery).toBe('');
+  });
+});
+
+describe('getSortedArtifacts with search filter', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+  };
+
+  it('returns all artifacts when searchQuery is empty', () => {
+    const artifacts = [
+      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 2 },
+      { path: '/c/build', type: 'dir' as const, sizeBytes: 300, mtimeMs: 3 },
+    ];
+    const state = { ...baseState, artifacts, searchQuery: '' };
+    const result = getSortedArtifacts(state);
+    // baseState has sortKey: 'size', sortDir: 'desc', so results are sorted by size descending
+    expect(result).toHaveLength(3);
+    expect(result[0]?.sizeBytes).toBe(300);
+    expect(result[1]?.sizeBytes).toBe(200);
+    expect(result[2]?.sizeBytes).toBe(100);
+  });
+
+  it('filters artifacts by path substring (case-insensitive)', () => {
+    const artifacts = [
+      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 2 },
+      { path: '/c/NODE_MODULES', type: 'dir' as const, sizeBytes: 300, mtimeMs: 3 },
+    ];
+    const state = { ...baseState, artifacts, searchQuery: 'node' };
+    const result = getSortedArtifacts(state);
+    expect(result).toHaveLength(2);
+    // Sorted by size descending (baseState), so /c/NODE_MODULES (300) comes first
+    expect(result[0]?.path).toBe('/c/NODE_MODULES');
+    expect(result[1]?.path).toBe('/a/node_modules');
+  });
+
+  it('returns empty array when no artifacts match filter', () => {
+    const artifacts = [
+      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 2 },
+    ];
+    const state = { ...baseState, artifacts, searchQuery: 'nomatch' };
+    const result = getSortedArtifacts(state);
+    expect(result).toHaveLength(0);
+  });
+
+  it('preserves sort order when filtering', () => {
+    const artifacts = [
+      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 300, mtimeMs: 1 },
+      { path: '/b/node_modules2', type: 'dir' as const, sizeBytes: 100, mtimeMs: 2 },
+      { path: '/c/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 3 },
+    ];
+    const state = {
+      ...baseState,
+      artifacts,
+      searchQuery: 'node',
+      sortKey: 'size' as const,
+      sortDir: 'asc' as const,
+    };
+    const result = getSortedArtifacts(state);
+    // Should be sorted by size ascending: 100, then 300
+    expect(result[0]?.sizeBytes).toBe(100);
+    expect(result[1]?.sizeBytes).toBe(300);
   });
 });

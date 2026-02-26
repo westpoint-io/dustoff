@@ -256,5 +256,14 @@ export function getSortedArtifacts(state: AppState): ScanResult[] {
     }
     return 0;
   });
+
+  // Apply search filter if query is non-empty
+  if (state.searchQuery.length > 0) {
+    const query = state.searchQuery.toLowerCase();
+    return sorted.filter((artifact) =>
+      artifact.path.toLowerCase().includes(query),
+    );
+  }
+
   return sorted;
 }

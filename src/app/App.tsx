@@ -73,8 +73,19 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
     // Search mode input
     if (state.isSearchMode) {
-      // Handle backspace/delete first
-      if (key.backspace || input === '\b' || input === '\u0008' || input === '\u007f') {
+      // Backspace can come through different ways in different terminals
+      const charCode = input?.charCodeAt(0) ?? -1;
+      const isBackspace =
+        key.backspace ||
+        key.delete ||
+        input === '\b' ||
+        input === '\u0008' ||
+        input === '\u007f' ||
+        charCode === 8 ||
+        charCode === 127 ||
+        (key.ctrl && input === 'h'); // Ctrl+H is sometimes backspace
+
+      if (isBackspace && state.searchQuery.length > 0) {
         dispatch({
           type: 'SET_SEARCH_QUERY',
           query: state.searchQuery.slice(0, -1),
@@ -89,8 +100,8 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         // Clear search and exit search mode
         dispatch({ type: 'SET_SEARCH_QUERY', query: '' });
         dispatch({ type: 'SET_SEARCH_MODE', enabled: false });
-      } else if (input && input.length === 1 && !key.ctrl && !key.meta && !key.shift) {
-        // Regular character — append to search
+      } else if (input && input.length === 1 && charCode > 31 && !key.ctrl && !key.meta && !key.shift) {
+        // Regular printable character (code > 31) — append to search
         dispatch({
           type: 'SET_SEARCH_QUERY',
           query: state.searchQuery + input,

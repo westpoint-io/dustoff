@@ -42,7 +42,7 @@ export function Header({
   const selectedLabel = selectedCount > 0 ? `${selectedCount} selected (${formatBytes(selectedBytes)})` : 'None';
 
   return (
-    <Box alignItems="flex-end" marginLeft={1}>
+    <Box alignItems="flex-start" marginLeft={1}>
       {/* Left column — Scan, Artifacts, Reclaimable */}
       <Box flexDirection="column">
         <Box>

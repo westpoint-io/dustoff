@@ -25,11 +25,16 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.4",
     "@types/bun": "^1.3.9",
     "@types/node": "^25.3.0",
     "@types/react": "^19.2.14",
     "ink-testing-library": "^4.0.0",
     "memfs": "^4.0.0",
+    "semantic-release": "^25.0.3",
     "typescript": "^5.8.0"
   },
   "dependencies": {

@@ -1,0 +1,29 @@
+name: Release to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v1
+
+      - run: bun install
+      - run: bun run typecheck
+      - run: bun test
+      - run: bun run build
+
+      - name: Release
+        run: bun x semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

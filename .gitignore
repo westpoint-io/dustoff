@@ -4,3 +4,6 @@ dist/
 .planning/
 docs/
 mockups/
+
+# Release files
+.releaserc.json.bak

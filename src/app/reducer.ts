@@ -51,6 +51,8 @@ export type AppAction =
   | { type: 'SET_SEARCH_MODE'; enabled: boolean }
   | { type: 'SET_SEARCH_QUERY'; query: string }
   | { type: 'DELETE_CONFIRM_FOCUS'; focus: 'yes' | 'cancel' }
+  | { type: 'CURSOR_HOME' }
+  | { type: 'CURSOR_END' }
   | { type: 'CYCLE_THEME' }
   | { type: 'SET_THEME'; name: string };
 
@@ -127,6 +129,17 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         cursorIndex: Math.min(state.artifacts.length - 1, state.cursorIndex + 1),
+      };
+    }
+
+    case 'CURSOR_HOME': {
+      return { ...state, cursorIndex: 0 };
+    }
+
+    case 'CURSOR_END': {
+      return {
+        ...state,
+        cursorIndex: Math.max(0, state.artifacts.length - 1),
       };
     }
 

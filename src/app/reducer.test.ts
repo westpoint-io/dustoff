@@ -114,6 +114,86 @@ describe('reducer — selection', () => {
   });
 });
 
+// ─── CURSOR_HOME / CURSOR_END reducer tests ─────────────────────────────────
+
+describe('CURSOR_HOME action', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 2,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 300,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+  };
+
+  it('sets cursorIndex to 0', () => {
+    const next = reducer(baseState, { type: 'CURSOR_HOME' });
+    expect(next.cursorIndex).toBe(0);
+  });
+
+  it('stays at 0 when already at 0', () => {
+    const state = { ...baseState, cursorIndex: 0 };
+    const next = reducer(state, { type: 'CURSOR_HOME' });
+    expect(next.cursorIndex).toBe(0);
+  });
+});
+
+describe('CURSOR_END action', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 300,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+  };
+
+  it('sets cursorIndex to last artifact', () => {
+    const next = reducer(baseState, { type: 'CURSOR_END' });
+    expect(next.cursorIndex).toBe(2);
+  });
+
+  it('stays at last when already at end', () => {
+    const state = { ...baseState, cursorIndex: 2 };
+    const next = reducer(state, { type: 'CURSOR_END' });
+    expect(next.cursorIndex).toBe(2);
+  });
+
+  it('returns 0 for empty artifacts', () => {
+    const state = { ...baseState, artifacts: [] };
+    const next = reducer(state, { type: 'CURSOR_END' });
+    expect(next.cursorIndex).toBe(0);
+  });
+});
+
 describe('SET_SEARCH_MODE action', () => {
   const baseState: AppState = {
     artifacts: [],

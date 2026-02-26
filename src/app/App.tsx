@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Box, Text, useInput, useApp, useStdout } from 'ink';
-import Spinner from 'ink-spinner';
-import { rm } from 'node:fs/promises';
 import { useScan } from '../features/scanning/useScan.js';
 import { ArtifactTable } from '../features/browse/ArtifactTable.js';
 import { Header } from '../features/browse/Header.js';
 import { DetailPanel } from '../features/browse/DetailPanel.js';
+import { useDelete } from '../features/deletion/useDelete.js';
+import { DeleteConfirm } from '../features/deletion/DeleteConfirm.js';
+import { DeleteProgress } from '../features/deletion/DeleteProgress.js';
 import { ShortcutBar } from './ShortcutBar.js';
-import { theme, accent, LOGO, logoColors } from '../shared/theme.js';
+import { theme, LOGO, logoColors } from '../shared/theme.js';
 import { formatBytes } from '../shared/formatters.js';
 import { reducer, initialState, getSortedArtifacts } from './reducer.js';
 
@@ -48,45 +49,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
   useScan(rootPath, dispatch);
 
   // Delete handler
-  const executeDelete = useCallback(async () => {
-    const toDelete = state.artifacts.filter((a) => state.selectedPaths.has(a.path));
-    if (toDelete.length === 0) return;
-
-    dispatch({ type: 'SET_VIEW_MODE', mode: 'deleting' });
-
-    let freedBytes = 0;
-    const deletedPaths: string[] = [];
-
-    for (let i = 0; i < toDelete.length; i++) {
-      const artifact = toDelete[i]!;
-      dispatch({
-        type: 'DELETE_PROGRESS',
-        done: i,
-        total: toDelete.length,
-        freedBytes,
-      });
-
-      try {
-        await rm(artifact.path, { recursive: true, force: true });
-        freedBytes += artifact.sizeBytes ?? 0;
-        deletedPaths.push(artifact.path);
-      } catch {
-        // Skip failed deletions silently
-      }
-    }
-
-    dispatch({
-      type: 'DELETE_PROGRESS',
-      done: toDelete.length,
-      total: toDelete.length,
-      freedBytes,
-    });
-
-    // Brief pause to show completion
-    await new Promise((r) => setTimeout(r, 500));
-
-    dispatch({ type: 'DELETE_COMPLETE', deletedPaths });
-  }, [state.artifacts, state.selectedPaths]);
+  const executeDelete = useDelete(state.artifacts, state.selectedPaths, dispatch);
 
   const sortedArtifacts = useMemo(
     () => getSortedArtifacts(state),
@@ -272,28 +235,16 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
       {/* Delete confirmation — prominent bar above status */}
       {state.viewMode === 'confirm-delete' && (
-        <Box borderStyle="single" borderColor={theme.red} justifyContent="center" paddingX={2}>
-          <Text color={theme.red} bold>
-            {`  Delete ${state.selectedPaths.size} artifact${state.selectedPaths.size > 1 ? 's' : ''}?  `}
-          </Text>
-          <Text color={theme.yellow} bold>{`(${formatBytes(selectedBytes)} will be freed)  `}</Text>
-          <Text backgroundColor="green" color="black">{' Yes '}</Text>
-          <Text>{' '}</Text>
-          <Text backgroundColor="gray" color="white">{' Cancel '}</Text>
-        </Box>
+        <DeleteConfirm selectedCount={state.selectedPaths.size} selectedBytes={selectedBytes} />
       )}
 
       {/* Delete progress — prominent bar above status */}
       {state.viewMode === 'deleting' && state.deleteProgress && (
-        <Box borderStyle="single" borderColor={theme.yellow} justifyContent="center" paddingX={2}>
-          <Spinner type="dots" />
-          <Text color={theme.red} bold>
-            {`  Deleting... ${state.deleteProgress.done}/${state.deleteProgress.total}  `}
-          </Text>
-          <Text color={theme.overlay0}>
-            {`${formatBytes(state.deleteProgress.freedBytes)} freed`}
-          </Text>
-        </Box>
+        <DeleteProgress
+          done={state.deleteProgress.done}
+          total={state.deleteProgress.total}
+          freedBytes={state.deleteProgress.freedBytes}
+        />
       )}
 
       {/* Shortcut bar */}

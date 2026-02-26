@@ -46,16 +46,16 @@ export function DetailPanel({ artifact, width, rootPath }: DetailPanelProps): Re
       <Text color={accent} bold>{name}</Text>
       <Text color={theme.surface0}>{sep}</Text>
 
-      <Box><Text color={theme.overlay0}>{'Type'}</Text><Box flexGrow={1} /><Text color={typeColor}>{artifact.type}</Text></Box>
-      <Box><Text color={theme.overlay0}>{'Size'}</Text><Box flexGrow={1} /><Text color={sizeClr} bold>{formatBytes(artifact.sizeBytes)}</Text></Box>
-      <Box><Text color={theme.overlay0}>{'Age'}</Text><Box flexGrow={1} /><Text color={ageClr}>{formatAge(artifact.mtimeMs)}</Text></Box>
+      <Box><Text color={theme.text}>{'Type'}</Text><Box flexGrow={1} /><Text color={typeColor}>{artifact.type}</Text></Box>
+      <Box><Text color={theme.text}>{'Size'}</Text><Box flexGrow={1} /><Text color={sizeClr} bold>{formatBytes(artifact.sizeBytes)}</Text></Box>
+      <Box><Text color={theme.text}>{'Age'}</Text><Box flexGrow={1} /><Text color={ageClr}>{formatAge(artifact.mtimeMs)}</Text></Box>
       {itemCount !== null && (
-        <Box><Text color={theme.overlay0}>{'Items'}</Text><Box flexGrow={1} /><Text color={theme.text}>{itemCount}</Text></Box>
+        <Box><Text color={theme.text}>{'Items'}</Text><Box flexGrow={1} /><Text color={theme.text}>{itemCount}</Text></Box>
       )}
-      <Box><Text color={theme.overlay0}>{'Modified'}</Text><Box flexGrow={1} /><Text color={theme.text}>{lastModDate}</Text></Box>
+      <Box><Text color={theme.text}>{'Modified'}</Text><Box flexGrow={1} /><Text color={theme.text}>{lastModDate}</Text></Box>
       <Text color={theme.surface0}>{sep}</Text>
 
-      <Text color={theme.overlay0}>{'Relative Path'}</Text>
+      <Text color={theme.text}>{'Relative Path'}</Text>
       <Text color={theme.blue}>{truncatePath(relativePath, innerW)}</Text>
 
       <Text color={theme.overlay0} marginTop={1}>{'Full Path'}</Text>

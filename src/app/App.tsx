@@ -241,7 +241,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
   }
 
   return (
-    <Box flexDirection="column" height={termSize.height} paddingX={1}>
+    <Box flexDirection="column" height={termSize.height} paddingX={1} paddingBottom={1}>
       {/* Header: context left, logo right — no bottom gap */}
       <Header
         rootPath={rootPath}

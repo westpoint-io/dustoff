@@ -73,9 +73,10 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
     // Search mode input
     if (state.isSearchMode) {
-      // Backspace can come through different ways in different terminals
       const charCode = input?.charCodeAt(0) ?? -1;
-      const isBackspace =
+
+      // Delete last character: Backspace, Ctrl+W (delete word)
+      const isDeleteChar =
         key.backspace ||
         key.delete ||
         input === '\b' ||
@@ -83,12 +84,22 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         input === '\u007f' ||
         charCode === 8 ||
         charCode === 127 ||
-        (key.ctrl && input === 'h'); // Ctrl+H is sometimes backspace
+        (key.ctrl && input === 'h') || // Ctrl+H (terminal sends for backspace)
+        (key.ctrl && input === 'w'); // Ctrl+W (delete word, readline-style)
 
-      if (isBackspace && state.searchQuery.length > 0) {
+      if (isDeleteChar && state.searchQuery.length > 0) {
         dispatch({
           type: 'SET_SEARCH_QUERY',
           query: state.searchQuery.slice(0, -1),
+        });
+        return;
+      }
+
+      // Delete entire search query: Ctrl+U
+      if (key.ctrl && input === 'u') {
+        dispatch({
+          type: 'SET_SEARCH_QUERY',
+          query: '',
         });
         return;
       }

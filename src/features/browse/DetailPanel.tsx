@@ -42,7 +42,7 @@ export function DetailPanel({ artifact, width, rootPath }: DetailPanelProps): Re
   }, [artifact.path]);
 
   return (
-    <Box flexDirection="column" width={width} borderStyle="round" borderColor={theme.blue} paddingX={1}>
+    <Box flexDirection="column" width={width} borderStyle="round" borderColor={theme.red} paddingX={1}>
       <Text color={accent} bold>{name}</Text>
       <Text color={theme.surface0}>{sep}</Text>
 

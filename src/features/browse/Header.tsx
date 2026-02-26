@@ -18,6 +18,7 @@ interface HeaderProps {
   searchQuery?: string;
   isSearchMode?: boolean;
   filteredCount?: number;
+  typeFilter?: Set<string> | null;
 }
 
 // Fixed-width label column for alignment
@@ -43,6 +44,7 @@ export function Header({
   searchQuery = '',
   isSearchMode = false,
   filteredCount = 0,
+  typeFilter = null,
 }: HeaderProps): React.ReactElement {
   const theme = useTheme();
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
@@ -128,6 +130,13 @@ export function Header({
       {hasFilter && (
         <Box marginLeft={1}>
           <Text color={theme.blue}>{`Filter: "${searchQuery}" (${filteredCount} results)`}</Text>
+        </Box>
+      )}
+
+      {/* Type filter indicator */}
+      {typeFilter !== null && typeFilter.size > 0 && (
+        <Box marginLeft={1}>
+          <Text color={theme.yellow}>{`Type: ${[...typeFilter].join(', ')}`}</Text>
         </Box>
       )}
     </>

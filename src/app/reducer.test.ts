@@ -66,6 +66,9 @@ describe('reducer — selection', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('TOGGLE_SELECT adds a path', () => {
@@ -148,6 +151,9 @@ describe('CURSOR_HOME action', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('sets cursorIndex to 0', () => {
@@ -187,6 +193,9 @@ describe('CURSOR_END action', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('sets cursorIndex to last artifact', () => {
@@ -228,6 +237,9 @@ describe('SET_SEARCH_MODE action', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('enables search mode', () => {
@@ -265,6 +277,9 @@ describe('SET_SEARCH_QUERY action', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('updates search query', () => {
@@ -316,6 +331,9 @@ describe('DELETE_COMPLETE sets toast', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('sets deleteToast with count and freed bytes', () => {
@@ -370,6 +388,9 @@ describe('DISMISS_TOAST action', () => {
     deleteToast: { count: 2, freedBytes: 800 },
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('clears deleteToast', () => {
@@ -405,6 +426,9 @@ describe('getSortedArtifacts with search filter', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('returns all artifacts when searchQuery is empty', () => {
@@ -491,6 +515,9 @@ describe('TOGGLE_GROUPING action', () => {
     deleteToast: null,
     groupingEnabled: false,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('enables grouping', () => {
@@ -537,6 +564,9 @@ describe('TOGGLE_GROUP_COLLAPSE action', () => {
     deleteToast: null,
     groupingEnabled: true,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('adds key to collapsed groups', () => {
@@ -576,6 +606,9 @@ describe('SELECT_PATHS action', () => {
     deleteToast: null,
     groupingEnabled: true,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('adds multiple paths to selection', () => {
@@ -618,6 +651,9 @@ describe('DESELECT_PATHS action', () => {
     deleteToast: null,
     groupingEnabled: true,
     collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
   };
 
   it('removes multiple paths from selection', () => {
@@ -635,5 +671,251 @@ describe('DESELECT_PATHS action', () => {
       paths: ['/nonexistent'],
     });
     expect(next.selectedPaths.size).toBe(3);
+  });
+});
+
+// ─── Type filter reducer tests ──────────────────────────────────────────────
+
+describe('SET_TYPE_FILTER_MODE action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
+  };
+
+  it('enables type filter mode', () => {
+    const next = reducer(baseState, { type: 'SET_TYPE_FILTER_MODE', enabled: true });
+    expect(next.isTypeFilterMode).toBe(true);
+  });
+
+  it('disables type filter mode', () => {
+    const state = { ...baseState, isTypeFilterMode: true };
+    const next = reducer(state, { type: 'SET_TYPE_FILTER_MODE', enabled: false });
+    expect(next.isTypeFilterMode).toBe(false);
+  });
+
+  it('resets typeFilterCursor to 0 when enabling', () => {
+    const state = { ...baseState, typeFilterCursor: 3 };
+    const next = reducer(state, { type: 'SET_TYPE_FILTER_MODE', enabled: true });
+    expect(next.typeFilterCursor).toBe(0);
+  });
+});
+
+describe('TOGGLE_TYPE_FILTER action', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.cache', type: '.cache', sizeBytes: 50, mtimeMs: Date.now() },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 200,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: true,
+    typeFilterCursor: 0,
+  };
+
+  it('creates set excluding toggled type from null', () => {
+    const next = reducer(baseState, { type: 'TOGGLE_TYPE_FILTER', artifactType: 'dist' });
+    expect(next.typeFilter).not.toBeNull();
+    expect(next.typeFilter!.has('node_modules')).toBe(true);
+    expect(next.typeFilter!.has('.cache')).toBe(true);
+    expect(next.typeFilter!.has('dist')).toBe(false);
+  });
+
+  it('toggles type in existing set — removes it', () => {
+    const state = { ...baseState, typeFilter: new Set(['node_modules', '.cache']) };
+    const next = reducer(state, { type: 'TOGGLE_TYPE_FILTER', artifactType: '.cache' });
+    expect(next.typeFilter!.has('.cache')).toBe(false);
+    expect(next.typeFilter!.has('node_modules')).toBe(true);
+  });
+
+  it('toggles type in existing set — adds it back', () => {
+    const state = { ...baseState, typeFilter: new Set(['node_modules']) };
+    const next = reducer(state, { type: 'TOGGLE_TYPE_FILTER', artifactType: '.cache' });
+    expect(next.typeFilter!.has('.cache')).toBe(true);
+    expect(next.typeFilter!.has('node_modules')).toBe(true);
+  });
+
+  it('resets to null when all types are re-selected', () => {
+    const state = { ...baseState, typeFilter: new Set(['node_modules', '.cache']) };
+    const next = reducer(state, { type: 'TOGGLE_TYPE_FILTER', artifactType: 'dist' });
+    expect(next.typeFilter).toBeNull();
+  });
+});
+
+describe('TYPE_FILTER_CURSOR_UP/DOWN actions', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: true,
+    typeFilterCursor: 1,
+  };
+
+  it('moves cursor up', () => {
+    const next = reducer(baseState, { type: 'TYPE_FILTER_CURSOR_UP' });
+    expect(next.typeFilterCursor).toBe(0);
+  });
+
+  it('clamps cursor up at 0', () => {
+    const state = { ...baseState, typeFilterCursor: 0 };
+    const next = reducer(state, { type: 'TYPE_FILTER_CURSOR_UP' });
+    expect(next.typeFilterCursor).toBe(0);
+  });
+
+  it('moves cursor down', () => {
+    const next = reducer(baseState, { type: 'TYPE_FILTER_CURSOR_DOWN', typeCount: 5 });
+    expect(next.typeFilterCursor).toBe(2);
+  });
+
+  it('clamps cursor down at typeCount - 1', () => {
+    const state = { ...baseState, typeFilterCursor: 4 };
+    const next = reducer(state, { type: 'TYPE_FILTER_CURSOR_DOWN', typeCount: 5 });
+    expect(next.typeFilterCursor).toBe(4);
+  });
+});
+
+describe('CLEAR_TYPE_FILTER action', () => {
+  const baseState: AppState = {
+    artifacts: [],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 0,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: new Set(['node_modules']),
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
+  };
+
+  it('resets typeFilter to null', () => {
+    const next = reducer(baseState, { type: 'CLEAR_TYPE_FILTER' });
+    expect(next.typeFilter).toBeNull();
+  });
+});
+
+describe('getSortedArtifacts with type filter', () => {
+  const baseState: AppState = {
+    artifacts: [
+      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: 2 },
+      { path: '/c/.cache', type: '.cache', sizeBytes: 300, mtimeMs: 3 },
+    ],
+    scanStatus: 'complete',
+    scanDurationMs: 100,
+    directoriesScanned: 10,
+    cursorIndex: 0,
+    sortKey: 'size',
+    sortDir: 'desc',
+    detailVisible: false,
+    maxSizeBytes: 300,
+    selectedPaths: new Set(),
+    viewMode: 'browse',
+    deleteProgress: null,
+    isSearchMode: false,
+    searchQuery: '',
+    deleteConfirmFocus: 'yes',
+    themeName: 'Catppuccin Mocha',
+    deleteToast: null,
+    groupingEnabled: false,
+    collapsedGroups: new Set(),
+    typeFilter: null,
+    isTypeFilterMode: false,
+    typeFilterCursor: 0,
+  };
+
+  it('returns all artifacts when typeFilter is null', () => {
+    const result = getSortedArtifacts(baseState);
+    expect(result).toHaveLength(3);
+  });
+
+  it('filters artifacts by type when typeFilter is set', () => {
+    const state = { ...baseState, typeFilter: new Set(['node_modules', '.cache']) };
+    const result = getSortedArtifacts(state);
+    expect(result).toHaveLength(2);
+    expect(result.some((a) => a.type === 'dist')).toBe(false);
+  });
+
+  it('applies type filter before search filter', () => {
+    const state = {
+      ...baseState,
+      typeFilter: new Set(['node_modules', 'dist']),
+      searchQuery: 'node',
+    };
+    const result = getSortedArtifacts(state);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.type).toBe('node_modules');
+  });
+
+  it('returns empty when typeFilter excludes all types', () => {
+    const state = { ...baseState, typeFilter: new Set(['nonexistent']) };
+    const result = getSortedArtifacts(state);
+    expect(result).toHaveLength(0);
   });
 });

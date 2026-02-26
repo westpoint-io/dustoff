@@ -27,6 +27,9 @@ export interface AppState {
   deleteToast: { count: number; freedBytes: number } | null;
   groupingEnabled: boolean;
   collapsedGroups: Set<string>;
+  typeFilter: Set<string> | null;
+  isTypeFilterMode: boolean;
+  typeFilterCursor: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -62,7 +65,12 @@ export type AppAction =
   | { type: 'TOGGLE_GROUPING' }
   | { type: 'TOGGLE_GROUP_COLLAPSE'; key: string }
   | { type: 'SELECT_PATHS'; paths: string[] }
-  | { type: 'DESELECT_PATHS'; paths: string[] };
+  | { type: 'DESELECT_PATHS'; paths: string[] }
+  | { type: 'SET_TYPE_FILTER_MODE'; enabled: boolean }
+  | { type: 'TOGGLE_TYPE_FILTER'; artifactType: string }
+  | { type: 'TYPE_FILTER_CURSOR_UP' }
+  | { type: 'TYPE_FILTER_CURSOR_DOWN'; typeCount: number }
+  | { type: 'CLEAR_TYPE_FILTER' };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -95,6 +103,9 @@ export const initialState: AppState = {
   deleteToast: null,
   groupingEnabled: false,
   collapsedGroups: new Set(),
+  typeFilter: null,
+  isTypeFilterMode: false,
+  typeFilterCursor: 0,
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -320,6 +331,54 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, selectedPaths: next };
     }
 
+    case 'SET_TYPE_FILTER_MODE': {
+      return {
+        ...state,
+        isTypeFilterMode: action.enabled,
+        typeFilterCursor: action.enabled ? 0 : state.typeFilterCursor,
+      };
+    }
+
+    case 'TOGGLE_TYPE_FILTER': {
+      if (state.typeFilter === null) {
+        // Starting from "show all" — create set with all types EXCEPT the toggled one
+        const allTypes = new Set(state.artifacts.map((a) => a.type));
+        allTypes.delete(action.artifactType);
+        // If removing one type still leaves all others, return the set
+        return { ...state, typeFilter: allTypes, cursorIndex: 0 };
+      }
+      const next = new Set(state.typeFilter);
+      if (next.has(action.artifactType)) {
+        next.delete(action.artifactType);
+      } else {
+        next.add(action.artifactType);
+      }
+      // If the set now includes all artifact types, reset to null
+      const allTypes = new Set(state.artifacts.map((a) => a.type));
+      if (allTypes.size === next.size && [...allTypes].every((t) => next.has(t))) {
+        return { ...state, typeFilter: null, cursorIndex: 0 };
+      }
+      return { ...state, typeFilter: next, cursorIndex: 0 };
+    }
+
+    case 'TYPE_FILTER_CURSOR_UP': {
+      return {
+        ...state,
+        typeFilterCursor: Math.max(0, state.typeFilterCursor - 1),
+      };
+    }
+
+    case 'TYPE_FILTER_CURSOR_DOWN': {
+      return {
+        ...state,
+        typeFilterCursor: Math.min(action.typeCount - 1, state.typeFilterCursor + 1),
+      };
+    }
+
+    case 'CLEAR_TYPE_FILTER': {
+      return { ...state, typeFilter: null, cursorIndex: 0 };
+    }
+
     default: {
       return state;
     }
@@ -347,13 +406,19 @@ export function getSortedArtifacts(state: AppState): ScanResult[] {
     return 0;
   });
 
+  // Apply type filter
+  let result = sorted;
+  if (state.typeFilter !== null && state.typeFilter.size > 0) {
+    result = result.filter((a) => state.typeFilter!.has(a.type));
+  }
+
   // Apply search filter if query is non-empty
   if (state.searchQuery.length > 0) {
     const query = state.searchQuery.toLowerCase();
-    return sorted.filter((artifact) =>
+    return result.filter((artifact) =>
       artifact.path.toLowerCase().includes(query),
     );
   }
 
-  return sorted;
+  return result;
 }

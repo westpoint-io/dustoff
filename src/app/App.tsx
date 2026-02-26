@@ -10,6 +10,7 @@ import { DeleteProgress } from '../features/deletion/DeleteProgress.js';
 import { ShortcutBar } from './ShortcutBar.js';
 import { StatusBar } from './StatusBar.js';
 import { SearchBox } from '../features/browse/SearchBox.js';
+import { TypeFilter } from '../features/browse/TypeFilter.js';
 import { LOGO, getThemeByName } from '../shared/themes.js';
 import { ThemeProvider } from '../shared/ThemeContext.js';
 import { formatBytes } from '../shared/formatters.js';
@@ -97,7 +98,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
 
   const sortedArtifacts = useMemo(
     () => getSortedArtifacts(state),
-    [state.artifacts, state.sortKey, state.sortDir, state.searchQuery],
+    [state.artifacts, state.sortKey, state.sortDir, state.searchQuery, state.typeFilter],
   );
 
   // Compute flat items for grouping mode
@@ -106,6 +107,21 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     const groups = groupArtifacts(sortedArtifacts, rootPath);
     return flattenGroups(groups, state.collapsedGroups);
   }, [state.groupingEnabled, sortedArtifacts, rootPath, state.collapsedGroups]);
+
+  // Compute available types for type filter
+  const availableTypes = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const a of state.artifacts) {
+      counts.set(a.type, (counts.get(a.type) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, count]) => ({
+        type,
+        count,
+        selected: state.typeFilter === null || state.typeFilter.has(type),
+      }));
+  }, [state.artifacts, state.typeFilter]);
 
   // Helper to get current flat item at cursor
   const getCursorFlatItem = (): FlatItem | undefined => {
@@ -187,6 +203,23 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       return; // Don't process other commands while searching
     }
 
+    // Type filter mode
+    if (state.isTypeFilterMode) {
+      if (key.upArrow || input === 'k') {
+        dispatch({ type: 'TYPE_FILTER_CURSOR_UP' });
+      } else if (key.downArrow || input === 'j') {
+        dispatch({ type: 'TYPE_FILTER_CURSOR_DOWN', typeCount: availableTypes.length });
+      } else if (key.return || input === ' ') {
+        const typeInfo = availableTypes[state.typeFilterCursor];
+        if (typeInfo) {
+          dispatch({ type: 'TOGGLE_TYPE_FILTER', artifactType: typeInfo.type });
+        }
+      } else if (key.escape) {
+        dispatch({ type: 'SET_TYPE_FILTER_MODE', enabled: false });
+      }
+      return;
+    }
+
     // Browse mode
     const effectiveItemCount = state.groupingEnabled && flatItems.length > 0 ? flatItems.length : undefined;
     if (key.upArrow || input === 'k') {
@@ -254,6 +287,8 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       dispatch({ type: 'SORT_TO', key: 'path', dir: 'asc' });
     } else if (input === '3') {
       dispatch({ type: 'SORT_TO', key: 'age', dir: 'desc' });
+    } else if (input === 'f') {
+      dispatch({ type: 'SET_TYPE_FILTER_MODE', enabled: true });
     } else if (input === '/') {
       dispatch({ type: 'SET_SEARCH_MODE', enabled: true });
     } else if (input === 't') {
@@ -373,6 +408,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           searchQuery={state.searchQuery}
           isSearchMode={state.isSearchMode}
           filteredCount={sortedArtifacts.length}
+          typeFilter={state.typeFilter}
         />
 
         {/* Search box — shows when searching or has active filter */}
@@ -381,6 +417,11 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           isActive={state.isSearchMode}
           totalResults={sortedArtifacts.length}
         />
+
+        {/* Type filter picker */}
+        {state.isTypeFilterMode && (
+          <TypeFilter types={availableTypes} cursorIndex={state.typeFilterCursor} />
+        )}
 
         {/* Table — always visible */}
         <Box flexGrow={1}>

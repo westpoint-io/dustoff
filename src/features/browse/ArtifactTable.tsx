@@ -7,9 +7,12 @@ import { ArtifactRow } from './ArtifactRow.js';
 import { useWindow } from './useWindow.js';
 import { useTheme } from '../../shared/ThemeContext.js';
 import { TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
+import { findCommonDirPrefix } from '../../shared/pathUtils.js';
 
-// Header(5 logo) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11 overhead
-const RESERVED_ROWS = 11;
+// Full header (5 logo lines) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11
+const RESERVED_ROWS_FULL = 11;
+// Compact header (1 line) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 7
+const RESERVED_ROWS_COMPACT = 7;
 
 /**
  * Renders a scrollbar track as an array of single characters.
@@ -36,6 +39,7 @@ interface ArtifactTableProps {
   state: AppState;
   dispatch: Dispatch<AppAction>;
   rootPath: string;
+  termHeight?: number;
   onVisibleCountChange?: (count: number) => void;
 }
 
@@ -43,15 +47,17 @@ export function ArtifactTable({
   state,
   dispatch,
   rootPath,
+  termHeight = 40,
   onVisibleCountChange,
 }: ArtifactTableProps): React.ReactElement {
   const theme = useTheme();
   const sortedArtifacts = getSortedArtifacts(state);
+  const reservedRows = termHeight >= 30 ? RESERVED_ROWS_FULL : RESERVED_ROWS_COMPACT;
 
   const { visibleItems, scrollOffset, visibleCount } = useWindow(
     sortedArtifacts,
     state.cursorIndex,
-    RESERVED_ROWS,
+    reservedRows,
   );
 
   useEffect(() => {
@@ -66,6 +72,15 @@ export function ArtifactTable({
         : [],
     [showScrollbar, visibleCount, sortedArtifacts.length, scrollOffset],
   );
+
+  // Compute display paths and common prefix for dim-prefix rendering
+  const commonPrefix = useMemo(() => {
+    const prefix = rootPath.endsWith('/') ? rootPath : rootPath + '/';
+    const displayPaths = sortedArtifacts.map((a) =>
+      a.path.startsWith(prefix) ? a.path.slice(prefix.length) : a.path,
+    );
+    return findCommonDirPrefix(displayPaths);
+  }, [sortedArtifacts, rootPath]);
 
   // Sort indicator on active column
   const arrow = state.sortDir === 'desc' ? '↓' : '↑';
@@ -96,6 +111,8 @@ export function ArtifactTable({
                 isCursor={absoluteIndex === state.cursorIndex}
                 isSelected={state.selectedPaths.has(artifact.path)}
                 rootPath={rootPath}
+                maxSizeBytes={state.maxSizeBytes}
+                commonPrefix={commonPrefix}
                 themeName={state.themeName}
               />
             </Box>

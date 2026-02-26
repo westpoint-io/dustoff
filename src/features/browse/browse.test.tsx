@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect } from 'bun:test';
 import { render } from 'ink-testing-library';
 import { ArtifactRow } from './ArtifactRow.js';
+import { SizeBar } from './SizeBar.js';
 import { Header } from './Header.js';
 import { DetailPanel } from './DetailPanel.js';
 import { SearchBox } from './SearchBox.js';
@@ -25,6 +26,8 @@ describe('ArtifactRow', () => {
         isCursor={false}
         isSelected={false}
         rootPath="/home/user/project"
+        maxSizeBytes={0}
+        commonPrefix=""
       />,
       { columns: 160 },
     );
@@ -39,6 +42,8 @@ describe('ArtifactRow', () => {
         isCursor={false}
         isSelected={false}
         rootPath="/home/user/project"
+        maxSizeBytes={1073741824}
+        commonPrefix=""
       />
     );
     expect(lastFrame()).toContain('GB');
@@ -51,6 +56,8 @@ describe('ArtifactRow', () => {
         isCursor={false}
         isSelected={false}
         rootPath="/home/user"
+        maxSizeBytes={0}
+        commonPrefix=""
       />
     );
     expect(lastFrame()).toContain('node_modules');
@@ -63,11 +70,53 @@ describe('ArtifactRow', () => {
         isCursor={false}
         isSelected={false}
         rootPath="/home/user"
+        maxSizeBytes={0}
+        commonPrefix=""
       />,
       { columns: 160 },
     );
     // Should show "project/node_modules" not the full path
     expect(lastFrame()).toContain('project/node_modules');
+  });
+});
+
+// ─── SizeBar tests ──────────────────────────────────────────────────────────
+
+describe('SizeBar', () => {
+  it('full bar contains only filled blocks', () => {
+    const { lastFrame } = render(
+      <SizeBar sizeBytes={1000} maxSizeBytes={1000} isCursor={false} />
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('████████');
+    expect(output).not.toContain('░');
+  });
+
+  it('null sizeBytes renders only empty blocks', () => {
+    const { lastFrame } = render(
+      <SizeBar sizeBytes={null} maxSizeBytes={1000} isCursor={false} />
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('░░░░░░░░');
+    expect(output).not.toContain('█');
+  });
+
+  it('zero maxSizeBytes renders only empty blocks', () => {
+    const { lastFrame } = render(
+      <SizeBar sizeBytes={500} maxSizeBytes={0} isCursor={false} />
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('░░░░░░░░');
+    expect(output).not.toContain('█');
+  });
+
+  it('half size renders both filled and empty characters', () => {
+    const { lastFrame } = render(
+      <SizeBar sizeBytes={500} maxSizeBytes={1000} isCursor={false} />
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('█');
+    expect(output).toContain('░');
   });
 });
 
@@ -122,6 +171,31 @@ describe('Header', () => {
       { columns: 120 },
     );
     expect(lastFrame()).toContain('Scan:');
+  });
+
+  it('shows compact header when termHeight < 30', () => {
+    const { lastFrame } = render(
+      <Header {...headerProps} artifactCount={22} totalBytes={3700000000} termHeight={25} />,
+      { columns: 120 },
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('DUSTOFF');
+    expect(output).toContain('22 artifacts');
+    expect(output).toContain('reclaimable');
+    // Should NOT contain the logo ASCII art
+    expect(output).not.toContain('____');
+    // Should NOT contain full header labels
+    expect(output).not.toContain('Scan:');
+  });
+
+  it('shows full header when termHeight >= 30', () => {
+    const { lastFrame } = render(
+      <Header {...headerProps} termHeight={30} />,
+      { columns: 120 },
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('Scan:');
+    expect(output).toContain('____');
   });
 });
 
@@ -252,14 +326,14 @@ describe('ArtifactRow — selection', () => {
 
   it('shows [ ] when not selected', () => {
     const { lastFrame } = render(
-      <ArtifactRow artifact={artifact} isCursor={false} isSelected={false} rootPath="/home/user" />
+      <ArtifactRow artifact={artifact} isCursor={false} isSelected={false} rootPath="/home/user" maxSizeBytes={500000000} commonPrefix="" />
     );
     expect(lastFrame()).toContain('[ ]');
   });
 
   it('shows [x] when selected', () => {
     const { lastFrame } = render(
-      <ArtifactRow artifact={artifact} isCursor={false} isSelected={true} rootPath="/home/user" />
+      <ArtifactRow artifact={artifact} isCursor={false} isSelected={true} rootPath="/home/user" maxSizeBytes={500000000} commonPrefix="" />
     );
     expect(lastFrame()).toContain('[x]');
   });

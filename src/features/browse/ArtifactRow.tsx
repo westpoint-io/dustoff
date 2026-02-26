@@ -4,13 +4,16 @@ import type { ScanResult } from '../scanning/types.js';
 import { useTheme } from '../../shared/ThemeContext.js';
 import { sizeColor, ageColor, TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
 import { formatBytes, formatAge, ageDays } from '../../shared/formatters.js';
+import { SizeBar } from './SizeBar.js';
 
 interface ArtifactRowProps {
   artifact: ScanResult;
   isCursor: boolean;
   isSelected: boolean;
   rootPath: string;
-  themeName: string;
+  maxSizeBytes: number;
+  commonPrefix: string;
+  themeName?: string;
 }
 
 // Memoized row — prevents re-render on every cursor move for non-cursor rows
@@ -19,6 +22,8 @@ export const ArtifactRow = memo(function ArtifactRow({
   isCursor,
   isSelected,
   rootPath,
+  maxSizeBytes,
+  commonPrefix,
 }: ArtifactRowProps): React.ReactElement {
   const theme = useTheme();
   // Full-row highlight: cursor gets accent bg, selected (non-cursor) gets muted bg
@@ -36,14 +41,28 @@ export const ArtifactRow = memo(function ArtifactRow({
     ? artifact.path.slice(prefix.length)
     : artifact.path;
 
+  // Split displayPath into dim common prefix + bright suffix
+  const dimPart = displayPath.startsWith(commonPrefix) ? commonPrefix : '';
+  const brightPart = dimPart ? displayPath.slice(dimPart.length) : displayPath;
+
   const checkbox = isSelected ? '[x]' : '[ ]';
 
   return (
     <Box backgroundColor={bg}>
       <Text color={checkFg}>{` ${checkbox} `}</Text>
       <Text color={typeFg}>{artifact.type.padEnd(TYPE_W)}</Text>
-      <Text color={fg} wrap="truncate-end">{displayPath}</Text>
+      <Text wrap="truncate-end">
+        {isCursor ? (
+          <Text color={fg}>{displayPath}</Text>
+        ) : (
+          <>
+            <Text color={theme.overlay0}>{dimPart}</Text>
+            <Text color={fg}>{brightPart}</Text>
+          </>
+        )}
+      </Text>
       <Box flexGrow={1} />
+      <SizeBar sizeBytes={artifact.sizeBytes} maxSizeBytes={maxSizeBytes} isCursor={isCursor} />
       <Text color={sizeFg} bold={!isCursor}>
         {formatBytes(artifact.sizeBytes).padStart(SIZE_W)}
       </Text>

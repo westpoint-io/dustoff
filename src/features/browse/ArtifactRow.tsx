@@ -18,8 +18,8 @@ export const ArtifactRow = memo(function ArtifactRow({
   isSelected,
   rootPath,
 }: ArtifactRowProps): React.ReactElement {
-  // Full-row highlight: when cursor, dark text on accent bg
-  const bg = isCursor ? cursorBg : undefined;
+  // Full-row highlight: cursor gets yellow bg, selected (non-cursor) gets muted bg
+  const bg = isCursor ? cursorBg : (isSelected ? '#3a3a3a' : undefined);
   const cursorFg = 'black';
   const fg = isCursor ? cursorFg : theme.text;
   const typeFg = isCursor ? cursorFg : (typeBadgeColor[artifact.type] ?? theme.subtext0);

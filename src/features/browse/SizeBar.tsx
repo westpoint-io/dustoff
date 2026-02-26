@@ -3,7 +3,7 @@ import { Text } from 'ink';
 import { useTheme } from '../../shared/ThemeContext.js';
 import { sizeColor } from '../../shared/themes.js';
 
-const BAR_WIDTH = 8;
+export const BAR_WIDTH = 8;
 
 interface SizeBarProps {
   sizeBytes: number | null;

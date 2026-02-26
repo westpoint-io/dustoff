@@ -8,7 +8,11 @@ import { GroupRow } from './GroupRow.js';
 import { useWindow } from './useWindow.js';
 import { useTheme } from '../../shared/ThemeContext.js';
 import { TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
+import { BAR_WIDTH } from './SizeBar.js';
 import { findCommonDirPrefix } from '../../shared/pathUtils.js';
+
+// Fixed width for right-side columns — must match ArtifactRow's RIGHT_W
+const RIGHT_W = 1 + BAR_WIDTH + 1 + SIZE_W + 1 + AGE_W + 1;
 import { groupArtifacts, flattenGroups } from './grouping.js';
 import type { FlatItem } from './grouping.js';
 
@@ -116,14 +120,18 @@ export function ArtifactTable({
         </Text>
         <Text dimColor color={theme.overlay0}>{'[2]'}</Text>
         <Box flexGrow={1} />
-        <Text dimColor color={theme.overlay0}>{'[1] '}</Text>
-        <Text color={theme.headerColor} bold>
-          {sizeLabel.padStart(SIZE_W)}{' '}
-        </Text>
-        <Text dimColor color={theme.overlay0}>{'[3] '}</Text>
-        <Text color={theme.headerColor} bold>
-          {ageLabel}{'  '}
-        </Text>
+        <Box width={RIGHT_W} flexShrink={0}>
+          <Box flexGrow={1} />
+          <Text dimColor color={theme.overlay0}>{'[1]'}</Text>
+          <Text color={theme.headerColor} bold>
+            {sizeLabel.padStart(SIZE_W)}{' '}
+          </Text>
+          <Text dimColor color={theme.overlay0}>{'[3]'}</Text>
+          <Text color={theme.headerColor} bold>
+            {ageLabel}
+          </Text>
+          <Text>{' '}</Text>
+        </Box>
       </Box>
 
       {/* Rows — full-row cursor highlight */}

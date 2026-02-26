@@ -4,7 +4,10 @@ import type { ScanResult } from '../scanning/types.js';
 import { useTheme } from '../../shared/ThemeContext.js';
 import { sizeColor, ageColor, TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
 import { formatBytes, formatAge, ageDays } from '../../shared/formatters.js';
-import { SizeBar } from './SizeBar.js';
+import { SizeBar, BAR_WIDTH } from './SizeBar.js';
+
+// Fixed width for right-side columns: space + bar + space + size + space + age + space
+const RIGHT_W = 1 + BAR_WIDTH + 1 + SIZE_W + 1 + AGE_W + 1;
 
 interface ArtifactRowProps {
   artifact: ScanResult;
@@ -51,28 +54,31 @@ export const ArtifactRow = memo(function ArtifactRow({
     <Box backgroundColor={bg}>
       <Text color={checkFg}>{` ${checkbox} `}</Text>
       <Text color={typeFg}>{artifact.type.padEnd(TYPE_W)}</Text>
-      <Text wrap="truncate-end">
-        {isCursor ? (
-          <Text color={fg}>{displayPath}</Text>
-        ) : (
-          <>
-            <Text color={theme.overlay0}>{dimPart}</Text>
-            <Text color={fg}>{brightPart}</Text>
-          </>
-        )}
-      </Text>
-      <Box flexGrow={1} />
-      <Text>{' '}</Text>
-      <SizeBar sizeBytes={artifact.sizeBytes} maxSizeBytes={maxSizeBytes} isCursor={isCursor} />
-      <Text>{' '}</Text>
-      <Text color={sizeFg} bold={!isCursor}>
-        {formatBytes(artifact.sizeBytes).padStart(SIZE_W)}
-      </Text>
-      <Text>{' '}</Text>
-      <Text color={ageFg}>
-        {formatAge(artifact.mtimeMs).padStart(AGE_W)}
-      </Text>
-      <Text>{' '}</Text>
+      <Box flexGrow={1}>
+        <Text wrap="truncate-end">
+          {isCursor ? (
+            <Text color={fg}>{displayPath}</Text>
+          ) : (
+            <>
+              <Text color={theme.overlay0}>{dimPart}</Text>
+              <Text color={fg}>{brightPart}</Text>
+            </>
+          )}
+        </Text>
+      </Box>
+      <Box width={RIGHT_W} flexShrink={0}>
+        <Text>{' '}</Text>
+        <SizeBar sizeBytes={artifact.sizeBytes} maxSizeBytes={maxSizeBytes} isCursor={isCursor} />
+        <Text>{' '}</Text>
+        <Text color={sizeFg} bold={!isCursor}>
+          {formatBytes(artifact.sizeBytes).padStart(SIZE_W)}
+        </Text>
+        <Text>{' '}</Text>
+        <Text color={ageFg}>
+          {formatAge(artifact.mtimeMs).padStart(AGE_W)}
+        </Text>
+        <Text>{' '}</Text>
+      </Box>
     </Box>
   );
 });

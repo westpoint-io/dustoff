@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
 import { Box, Text } from 'ink';
-import type { ScanResult } from '../../scanner/types.js';
-import { theme, cursorBg, sizeColor, ageColor, typeBadgeColor, TYPE_W, SIZE_W, AGE_W } from '../theme.js';
-import { formatBytes, formatAge, ageDays } from '../formatters.js';
+import type { ScanResult } from '../scanning/types.js';
+import { theme, cursorBg, sizeColor, ageColor, typeBadgeColor, TYPE_W, SIZE_W, AGE_W } from '../../shared/theme.js';
+import { formatBytes, formatAge, ageDays } from '../../shared/formatters.js';
 
 interface ArtifactRowProps {
   artifact: ScanResult;

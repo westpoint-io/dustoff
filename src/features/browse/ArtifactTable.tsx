@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import type { Dispatch } from 'react';
 import { Box, Text } from 'ink';
-import type { AppState, AppAction } from '../app.js';
-import { getSortedArtifacts } from '../app.js';
+import type { AppState, AppAction } from '../../app/reducer.js';
+import { getSortedArtifacts } from '../../app/reducer.js';
 import { ArtifactRow } from './ArtifactRow.js';
-import { useWindow } from '../hooks/useWindow.js';
-import { accent, headerColor, TYPE_W, SIZE_W, AGE_W } from '../theme.js';
+import { useWindow } from './useWindow.js';
+import { accent, headerColor, TYPE_W, SIZE_W, AGE_W } from '../../shared/theme.js';
 
 // Header(5 logo) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11 overhead
 const RESERVED_ROWS = 11;

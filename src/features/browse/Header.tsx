@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { theme, LOGO, logoColors } from '../theme.js';
-import { formatBytes, formatAge } from '../formatters.js';
+import { theme, LOGO, logoColors } from '../../shared/theme.js';
+import { formatBytes, formatAge } from '../../shared/formatters.js';
 
 interface HeaderProps {
   rootPath: string;
@@ -9,10 +9,18 @@ interface HeaderProps {
   artifactCount: number;
   oldestMtimeMs: number | undefined;
   scanStatus: 'scanning' | 'complete';
+  sortKey: 'size' | 'path' | 'age';
+  sortDir: 'asc' | 'desc';
 }
 
 // Fixed-width label column for alignment
 const LABEL_W = 13;
+
+const SORT_LABELS: Record<string, string> = {
+  size: 'Size',
+  path: 'Path',
+  age: 'Age',
+};
 
 export function Header({
   rootPath,
@@ -20,10 +28,13 @@ export function Header({
   artifactCount,
   oldestMtimeMs,
   scanStatus,
+  sortKey,
+  sortDir,
 }: HeaderProps): React.ReactElement {
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
   const oldest = oldestMtimeMs !== undefined ? formatAge(oldestMtimeMs) : '—';
   const displayPath = rootPath.replace(process.env.HOME || '', '~');
+  const sortLabel = `${SORT_LABELS[sortKey]} ${sortDir === 'desc' ? '↓' : '↑'}`;
 
   return (
     <Box alignItems="flex-end" marginLeft={1}>
@@ -44,6 +55,10 @@ export function Header({
         <Box>
           <Text color={theme.text} bold>{'Oldest:'.padEnd(LABEL_W)}</Text>
           <Text color={theme.red}>{oldest}</Text>
+        </Box>
+        <Box>
+          <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
+          <Text color={theme.yellow}>{sortLabel}</Text>
         </Box>
       </Box>
 

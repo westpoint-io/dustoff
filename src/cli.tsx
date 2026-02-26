@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import React from 'react';
 import { render } from 'ink';
-import App from './ui/app.js';
+import App from './app/App.js';
 
 // Clear screen and scrollback (NOT alternate buffer)
 process.stdout.write('\x1b[2J\x1b[H\x1b[3J');

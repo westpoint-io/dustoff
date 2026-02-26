@@ -1,15 +1,14 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render } from 'ink-testing-library';
-import { ArtifactRow } from '../../src/ui/components/ArtifactRow.js';
-import { Header } from '../../src/ui/components/Header.js';
-import { StatusBar } from '../../src/ui/components/StatusBar.js';
-import { DetailPanel } from '../../src/ui/components/DetailPanel.js';
-import { ShortcutBar } from '../../src/ui/components/ShortcutBar.js';
-import { formatBytes, formatAge } from '../../src/ui/formatters.js';
-import { sizeColor } from '../../src/ui/theme.js';
-import { theme } from '../../src/ui/theme.js';
-import { reducer, type AppState } from '../../src/ui/app.js';
+import { ArtifactRow } from '../../src/features/browse/ArtifactRow.js';
+import { Header } from '../../src/features/browse/Header.js';
+import { StatusBar } from '../../src/app/StatusBar.js';
+import { DetailPanel } from '../../src/features/browse/DetailPanel.js';
+import { ShortcutBar } from '../../src/app/ShortcutBar.js';
+import { formatBytes, formatAge } from '../../src/shared/formatters.js';
+import { sizeColor, theme } from '../../src/shared/theme.js';
+import { reducer, type AppState } from '../../src/app/reducer.js';
 
 // ─── Pure function tests (no Ink render required) ───────────────────────────
 
@@ -117,6 +116,8 @@ describe('Header', () => {
     artifactCount: 0,
     oldestMtimeMs: undefined as number | undefined,
     scanStatus: 'scanning' as const,
+    sortKey: 'size' as const,
+    sortDir: 'desc' as const,
   };
 
   it('shows artifact count', () => {

@@ -1,3 +1,3 @@
-export { scan } from './scanner/scanner.js';
-export { calculateSize, calculateSizeWithTimeout } from './scanner/size.js';
-export type { ScanResult, ScanOptions, ScanStats } from './scanner/types.js';
+export { scan } from './features/scanning/scanner.js';
+export { calculateSize, calculateSizeWithTimeout } from './features/scanning/size.js';
+export type { ScanResult, ScanOptions, ScanStats } from './features/scanning/types.js';

@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import type { Dispatch } from 'react';
-import { scan } from '../../scanner/scanner.js';
-import { calculateSizeWithTimeout } from '../../scanner/size.js';
-import type { AppAction } from '../app.js';
+import { scan } from './scanner.js';
+import { calculateSizeWithTimeout } from './size.js';
+import type { AppAction } from '../../app/reducer.js';
 
 /**
  * Consumes the scanner AsyncGenerator and dispatches TUI state actions.

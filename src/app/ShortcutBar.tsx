@@ -1,25 +1,25 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { theme } from '../theme.js';
+import { theme } from '../shared/theme.js';
 
 interface ShortcutBarProps {
   hasSelection: boolean;
 }
 
 const BASE_SHORTCUTS = [
-  { key: '↑↓', desc: 'navigate' },
-  { key: 'Space', desc: 'select' },
-  { key: 'Tab', desc: 'detail' },
+  { key: '▲▼', desc: 'navigate' },
+  { key: '␣', desc: 'select' },
+  { key: '⇥', desc: 'detail' },
   { key: 's', desc: 'sort' },
   { key: 'q', desc: 'quit' },
 ];
 
 const SELECTION_SHORTCUTS = [
-  { key: '↑↓', desc: 'navigate' },
-  { key: 'Space', desc: 'select' },
+  { key: '▲▼', desc: 'navigate' },
+  { key: '␣', desc: 'select' },
   { key: 'd', desc: 'delete' },
   { key: 'a', desc: 'select all' },
-  { key: 'Esc', desc: 'clear' },
+  { key: 'esc', desc: 'clear' },
   { key: 'q', desc: 'quit' },
 ];
 
@@ -27,11 +27,11 @@ export function ShortcutBar({ hasSelection }: ShortcutBarProps): React.ReactElem
   const shortcuts = hasSelection ? SELECTION_SHORTCUTS : BASE_SHORTCUTS;
 
   return (
-    <Box gap={2} marginLeft={1}>
+    <Box gap={1} marginLeft={1}>
       {shortcuts.map(({ key, desc }) => (
         <Box key={key}>
-          <Text bold color="black" backgroundColor="green">{` ${key} `}</Text>
-          <Text color={theme.overlay0}>{` ${desc}`}</Text>
+          <Text backgroundColor={theme.yellow} color="black" bold>{` ${key} `}</Text>
+          <Text color={theme.text}>{` ${desc}`}</Text>
         </Box>
       ))}
     </Box>

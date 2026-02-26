@@ -1,9 +1,9 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { basename } from 'node:path';
-import type { ScanResult } from '../../scanner/types.js';
-import { theme, accent, typeBadgeColor, sizeColor, ageColor } from '../theme.js';
-import { formatBytes, formatAge, ageDays } from '../formatters.js';
+import type { ScanResult } from '../scanning/types.js';
+import { theme, accent, typeBadgeColor, sizeColor, ageColor } from '../../shared/theme.js';
+import { formatBytes, formatAge, ageDays } from '../../shared/formatters.js';
 
 interface DetailPanelProps {
   artifact: ScanResult;

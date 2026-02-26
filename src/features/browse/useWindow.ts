@@ -1,5 +1,5 @@
 import { useStdout } from 'ink';
-import type { ScanResult } from '../../scanner/types.js';
+import type { ScanResult } from '../scanning/types.js';
 
 export interface WindowResult {
   visibleItems: ScanResult[];

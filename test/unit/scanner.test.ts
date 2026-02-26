@@ -1,6 +1,6 @@
 import { vol } from 'memfs';
 import { vi, beforeEach, describe, test, expect } from 'vitest';
-import { scan } from '../../src/scanner/scanner.js';
+import { scan } from '../../src/features/scanning/scanner.js';
 
 vi.mock('node:fs', async () => {
   const memfs = await vi.importActual<typeof import('memfs')>('memfs');

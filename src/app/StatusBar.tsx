@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { theme } from '../theme.js';
+import { theme } from '../shared/theme.js';
 
 interface StatusBarProps {
   scanStatus: 'scanning' | 'complete';

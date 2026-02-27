@@ -183,7 +183,7 @@ dustoff scans for these directories:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Check the [CONTRIBUTING.md](CONTRIBUTING.md) guide to get started.
 
 ## 📄 License
 

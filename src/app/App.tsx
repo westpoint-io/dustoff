@@ -25,9 +25,11 @@ import type { FlatItem } from '../features/browse/grouping.js';
 
 interface AppProps {
   rootPath?: string;
+  exclude?: ReadonlySet<string>;
+  targets?: ReadonlySet<string>;
 }
 
-export default function App({ rootPath = process.cwd() }: AppProps): React.ReactElement {
+export default function App({ rootPath = process.cwd(), exclude, targets }: AppProps): React.ReactElement {
   const [state, dispatch] = React.useReducer(reducer, {
     ...initialState,
     themeName: loadThemeName(),
@@ -50,8 +52,13 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     return () => clearTimeout(id);
   }, [state.deleteToast]);
 
-  // Persist theme when it changes and show flash
+  // Persist theme when it changes and show flash (skip initial mount)
+  const initialThemeRef = useRef(true);
   useEffect(() => {
+    if (initialThemeRef.current) {
+      initialThemeRef.current = false;
+      return;
+    }
     saveThemeName(state.themeName);
     setThemeFlash(state.themeName);
     const id = setTimeout(() => setThemeFlash(null), 1500);
@@ -78,20 +85,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     };
   }, [stdout]);
 
-  useScan(rootPath, dispatch);
-
-  // Auto-show detail panel on wide terminals when scan completes
-  const autoDetailFired = useRef(false);
-  useEffect(() => {
-    if (
-      state.scanStatus === 'complete' &&
-      termSize.width >= 120 &&
-      !autoDetailFired.current
-    ) {
-      autoDetailFired.current = true;
-      dispatch({ type: 'DETAIL_TOGGLE' });
-    }
-  }, [state.scanStatus, termSize.width]);
+  useScan(rootPath, dispatch, termSize.width, exclude, targets);
 
   // Delete handler
   const executeDelete = useDelete(state.artifacts, state.selectedPaths, dispatch);
@@ -209,10 +203,22 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
         dispatch({ type: 'TYPE_FILTER_CURSOR_UP' });
       } else if (key.downArrow || input === 'j') {
         dispatch({ type: 'TYPE_FILTER_CURSOR_DOWN', typeCount: availableTypes.length });
-      } else if (key.return || input === ' ') {
+      } else if (input === ' ') {
         const typeInfo = availableTypes[state.typeFilterCursor];
         if (typeInfo) {
           dispatch({ type: 'TOGGLE_TYPE_FILTER', artifactType: typeInfo.type });
+        }
+      } else if (key.return) {
+        dispatch({ type: 'SET_TYPE_FILTER_MODE', enabled: false });
+      } else if (input === 'a') {
+        // Toggle all: if all selected, deselect all; otherwise select all
+        const allSelected = availableTypes.every((t) => t.selected);
+        for (const t of availableTypes) {
+          if (allSelected && t.selected) {
+            dispatch({ type: 'TOGGLE_TYPE_FILTER', artifactType: t.type });
+          } else if (!allSelected && !t.selected) {
+            dispatch({ type: 'TOGGLE_TYPE_FILTER', artifactType: t.type });
+          }
         }
       } else if (key.escape) {
         dispatch({ type: 'SET_TYPE_FILTER_MODE', enabled: false });
@@ -223,7 +229,12 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     // Browse mode
 
     // Range select — must be checked before regular cursor movement
-    if (key.shift && key.upArrow && state.viewMode === 'browse' && !state.isSearchMode && !state.isTypeFilterMode) {
+    const rangeUp = state.viewMode === 'browse' && !state.isSearchMode && !state.isTypeFilterMode
+      && ((key.shift && key.upArrow) || input === 'K');
+    const rangeDown = state.viewMode === 'browse' && !state.isSearchMode && !state.isTypeFilterMode
+      && ((key.shift && key.downArrow) || input === 'J');
+
+    if (rangeUp) {
       const anchor = state.selectionAnchor ?? state.cursorIndex;
       const newCursor = Math.max(0, state.cursorIndex - 1);
       const start = Math.min(anchor, newCursor);
@@ -235,7 +246,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       return;
     }
 
-    if (key.shift && key.downArrow && state.viewMode === 'browse' && !state.isSearchMode && !state.isTypeFilterMode) {
+    if (rangeDown) {
       const anchor = state.selectionAnchor ?? state.cursorIndex;
       const newCursor = Math.min(sortedArtifacts.length - 1, state.cursorIndex + 1);
       const start = Math.min(anchor, newCursor);
@@ -247,7 +258,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       return;
     }
 
-    const effectiveItemCount = state.groupingEnabled && flatItems.length > 0 ? flatItems.length : undefined;
+    const effectiveItemCount = state.groupingEnabled && flatItems.length > 0 ? flatItems.length : sortedArtifacts.length;
     if (key.upArrow || input === 'k') {
       dispatch({ type: 'CURSOR_UP' });
     } else if (key.downArrow || input === 'j') {
@@ -313,12 +324,6 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
       }
     } else if (input === 's') {
       dispatch({ type: 'SORT_CYCLE' });
-    } else if (input === '1') {
-      dispatch({ type: 'SORT_TO', key: 'size', dir: 'desc' });
-    } else if (input === '2') {
-      dispatch({ type: 'SORT_TO', key: 'path', dir: 'asc' });
-    } else if (input === '3') {
-      dispatch({ type: 'SORT_TO', key: 'age', dir: 'desc' });
     } else if (input === 'f') {
       dispatch({ type: 'SET_TYPE_FILTER_MODE', enabled: true });
     } else if (input === '/') {
@@ -362,7 +367,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
     .reduce((sum, a) => sum + (a.sizeBytes ?? 0), 0);
 
   const detailWidth = state.detailVisible
-    ? Math.max(28, Math.floor(termSize.width * 0.22))
+    ? Math.max(45, Math.floor(termSize.width * 0.22))
     : 0;
 
   // Get cursor artifact from sorted list (or from flat items if grouping)
@@ -443,6 +448,7 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           isSearchMode={state.isSearchMode}
           filteredCount={sortedArtifacts.length}
           typeFilter={state.typeFilter}
+          detailWidth={detailWidth}
         />
 
         {/* Search box — shows when searching or has active filter */}
@@ -452,25 +458,31 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           totalResults={sortedArtifacts.length}
         />
 
-        {/* Type filter picker */}
-        {state.isTypeFilterMode && (
-          <TypeFilter types={availableTypes} cursorIndex={state.typeFilterCursor} />
-        )}
-
         {/* Table — always visible */}
         <Box flexGrow={1}>
-          <ArtifactTable
-            state={state}
-            dispatch={dispatch}
-            rootPath={rootPath}
-            termHeight={termSize.height}
-            onVisibleCountChange={setVisibleCount}
-            flatItems={state.groupingEnabled ? flatItems : undefined}
-          />
+          {/* Type filter picker replaces table when active */}
+          {state.isTypeFilterMode ? (
+            <Box flexGrow={1} justifyContent="center" alignItems="center">
+              <TypeFilter types={availableTypes} cursorIndex={state.typeFilterCursor} width={Math.floor(termSize.width * 0.6)} />
+            </Box>
+          ) : (
+            <>
+              <ArtifactTable
+                state={state}
+                dispatch={dispatch}
+                rootPath={rootPath}
+                termHeight={termSize.height}
+                termWidth={termSize.width}
+                detailWidth={detailWidth}
+                onVisibleCountChange={setVisibleCount}
+                flatItems={state.groupingEnabled ? flatItems : undefined}
+              />
 
-          {/* Detail panel */}
-          {state.detailVisible && cursorArtifact !== undefined && (
-            <DetailPanel artifact={cursorArtifact} width={detailWidth} rootPath={rootPath} />
+              {/* Detail panel */}
+              {state.detailVisible && cursorArtifact !== undefined && (
+                <DetailPanel artifact={cursorArtifact} width={detailWidth} rootPath={rootPath} />
+              )}
+            </>
           )}
         </Box>
 
@@ -497,22 +509,18 @@ export default function App({ rootPath = process.cwd() }: AppProps): React.React
           totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : sortedArtifacts.length}
         />
 
-        {/* Theme flash indicator */}
-        {themeFlash !== null && (
+        {/* Shortcut bar — replaced by flash/toast when active */}
+        {themeFlash !== null ? (
           <Box justifyContent="center">
             <Text color={currentTheme.accent} bold>{`Theme: ${themeFlash}`}</Text>
           </Box>
-        )}
-
-        {/* Post-delete toast */}
-        {state.deleteToast !== null && (
+        ) : state.deleteToast !== null ? (
           <Box justifyContent="center">
             <Text color={currentTheme.green} bold>{`Deleted ${state.deleteToast.count} artifact(s), freed ${formatBytes(state.deleteToast.freedBytes)}`}</Text>
           </Box>
+        ) : (
+          <ShortcutBar hasSelection={state.selectedPaths.size > 0} hasFilter={state.searchQuery.length > 0 && !state.isSearchMode} />
         )}
-
-        {/* Shortcut bar */}
-        <ShortcutBar hasSelection={state.selectedPaths.size > 0} hasFilter={state.searchQuery.length > 0 && !state.isSearchMode} />
       </Box>
     </ThemeProvider>
   );

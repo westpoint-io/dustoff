@@ -1,11 +1,19 @@
-import { useEffect, useTransition } from 'react';
+import { useEffect, useRef, useTransition } from 'react';
 import type { Dispatch } from 'react';
 import { scan } from './scanner.js';
 import { calculateSizeWithTimeout } from './size.js';
 import type { AppAction } from '../../app/reducer.js';
 
-export function useScan(rootPath: string, dispatch: Dispatch<AppAction>): void {
+export function useScan(
+  rootPath: string,
+  dispatch: Dispatch<AppAction>,
+  termWidth?: number,
+  exclude?: ReadonlySet<string>,
+  targets?: ReadonlySet<string>,
+): void {
   const [, startTransition] = useTransition();
+  const termWidthRef = useRef(termWidth);
+  termWidthRef.current = termWidth;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -19,6 +27,8 @@ export function useScan(rootPath: string, dispatch: Dispatch<AppAction>): void {
         onProgress: (evt) => {
           dispatch({ type: 'DIRS_SCANNED', count: evt.directoriesVisited });
         },
+        exclude,
+        targets,
       });
 
       for await (const artifact of generator) {
@@ -43,7 +53,7 @@ export function useScan(rootPath: string, dispatch: Dispatch<AppAction>): void {
       }
 
       await Promise.all(sizePromises);
-      dispatch({ type: 'SCAN_COMPLETE', durationMs: Date.now() - startMs });
+      dispatch({ type: 'SCAN_COMPLETE', durationMs: Date.now() - startMs, termWidth: termWidthRef.current });
     }
 
     run().catch(() => {
@@ -53,5 +63,5 @@ export function useScan(rootPath: string, dispatch: Dispatch<AppAction>): void {
     return () => {
       controller.abort();
     };
-  }, [rootPath, startTransition]);
+  }, [rootPath, startTransition, exclude, targets]);
 }

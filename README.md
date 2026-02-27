@@ -49,6 +49,27 @@ bun install -g dustoff
 
 Requires Node.js >= 18.18.0.
 
+### CLI Options
+
+```
+dustoff [options]
+
+  -d, --directory <path>    Set scan root directory (default: current directory)
+  -E, --exclude <names>     Exclude directories by name, comma-separated
+  -t, --target <names>      Override default targets, comma-separated
+  -V, --verbose             Write debug log to dustoff-debug.log
+  -h, --help                Show this help message
+  -v, --version             Show version number
+```
+
+Examples:
+
+```bash
+dustoff -d ~/projects                        # scan a specific directory
+dustoff --exclude "dist,build"               # skip dist and build directories
+dustoff --target "node_modules,.next"         # only scan for specific artifacts
+```
+
 ## Features
 
 ### Scan & Browse
@@ -69,19 +90,27 @@ Sort by size, path, or age with `1` `2` `3` keys to find the biggest space hogs.
 
 ### Search & Filter
 
-Press `/` to search — instantly filter artifacts by path.
+Press `/` to search — instantly filter artifacts by path. Press `f` to open the type filter and show only specific artifact types (e.g. just `node_modules` or `.next`).
 
 <p align="center">
   <img src="docs/features/search.gif" alt="Searching and filtering artifacts" width="800" />
 </p>
 
+### Directory Grouping
+
+Press `x` to group artifacts by parent directory. Collapse and expand groups with `Enter` or arrow keys. Select an entire group at once with `Space` on the group header.
+
 ### Detail Panel
 
-Press `Tab` to toggle a side panel with full artifact metadata.
+Press `Tab` to toggle a side panel with full artifact metadata — type, size, age, full path, subdirectory size breakdown chart, and sensitive location warnings. Scroll long panels with `+`/`-`.
 
 <p align="center">
   <img src="docs/features/detail-panel.gif" alt="Detail panel showing artifact info" width="800" />
 </p>
+
+### Range Multi-Select
+
+Hold `Shift` + arrow keys (or use `J`/`K`) to select a contiguous range of artifacts. `Shift+Space` extends selection from an anchor point.
 
 ### Safe Deletion
 
@@ -105,15 +134,20 @@ Cycle with `t`. Your choice is saved across sessions.
 |-----|--------|
 | `↑` `k` | Move cursor up |
 | `↓` `j` | Move cursor down |
+| `Shift+↑` `K` | Range select up |
+| `Shift+↓` `J` | Range select down |
 | `g` / `G` | Jump to top / bottom |
 | `PgUp` `PgDn` | Page up / down |
 | `Space` | Toggle selection |
+| `Shift+Space` | Extend selection from anchor |
 | `a` | Select all |
 | `d` | Delete selected |
 | `s` | Cycle sort mode |
-| `1` `2` `3` | Sort by size / path / age |
 | `/` | Search / filter |
+| `f` | Type filter |
+| `x` | Toggle directory grouping |
 | `Tab` | Toggle detail panel |
+| `+` / `-` | Scroll detail panel |
 | `t` | Cycle theme |
 | `Esc` | Clear selection |
 | `q` | Quit |

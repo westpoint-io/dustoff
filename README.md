@@ -142,7 +142,7 @@ Vim-style navigation is fully supported alongside arrow keys.
 
 ## 🎨 Themes
 
-Cycle through themes with `t` during a session. Your preference is persisted automatically.
+Cycle through themes with `t` during a session. Your preference is saved to `~/.config/dustoff/config.json` (or `$XDG_CONFIG_HOME/dustoff/config.json`) and persisted across sessions.
 
 <table>
   <tr>

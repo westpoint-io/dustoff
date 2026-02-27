@@ -403,12 +403,35 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
   // Splash screen — shown during entire scan
   if (state.scanStatus === 'scanning') {
     const BAR_W = 43; // Match LOGO width (43 chars)
-    const BLOCK_W = 8;
-    // Bounce the filled block back and forth
-    const cycle = (BAR_W - BLOCK_W) * 2;
-    const pos = barTick % cycle;
-    const offset = pos < BAR_W - BLOCK_W ? pos : cycle - pos;
-    const bar = '░'.repeat(offset) + '█'.repeat(BLOCK_W) + '░'.repeat(BAR_W - BLOCK_W - offset);
+    const artifactCount = state.artifacts.length;
+    const elapsedSec = Math.floor(barTick * 80 / 1000);
+    const isDeterminate = artifactCount > 0;
+
+    let bar: React.ReactNode;
+    if (isDeterminate) {
+      // Determinate progress bar: filled portion based on sizedCount / artifactCount
+      const pct = artifactCount > 0 ? sizedCount / artifactCount : 0;
+      const filled = Math.round(pct * BAR_W);
+      const empty = BAR_W - filled;
+      const pctLabel = `${Math.round(pct * 100)}%`;
+      bar = (
+        <Box>
+          <Text>
+            <Text color={currentTheme.accent}>{'█'.repeat(filled)}</Text>
+            <Text color={currentTheme.overlay0}>{'░'.repeat(empty)}</Text>
+          </Text>
+          <Text color={currentTheme.text}>{` ${pctLabel}`}</Text>
+        </Box>
+      );
+    } else {
+      // Indeterminate bouncing block
+      const BLOCK_W = 8;
+      const cycle = (BAR_W - BLOCK_W) * 2;
+      const pos = barTick % cycle;
+      const offset = pos < BAR_W - BLOCK_W ? pos : cycle - pos;
+      const bounceBar = '░'.repeat(offset) + '█'.repeat(BLOCK_W) + '░'.repeat(BAR_W - BLOCK_W - offset);
+      bar = <Text color={currentTheme.yellow}>{bounceBar}</Text>;
+    }
 
     return (
       <Box flexDirection="column" height={termSize.height} paddingX={1} alignItems="center" justifyContent="center">
@@ -418,25 +441,23 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           ))}
         </Box>
         <Box marginTop={1}>
-          <Text color={currentTheme.yellow}>{bar}</Text>
+          {bar}
         </Box>
         <Box marginTop={1} flexDirection="column" alignItems="center">
           <Text color={currentTheme.overlay0}>{truncatePath(rootPath.replace(process.env.HOME || '', '~'), BAR_W)}</Text>
-          {state.artifacts.length === 0 ? (
+          {artifactCount === 0 ? (
             <Text color={currentTheme.overlay0}>Scanning...</Text>
           ) : (
             <>
               <Text color={currentTheme.text}>
                 {`Found `}
-                <Text color={currentTheme.yellow} bold>{String(state.artifacts.length)}</Text>
-                {` artifact${state.artifacts.length > 1 ? 's' : ''}`}
+                <Text color={currentTheme.yellow} bold>{String(artifactCount)}</Text>
+                {` artifact${artifactCount > 1 ? 's' : ''} · Sizing ${sizedCount}/${artifactCount}`}
               </Text>
-              <Text color={currentTheme.overlay0}>
-                {`Calculating sizes... ${sizedCount}/${state.artifacts.length} · `}
-                <Text color={currentTheme.yellow} bold>{formatBytes(totalBytes)}</Text>
-              </Text>
+              <Text color={currentTheme.accent} bold>{formatBytes(totalBytes)}</Text>
             </>
           )}
+          <Text color={currentTheme.overlay0}>{`${elapsedSec}s`}</Text>
         </Box>
       </Box>
     );

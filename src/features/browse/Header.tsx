@@ -82,7 +82,7 @@ export function Header({
   }
 
   return (
-      <Box height={LOGO.length} flexShrink={0} alignItems="flex-start" marginLeft={1}>
+      <Box height={LOGO.length} flexShrink={0} alignItems="flex-start" marginLeft={1} marginTop={1}>
         {/* Left column — stats spread across 5 lines to match logo height */}
         <Box flexDirection="column" flexShrink={0}>
           <Box>

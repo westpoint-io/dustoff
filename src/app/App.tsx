@@ -380,7 +380,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
 
   // Detail panel max height: total height minus header, status bar, shortcut bar, padding
   const headerHeight = termSize.height < 30 ? 1 : LOGO.length;
-  const detailMaxHeight = Math.max(5, termSize.height - headerHeight - 4); // status(1) + shortcuts(1) + paddingTop(1) + paddingBottom(1)
+  const detailMaxHeight = Math.max(5, termSize.height - headerHeight - 4); // status(1) + shortcuts(1) + paddingBottom(1) + headerMarginTop(1)
 
   // Get cursor artifact from sorted list (or from flat items if grouping)
   const cursorArtifact = useMemo(() => {
@@ -465,7 +465,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
 
   return (
     <ThemeProvider value={currentTheme}>
-      <Box flexDirection="column" height={termSize.height} paddingX={1} paddingTop={1} paddingBottom={1}>
+      <Box flexDirection="column" height={termSize.height} paddingX={1} paddingBottom={1}>
         {/* Header: context left, logo right — no bottom gap */}
         <Header
           rootPath={rootPath}

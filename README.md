@@ -116,6 +116,8 @@ Cycle with `t`. Your choice is saved across sessions.
 
 ## ⌨️ Keybindings
 
+Vim-style navigation is fully supported alongside arrow keys.
+
 | Key | Action |
 |-----|--------|
 | `↑` `k` | Move cursor up |

@@ -1,12 +1,7 @@
 <p align="center">
   <br />
-  <pre align="center">
- ____  _   _ ____ _____ ___  _____ _____
-|  _ \| | | / ___|_   _/ _ \|  ___|  ___|
-| | | | | | \___ \ | || | | | |_  | |_
-| |_| | |_| |___) || || |_| |  _| |  _|
-|____/ \___/|____/ |_| \___/|_|   |_|
-  </pre>
+  <img src="assets/logo.svg" alt="DUSTOFF" width="500" />
+  <br />
   <br />
   <strong>Find and remove JS/TS build artifacts wasting disk space.</strong>
   <br />
@@ -72,10 +67,6 @@ dustoff --target "node_modules,.next"         # only scan for specific artifacts
 
 ## Features
 
-### Scan & Browse
-
-Real-time BFS scanning with live size calculation. Navigate with vim keys (`hjkl`) or arrow keys.
-
 ### Smart Sorting
 
 Sort by size, path, or age with `s` to find the biggest space hogs.
@@ -99,10 +90,6 @@ Press `x` to group artifacts by parent directory. Collapse and expand groups wit
 <p align="center">
   <img src="assets/features/grouping.gif" alt="Directory grouping" width="800" />
 </p>
-
-### Detail Panel
-
-Press `Tab` to toggle a side panel with full artifact metadata — type, size, age, full path, subdirectory size breakdown chart, and sensitive location warnings. Scroll long panels with `+`/`-`.
 
 ### Range Multi-Select
 

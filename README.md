@@ -20,7 +20,7 @@
 ---
 
 <p align="center">
-  <img src="docs/demo.gif" alt="dustoff in action" width="800" />
+  <img src="assets/demo.gif" alt="dustoff in action" width="800" />
   <br />
   <em>Demo recorded with the Tokyo Night theme. See <a href="#themes">Theme Gallery</a> for all 10 themes.</em>
 </p>
@@ -76,16 +76,12 @@ dustoff --target "node_modules,.next"         # only scan for specific artifacts
 
 Real-time BFS scanning with live size calculation. Navigate with vim keys (`hjkl`) or arrow keys.
 
-<p align="center">
-  <img src="docs/features/scan-browse.gif" alt="Scanning and browsing artifacts" width="800" />
-</p>
-
 ### Smart Sorting
 
-Sort by size, path, or age with `1` `2` `3` keys to find the biggest space hogs.
+Sort by size, path, or age with `s` to find the biggest space hogs.
 
 <p align="center">
-  <img src="docs/features/sorting.gif" alt="Sorting artifacts by size and age" width="800" />
+  <img src="assets/features/sorting.gif" alt="Sorting artifacts by size and age" width="800" />
 </p>
 
 ### Search & Filter
@@ -93,31 +89,35 @@ Sort by size, path, or age with `1` `2` `3` keys to find the biggest space hogs.
 Press `/` to search — instantly filter artifacts by path. Press `f` to open the type filter and show only specific artifact types (e.g. just `node_modules` or `.next`).
 
 <p align="center">
-  <img src="docs/features/search.gif" alt="Searching and filtering artifacts" width="800" />
+  <img src="assets/features/search_filter.gif" alt="Searching and filtering artifacts" width="800" />
 </p>
 
 ### Directory Grouping
 
 Press `x` to group artifacts by parent directory. Collapse and expand groups with `Enter` or arrow keys. Select an entire group at once with `Space` on the group header.
 
+<p align="center">
+  <img src="assets/features/grouping.gif" alt="Directory grouping" width="800" />
+</p>
+
 ### Detail Panel
 
 Press `Tab` to toggle a side panel with full artifact metadata — type, size, age, full path, subdirectory size breakdown chart, and sensitive location warnings. Scroll long panels with `+`/`-`.
 
-<p align="center">
-  <img src="docs/features/detail-panel.gif" alt="Detail panel showing artifact info" width="800" />
-</p>
-
 ### Range Multi-Select
 
 Hold `Shift` + arrow keys (or use `J`/`K`) to select a contiguous range of artifacts. `Shift+Space` extends selection from an anchor point.
+
+<p align="center">
+  <img src="assets/features/multi_select.gif" alt="Range multi-select" width="800" />
+</p>
 
 ### Safe Deletion
 
 Select artifacts with `Space`, delete with `d`. Confirmation dialog and live progress tracking.
 
 <p align="center">
-  <img src="docs/features/deletion.gif" alt="Selecting and deleting artifacts" width="800" />
+  <img src="assets/features/deletion.gif" alt="Selecting and deleting artifacts" width="800" />
 </p>
 
 ### 10 Built-in Themes
@@ -125,7 +125,7 @@ Select artifacts with `Space`, delete with `d`. Confirmation dialog and live pro
 Cycle with `t`. Your choice is saved across sessions.
 
 <p align="center">
-  <img src="docs/features/themes.gif" alt="Cycling through themes" width="800" />
+  <img src="assets/features/themes.gif" alt="Cycling through themes" width="800" />
 </p>
 
 ## Keybindings

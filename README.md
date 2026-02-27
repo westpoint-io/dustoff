@@ -21,11 +21,11 @@
 
 ---
 
-## What It Does
+## 🧹 What It Does
 
 Scan your filesystem for JavaScript/TypeScript build artifacts — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, and [30+ more](#detected-artifacts) — then interactively browse, sort, select, and safely delete them to reclaim disk space.
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 npx dustoff
@@ -64,7 +64,7 @@ dustoff --exclude "dist,build"               # skip dist and build directories
 dustoff --target "node_modules,.next"         # only scan for specific artifacts
 ```
 
-## Features
+## ✨ Features
 
 ### Smart Sorting
 
@@ -114,7 +114,7 @@ Cycle with `t`. Your choice is saved across sessions.
   <img src="assets/features/themes.gif" alt="Cycling through themes" width="800" />
 </p>
 
-## Keybindings
+## ⌨️ Keybindings
 
 | Key | Action |
 |-----|--------|
@@ -138,7 +138,7 @@ Cycle with `t`. Your choice is saved across sessions.
 | `Esc` | Clear selection |
 | `q` | Quit |
 
-## Themes
+## 🎨 Themes
 
 Cycle through themes with `t` during a session. Your preference is persisted automatically.
 
@@ -165,7 +165,7 @@ Cycle through themes with `t` during a session. Your preference is persisted aut
   </tr>
 </table>
 
-## Detected Artifacts
+## 🔍 Detected Artifacts
 
 dustoff scans for these directories:
 
@@ -181,10 +181,10 @@ dustoff scans for these directories:
 | **Runtime** | `deno_cache` |
 | **Build outputs** | `dist`, `build`, `.output` |
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
+## 📄 License
 
 MIT

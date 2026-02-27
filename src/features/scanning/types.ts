@@ -10,6 +10,7 @@ export interface ScanOptions {
   onProgress?: (event: { directoriesVisited: number }) => void; // called on each directory visited
   exclude?: ReadonlySet<string>;  // artifact types to skip (e.g. new Set(['dist']))
   targets?: ReadonlySet<string>;  // override TARGET_DIRS with custom set
+  onDebug?: (msg: string) => void; // optional debug logging callback
 }
 
 export interface ScanStats {

@@ -40,6 +40,7 @@ export async function* scan(
 ): AsyncGenerator<ScanResult> {
   const targets = options?.targets ?? TARGET_DIRS;
   const exclude = options?.exclude;
+  const debug = options?.onDebug;
   const queue: string[] = [rootPath];
   let directoriesVisited = 0;
 
@@ -54,13 +55,13 @@ export async function* scan(
     // Increment directory counter and notify caller
     directoriesVisited++;
     options?.onProgress?.({ directoriesVisited });
-
     let dir;
     try {
       dir = await opendir(currentDir);
     } catch (err) {
       if (isPermissionError(err)) {
         // Permission denied — skip this directory and continue
+        debug?.(`scan: permission denied, skipping ${currentDir}`);
         continue;
       }
       // Re-throw unexpected errors (e.g., ENOENT after scan started)
@@ -99,6 +100,7 @@ export async function* scan(
             // stat failed — leave mtimeMs undefined
           }
 
+          debug?.(`scan: artifact found ${entryPath} (${entry.name})`);
           yield {
             path: entryPath,
             type: entry.name,
@@ -111,6 +113,13 @@ export async function* scan(
         // Regular directory — enqueue for traversal
         queue.push(entryPath);
       }
+    } catch (err) {
+      // Permission errors can also occur during iteration (e.g. Bun's scandir)
+      if (isPermissionError(err)) {
+        debug?.(`scan: permission denied reading entries, skipping ${currentDir}`);
+        continue;
+      }
+      throw err;
     } finally {
       // Ensure dir is closed even if an error occurs during iteration
       try {

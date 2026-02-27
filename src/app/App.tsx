@@ -27,9 +27,10 @@ interface AppProps {
   rootPath?: string;
   exclude?: ReadonlySet<string>;
   targets?: ReadonlySet<string>;
+  verbose?: boolean;
 }
 
-export default function App({ rootPath = process.cwd(), exclude, targets }: AppProps): React.ReactElement {
+export default function App({ rootPath = process.cwd(), exclude, targets, verbose }: AppProps): React.ReactElement {
   const [state, dispatch] = React.useReducer(reducer, {
     ...initialState,
     themeName: loadThemeName(),
@@ -85,7 +86,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets }: AppP
     };
   }, [stdout]);
 
-  useScan(rootPath, dispatch, termSize.width, exclude, targets);
+  useScan(rootPath, dispatch, termSize.width, exclude, targets, verbose);
 
   // Delete handler
   const executeDelete = useDelete(state.artifacts, state.selectedPaths, dispatch);

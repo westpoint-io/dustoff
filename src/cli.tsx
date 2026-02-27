@@ -20,6 +20,7 @@ Options:
                             Example: --exclude "dist,build"
   -t, --target <names>      Override default targets, comma-separated
                             Example: --target "node_modules,.next"
+  -V, --verbose             Write debug log to dustoff-debug.log
   -h, --help                Show this help message
   -v, --version             Show version number`;
   console.log(help);
@@ -89,11 +90,20 @@ process.stdout.write = ((
   return originalWrite(chunk, encodingOrCb, cb);
 }) as typeof process.stdout.write;
 
+if (config.verbose) {
+  const { resolve } = await import('node:path');
+  const logPath = resolve('dustoff-debug.log');
+  process.on('exit', () => {
+    console.error(`Debug log written to ${logPath}`);
+  });
+}
+
 render(
   <App
     rootPath={config.directory}
     exclude={config.exclude ?? undefined}
     targets={config.targets ?? undefined}
+    verbose={config.verbose}
   />,
   { exitOnCtrlC: true },
 );

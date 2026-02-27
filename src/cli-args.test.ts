@@ -11,6 +11,7 @@ describe('parseCli()', () => {
     expect(config.targets).toBeNull();
     expect(config.help).toBe(false);
     expect(config.version).toBe(false);
+    expect(config.verbose).toBe(false);
   });
 
   test('parses -d / --directory', () => {
@@ -53,5 +54,21 @@ describe('parseCli()', () => {
     expect(config.directory).toBe('/tmp');
     expect(config.exclude).toEqual(new Set(['dist']));
     expect(config.targets).toEqual(new Set(['node_modules']));
+  });
+
+  test('handles -- separator before flags (npx tsx passes this)', () => {
+    const config = parseCli(argv('--', '-d', '/tmp/projects'));
+    expect(config.directory).toBe('/tmp/projects');
+  });
+
+  test('handles -- separator with multiple flags', () => {
+    const config = parseCli(argv('--', '-d', '/tmp', '-E', 'dist,build'));
+    expect(config.directory).toBe('/tmp');
+    expect(config.exclude).toEqual(new Set(['dist', 'build']));
+  });
+
+  test('parses -V / --verbose', () => {
+    expect(parseCli(argv('-V')).verbose).toBe(true);
+    expect(parseCli(argv('--verbose')).verbose).toBe(true);
   });
 });

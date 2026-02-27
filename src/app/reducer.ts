@@ -68,6 +68,7 @@ export type AppAction =
   | { type: 'TOGGLE_GROUP_COLLAPSE'; key: string }
   | { type: 'SELECT_PATHS'; paths: string[] }
   | { type: 'DESELECT_PATHS'; paths: string[] }
+  | { type: 'SET_RANGE_SELECTION'; paths: string[] }
   | { type: 'SET_TYPE_FILTER_MODE'; enabled: boolean }
   | { type: 'TOGGLE_TYPE_FILTER'; artifactType: string }
   | { type: 'TYPE_FILTER_CURSOR_UP' }
@@ -349,6 +350,10 @@ export function reducer(state: AppState, action: AppAction): AppState {
         next.delete(p);
       }
       return { ...state, selectedPaths: next };
+    }
+
+    case 'SET_RANGE_SELECTION': {
+      return { ...state, selectedPaths: new Set(action.paths) };
     }
 
     case 'SET_TYPE_FILTER_MODE': {

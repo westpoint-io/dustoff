@@ -236,25 +236,15 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     const rangeDown = state.viewMode === 'browse' && !state.isSearchMode && !state.isTypeFilterMode
       && ((key.shift && key.downArrow) || input === 'J');
 
-    if (rangeUp) {
+    if (rangeUp || rangeDown) {
       const anchor = state.selectionAnchor ?? state.cursorIndex;
-      const newCursor = Math.max(0, state.cursorIndex - 1);
+      const newCursor = rangeUp
+        ? Math.max(0, state.cursorIndex - 1)
+        : Math.min(sortedArtifacts.length - 1, state.cursorIndex + 1);
       const start = Math.min(anchor, newCursor);
       const end = Math.max(anchor, newCursor);
       const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
-      dispatch({ type: 'SELECT_PATHS', paths });
-      dispatch({ type: 'SET_SELECTION_ANCHOR', anchor });
-      dispatch({ type: 'SET_CURSOR', index: newCursor });
-      return;
-    }
-
-    if (rangeDown) {
-      const anchor = state.selectionAnchor ?? state.cursorIndex;
-      const newCursor = Math.min(sortedArtifacts.length - 1, state.cursorIndex + 1);
-      const start = Math.min(anchor, newCursor);
-      const end = Math.max(anchor, newCursor);
-      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
-      dispatch({ type: 'SELECT_PATHS', paths });
+      dispatch({ type: 'SET_RANGE_SELECTION', paths });
       dispatch({ type: 'SET_SELECTION_ANCHOR', anchor });
       dispatch({ type: 'SET_CURSOR', index: newCursor });
       return;

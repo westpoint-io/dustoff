@@ -71,13 +71,12 @@ export function Header({
   const sortLabel = `${SORT_LABELS[sortKey]} ${sortDir === 'desc' ? '↓' : '↑'}`;
   const hasFilter = searchQuery.length > 0 && !isSearchMode;
 
-  // Task 11: selection percentage
   let selectedLabel: string;
   if (selectedCount > 0 && totalBytes > 0) {
     const pct = (selectedBytes / totalBytes * 100).toFixed(1);
-    selectedLabel = `${selectedCount} selected (${formatBytes(selectedBytes)} / ${formatBytes(totalBytes)} — ${pct}%)`;
+    selectedLabel = `${selectedCount} selected (${pct}%)`;
   } else if (selectedCount > 0) {
-    selectedLabel = `${selectedCount} selected (${formatBytes(selectedBytes)})`;
+    selectedLabel = `${selectedCount} selected`;
   } else {
     selectedLabel = 'None';
   }
@@ -92,7 +91,7 @@ export function Header({
           </Box>
           <Box>
             <Text color={theme.text} bold>{'Artifacts:'.padEnd(LABEL_W)}</Text>
-            <Text color={theme.text}>{String(artifactCount)}</Text>
+            <Text color={theme.lavender}>{String(artifactCount)}</Text>
           </Box>
           <Box>
             <Text color={theme.text} bold>{'Reclaimable:'.padEnd(LABEL_W)}</Text>
@@ -104,22 +103,22 @@ export function Header({
           </Box>
           <Box flexShrink={0}>
             <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
-            <Text color={theme.text}>{sortLabel}</Text>
+            <Text color={theme.peach}>{sortLabel}</Text>
             <Text color={theme.overlay0}>{'   '}</Text>
             <Text color={theme.text} bold>{'Selected: '}</Text>
-            <Text color={theme.text}>{selectedLabel}</Text>
+            <Text color={theme.green}>{selectedLabel}</Text>
             {typeFilter !== null && typeFilter.size > 0 && (
               <>
                 <Text color={theme.overlay0}>{'   '}</Text>
                 <Text color={theme.text} bold>{'Type: '}</Text>
-                <Text color={theme.text}>{[...typeFilter].join(', ')}</Text>
+                <Text color={theme.cyan}>{[...typeFilter].join(', ')}</Text>
               </>
             )}
             {hasFilter && (
               <>
                 <Text color={theme.overlay0}>{'   '}</Text>
                 <Text color={theme.text} bold>{'Filter: '}</Text>
-                <Text color={theme.text}>{`"${searchQuery}" (${filteredCount})`}</Text>
+                <Text color={theme.pink}>{`"${searchQuery}" (${filteredCount})`}</Text>
               </>
             )}
           </Box>

@@ -59,7 +59,11 @@ function useSubdirSizes(path: string): SubdirSize[] | null {
 
 // ─── Chart bar colors (matches DonutChart.tsx) ───────────────────────────────
 
-const SEGMENT_COLORS = (theme: ThemePalette) => [theme.blue, theme.green, theme.yellow, theme.magenta, theme.cyan];
+const SEGMENT_COLORS = (theme: ThemePalette) => [
+  theme.blue, theme.green, theme.yellow, theme.magenta, theme.cyan,
+  theme.peach, theme.pink, theme.lavender, theme.teal, theme.maroon,
+  theme.sapphire, theme.flamingo, theme.sky, theme.mauve, theme.rosewater,
+];
 
 // ─── Scrollbar ───────────────────────────────────────────────────────────────
 
@@ -155,17 +159,17 @@ export function DetailPanel({ artifact, width, rootPath, maxHeight, scrollOffset
     );
     if (itemCount !== null) {
       result.push(
-        <Box key={k()}><Text color={theme.text}>{'Items'}</Text><Box flexGrow={1} /><Text color={theme.text}>{itemCount}</Text></Box>,
+        <Box key={k()}><Text color={theme.text}>{'Items'}</Text><Box flexGrow={1} /><Text color={theme.flamingo}>{itemCount}</Text></Box>,
       );
     }
     result.push(
-      <Box key={k()}><Text color={theme.text}>{'Modified'}</Text><Box flexGrow={1} /><Text color={theme.text}>{lastModDate}</Text></Box>,
+      <Box key={k()}><Text color={theme.text}>{'Modified'}</Text><Box flexGrow={1} /><Text color={theme.sky}>{lastModDate}</Text></Box>,
     );
     result.push(<Text key={k()} color={theme.overlay0}>{sep}</Text>);
 
     result.push(<Text key={k()} color={theme.text}>{'Relative Path'}</Text>);
     result.push(<Text key={k()} color={theme.blue}>{truncatePath(relativePath, innerW)}</Text>);
-    result.push(<Text key={k()}>{' '}</Text>);
+    result.push(<Text key={k()} color={theme.overlay0}>{sep}</Text>);
     result.push(<Text key={k()} color={theme.text}>{'Full Path'}</Text>);
     result.push(<Text key={k()} color={theme.blue}>{truncatePath(artifact.path, innerW)}</Text>);
 

@@ -1,13 +1,22 @@
-import prettyBytes from 'pretty-bytes';
 import { differenceInDays, differenceInHours } from 'date-fns';
 
+const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
+
 /**
- * Formats a byte count as a human-readable string.
+ * Formats a byte count as a human-readable string (base-1024, e.g. "1.5 MB").
  * Returns "calculating..." for null (size not yet resolved).
  */
 export function formatBytes(bytes: number | null): string {
   if (bytes === null) return 'calculating...';
-  return prettyBytes(bytes, { maximumFractionDigits: 1 });
+  if (bytes === 0) return '0 B';
+  let i = 0;
+  let value = bytes;
+  while (value >= 1024 && i < UNITS.length - 1) {
+    value /= 1024;
+    i++;
+  }
+  const formatted = i === 0 ? String(value) : value.toFixed(1).replace(/\.0$/, '');
+  return `${formatted} ${UNITS[i]}`;
 }
 
 /**

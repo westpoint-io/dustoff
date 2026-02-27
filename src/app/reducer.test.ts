@@ -18,7 +18,7 @@ describe('formatBytes', () => {
 
   it('formats small bytes', () => {
     const result = formatBytes(1024);
-    expect(result).toContain('kB');
+    expect(result).toContain('KB');
   });
 });
 

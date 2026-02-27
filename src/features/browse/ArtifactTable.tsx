@@ -10,6 +10,7 @@ import { useTheme } from '../../shared/ThemeContext.js';
 import { TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
 import { BAR_WIDTH } from './SizeBar.js';
 import { findCommonDirPrefix } from '../../shared/pathUtils.js';
+import { isSensitive } from '../../shared/sensitive.js';
 
 // Fixed width for right-side columns — must match ArtifactRow's RIGHT_W
 const RIGHT_W = 1 + BAR_WIDTH + 1 + SIZE_W + 1 + AGE_W + 1;
@@ -47,17 +48,30 @@ interface ArtifactTableProps {
   dispatch: Dispatch<AppAction>;
   rootPath: string;
   termHeight?: number;
+  termWidth?: number;
+  detailWidth?: number;
   onVisibleCountChange?: (count: number) => void;
   flatItems?: FlatItem[];
+  searchQuery?: string;
+  isSearchMode?: boolean;
+  searchResultCount?: number;
 }
+
+// Left-side fixed columns: checkbox (5) + type (TYPE_W)
+const LEFT_W = 5 + TYPE_W;
 
 export function ArtifactTable({
   state,
   dispatch,
   rootPath,
   termHeight = 40,
+  termWidth = 80,
+  detailWidth = 0,
   onVisibleCountChange,
   flatItems,
+  searchQuery = '',
+  isSearchMode = false,
+  searchResultCount = 0,
 }: ArtifactTableProps): React.ReactElement {
   const theme = useTheme();
   const sortedArtifacts = getSortedArtifacts(state);
@@ -89,6 +103,12 @@ export function ArtifactTable({
   }, [effectiveVisibleCount, onVisibleCountChange]);
 
   const showScrollbar = totalItemCount > effectiveVisibleCount;
+
+  // Compute max path width: total width minus fixed columns, border, padding, detail panel, scrollbar
+  // paddingX(2) + border(2) + LEFT_W + RIGHT_W + scrollbar(0|1) + detailWidth
+  const scrollbarW = showScrollbar ? 1 : 0;
+  const pathWidth = Math.max(20, termWidth - 2 - 2 - LEFT_W - RIGHT_W - scrollbarW - detailWidth);
+
   const scrollbarChars = useMemo(
     () =>
       showScrollbar
@@ -106,32 +126,41 @@ export function ArtifactTable({
     return findCommonDirPrefix(displayPaths);
   }, [sortedArtifacts, rootPath]);
 
-  // Sort indicator on active column
-  const arrow = state.sortDir === 'desc' ? '\u2193' : '\u2191';
-  const sizeLabel = state.sortKey === 'size' ? `SIZE ${arrow}` : 'SIZE';
-  const ageLabel = state.sortKey === 'age' ? `AGE ${arrow}` : 'AGE';
+  // Compute set of sensitive artifact paths
+  const sensitiveSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of sortedArtifacts) {
+      if (isSensitive(a.path).sensitive) set.add(a.path);
+    }
+    return set;
+  }, [sortedArtifacts]);
+
+  // Column header labels — no arrows, just plain text
+  const sizeLabel = 'SIZE'.padStart(SIZE_W);
+  const ageLabel = 'AGE'.padStart(AGE_W);
 
   return (
     <Box flexDirection="column" flexGrow={1} borderStyle="round" borderColor={theme.accent}>
+      {/* Search bar — inside table border */}
+      {(isSearchMode || searchQuery.length > 0) && (
+        <Box paddingX={1}>
+          <Text color={theme.accent} bold>{'/ '}</Text>
+          <Text bold>{searchQuery || '_'}</Text>
+          {searchQuery.length > 0 && (
+            <Text color={theme.overlay0}>{` (${searchResultCount} results)`}</Text>
+          )}
+        </Box>
+      )}
       {/* Column headers */}
       <Box>
         <Text color={theme.headerColor} bold>
-          {'     '}{('TYPE').padEnd(TYPE_W)}{'PATH '}
+          {'     '}{('TYPE').padEnd(TYPE_W)}{'PATH'}
         </Text>
-        <Text dimColor color={theme.overlay0}>{'[2]'}</Text>
         <Box flexGrow={1} />
-        <Box width={RIGHT_W} flexShrink={0}>
-          <Box flexGrow={1} />
-          <Text dimColor color={theme.overlay0}>{'[1]'}</Text>
-          <Text color={theme.headerColor} bold>
-            {sizeLabel.padStart(SIZE_W)}{' '}
-          </Text>
-          <Text dimColor color={theme.overlay0}>{'[3]'}</Text>
-          <Text color={theme.headerColor} bold>
-            {ageLabel}
-          </Text>
-          <Text>{' '}</Text>
-        </Box>
+        <Text color={theme.headerColor} bold>
+          {sizeLabel}{' '}{ageLabel}{' '}
+        </Text>
+        {showScrollbar && <Text>{' '}</Text>}
       </Box>
 
       {/* Rows — full-row cursor highlight */}
@@ -155,7 +184,7 @@ export function ArtifactTable({
                     someSelected={item.group.children.some((c) => state.selectedPaths.has(c.path))}
                   />
                 ) : (
-                  <Box>
+                  <Box flexGrow={1}>
                     {item.indented && <Text>{'  '}</Text>}
                     <ArtifactRow
                       artifact={item.artifact}
@@ -165,6 +194,8 @@ export function ArtifactTable({
                       maxSizeBytes={state.maxSizeBytes}
                       commonPrefix={commonPrefix}
                       themeName={state.themeName}
+                      pathWidth={pathWidth - (item.indented ? 2 : 0)}
+                      isSensitive={sensitiveSet.has(item.artifact.path)}
                     />
                   </Box>
                 )}
@@ -190,6 +221,8 @@ export function ArtifactTable({
                   maxSizeBytes={state.maxSizeBytes}
                   commonPrefix={commonPrefix}
                   themeName={state.themeName}
+                  pathWidth={pathWidth}
+                  isSensitive={sensitiveSet.has(artifact.path)}
                 />
               </Box>
               {showScrollbar && (
@@ -203,16 +236,6 @@ export function ArtifactTable({
       {/* Pad remaining space */}
       <Box flexGrow={1} />
 
-      {/* Contextual tip in empty table space */}
-      {sortedArtifacts.length > 0 && sortedArtifacts.length < effectiveVisibleCount && (
-        <Box justifyContent="center">
-          <Text dimColor>
-            {state.selectedPaths.size > 0
-              ? 'Tip: Press d to delete selected, Esc to clear selection'
-              : 'Tip: Press Space to select, / to search, Tab for details'}
-          </Text>
-        </Box>
-      )}
 
       {state.artifacts.length === 0 && (
         <Text dimColor>{'  No artifacts found.'}</Text>

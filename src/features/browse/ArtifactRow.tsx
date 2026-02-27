@@ -17,6 +17,8 @@ interface ArtifactRowProps {
   maxSizeBytes: number;
   commonPrefix: string;
   themeName?: string;
+  pathWidth?: number;
+  isSensitive?: boolean;
 }
 
 // Memoized row — prevents re-render on every cursor move for non-cursor rows
@@ -27,10 +29,12 @@ export const ArtifactRow = memo(function ArtifactRow({
   rootPath,
   maxSizeBytes,
   commonPrefix,
+  pathWidth = 60,
+  isSensitive = false,
 }: ArtifactRowProps): React.ReactElement {
   const theme = useTheme();
   // Full-row highlight: cursor gets accent bg, selected (non-cursor) gets muted bg
-  const bg = isCursor ? theme.cursorBg : (isSelected ? '#3a3a3a' : undefined);
+  const bg = isCursor ? theme.cursorBg : (isSelected ? theme.selectedBg : undefined);
   const fg = isCursor ? theme.cursorFg : theme.text;
   const typeFg = isCursor ? theme.cursorFg : (theme.typeBadgeColor[artifact.type] ?? theme.subtext0);
   const sizeFg = isCursor ? theme.cursorFg : sizeColor(theme, artifact.sizeBytes);
@@ -48,23 +52,32 @@ export const ArtifactRow = memo(function ArtifactRow({
   const dimPart = displayPath.startsWith(commonPrefix) ? commonPrefix : '';
   const brightPart = dimPart ? displayPath.slice(dimPart.length) : displayPath;
 
+  // Truncate path to fit available width (subtract 2 for ⚠ prefix when sensitive)
+  const effectivePathWidth = isSensitive ? pathWidth - 2 : pathWidth;
+  const truncatedPath = displayPath.length > effectivePathWidth
+    ? displayPath.slice(0, effectivePathWidth - 1) + '…'
+    : displayPath;
+  const truncatedDim = truncatedPath.startsWith(dimPart) ? dimPart : '';
+  const truncatedBright = truncatedDim
+    ? truncatedPath.slice(truncatedDim.length)
+    : truncatedPath;
+
   const checkbox = isSelected ? '[x]' : '[ ]';
 
   return (
-    <Box backgroundColor={bg}>
+    <Box backgroundColor={bg} flexGrow={1}>
       <Text color={checkFg}>{` ${checkbox} `}</Text>
-      <Text color={typeFg}>{artifact.type.padEnd(TYPE_W)}</Text>
+      <Text color={typeFg}>{artifact.type.length > TYPE_W ? artifact.type.slice(0, TYPE_W - 1) + '…' : artifact.type.padEnd(TYPE_W)}</Text>
       <Box flexGrow={1}>
-        <Text wrap="truncate-end">
-          {isCursor ? (
-            <Text color={fg}>{displayPath}</Text>
-          ) : (
-            <>
-              <Text color={theme.overlay0}>{dimPart}</Text>
-              <Text color={fg}>{brightPart}</Text>
-            </>
-          )}
-        </Text>
+        {isSensitive && <Text color={isCursor ? theme.cursorFg : theme.yellow}>{'\u26A0 '}</Text>}
+        {isCursor ? (
+          <Text color={fg}>{truncatedPath}</Text>
+        ) : (
+          <Text>
+            <Text color={theme.overlay0}>{truncatedDim}</Text>
+            <Text color={fg}>{truncatedBright}</Text>
+          </Text>
+        )}
       </Box>
       <Box width={RIGHT_W} flexShrink={0}>
         <Text>{' '}</Text>

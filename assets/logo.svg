@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 160">
-  <rect width="490" height="160" rx="12" fill="#1e1e2e"/>
-  <text font-family="'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace" font-size="14" font-weight="bold" text-anchor="middle" xml:space="preserve">
-    <tspan x="245" y="42" fill="#89dceb"> ____  _   _ ____ _____ ___  _____ _____ </tspan>
-    <tspan x="245" y="62" fill="#89b4fa">|  _ \| | | / ___|_   _/ _ \|  ___|  ___|</tspan>
-    <tspan x="245" y="82" fill="#cba6f7">| | | | | | \___ \ | || | | | |_  | |_   </tspan>
-    <tspan x="245" y="102" fill="#f5c2e7">| |_| | |_| |___) || || |_| |  _| |  _|  </tspan>
-    <tspan x="245" y="122" fill="#f38ba8">|____/ \___/|____/ |_| \___/|_|   |_|    </tspan>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 140">
+  <rect width="380" height="140" rx="12" fill="#1e1e2e"/>
+  <text font-family="'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace" font-size="14" font-weight="bold" xml:space="preserve">
+    <tspan x="18" y="35" fill="#89dceb"> ____  _   _ ____ _____ ___  _____ _____</tspan>
+    <tspan x="18" y="55" fill="#89b4fa">|  _ \| | | / ___|_   _/ _ \|  ___|  ___|</tspan>
+    <tspan x="18" y="75" fill="#cba6f7">| | | | | | \___ \ | || | | | |_  | |_</tspan>
+    <tspan x="18" y="95" fill="#f5c2e7">| |_| | |_| |___) || || |_| |  _| |  _|</tspan>
+    <tspan x="18" y="115" fill="#f38ba8">|____/ \___/|____/ |_| \___/|_|   |_|</tspan>
   </text>
 </svg>

@@ -31,6 +31,7 @@ export interface AppState {
   isTypeFilterMode: boolean;
   typeFilterCursor: number;
   selectionAnchor: number | null;
+  detailScrollOffset: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -40,7 +41,7 @@ export interface AppState {
 export type AppAction =
   | { type: 'ARTIFACT_FOUND'; artifact: ScanResult }
   | { type: 'SIZE_RESOLVED'; path: string; sizeBytes: number }
-  | { type: 'SCAN_COMPLETE'; durationMs: number }
+  | { type: 'SCAN_COMPLETE'; durationMs: number; termWidth?: number }
   | { type: 'DIRS_SCANNED'; count: number }
   | { type: 'CURSOR_UP' }
   | { type: 'CURSOR_DOWN'; itemCount?: number }
@@ -73,7 +74,9 @@ export type AppAction =
   | { type: 'TYPE_FILTER_CURSOR_DOWN'; typeCount: number }
   | { type: 'CLEAR_TYPE_FILTER' }
   | { type: 'SET_CURSOR'; index: number }
-  | { type: 'SET_SELECTION_ANCHOR'; anchor: number };
+  | { type: 'SET_SELECTION_ANCHOR'; anchor: number }
+  | { type: 'DETAIL_SCROLL_UP' }
+  | { type: 'DETAIL_SCROLL_DOWN'; totalLines: number; maxHeight: number };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -110,6 +113,7 @@ export const initialState: AppState = {
   isTypeFilterMode: false,
   typeFilterCursor: 0,
   selectionAnchor: null,
+  detailScrollOffset: 0,
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -133,10 +137,12 @@ export function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'SCAN_COMPLETE': {
+      const autoDetail = action.termWidth !== undefined && action.termWidth >= 130;
       return {
         ...state,
         scanStatus: 'complete',
         scanDurationMs: action.durationMs,
+        detailVisible: autoDetail ? true : state.detailVisible,
       };
     }
 
@@ -149,6 +155,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         cursorIndex: Math.max(0, state.cursorIndex - 1),
         selectionAnchor: null,
+        detailScrollOffset: 0,
       };
     }
 
@@ -158,11 +165,12 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         cursorIndex: Math.min(max, state.cursorIndex + 1),
         selectionAnchor: null,
+        detailScrollOffset: 0,
       };
     }
 
     case 'CURSOR_HOME': {
-      return { ...state, cursorIndex: 0, selectionAnchor: null };
+      return { ...state, cursorIndex: 0, selectionAnchor: null, detailScrollOffset: 0 };
     }
 
     case 'CURSOR_END': {
@@ -171,6 +179,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         cursorIndex: Math.max(0, max),
         selectionAnchor: null,
+        detailScrollOffset: 0,
       };
     }
 
@@ -179,6 +188,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         cursorIndex: Math.max(0, state.cursorIndex - action.visibleCount),
         selectionAnchor: null,
+        detailScrollOffset: 0,
       };
     }
 
@@ -188,6 +198,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         cursorIndex: Math.min(max, state.cursorIndex + action.visibleCount),
         selectionAnchor: null,
+        detailScrollOffset: 0,
       };
     }
 
@@ -219,7 +230,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'DETAIL_TOGGLE': {
-      return { ...state, detailVisible: !state.detailVisible };
+      return { ...state, detailVisible: !state.detailVisible, detailScrollOffset: 0 };
     }
 
     case 'TOGGLE_SELECT': {
@@ -394,6 +405,21 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_SELECTION_ANCHOR': {
       return { ...state, selectionAnchor: action.anchor };
+    }
+
+    case 'DETAIL_SCROLL_UP': {
+      return {
+        ...state,
+        detailScrollOffset: Math.max(0, state.detailScrollOffset - 1),
+      };
+    }
+
+    case 'DETAIL_SCROLL_DOWN': {
+      const maxOffset = Math.max(0, action.totalLines - action.maxHeight);
+      return {
+        ...state,
+        detailScrollOffset: Math.min(maxOffset, state.detailScrollOffset + 1),
+      };
     }
 
     default: {

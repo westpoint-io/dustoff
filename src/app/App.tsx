@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Box, Text, useInput, useApp, useStdout } from 'ink';
 import { useScan } from '../features/scanning/useScan.js';
 import { ArtifactTable } from '../features/browse/ArtifactTable.js';
@@ -9,11 +9,10 @@ import { DeleteConfirm } from '../features/deletion/DeleteConfirm.js';
 import { DeleteProgress } from '../features/deletion/DeleteProgress.js';
 import { ShortcutBar } from './ShortcutBar.js';
 import { StatusBar } from './StatusBar.js';
-import { SearchBox } from '../features/browse/SearchBox.js';
 import { TypeFilter } from '../features/browse/TypeFilter.js';
 import { LOGO, getThemeByName } from '../shared/themes.js';
 import { ThemeProvider } from '../shared/ThemeContext.js';
-import { formatBytes } from '../shared/formatters.js';
+import { formatBytes, truncatePath } from '../shared/formatters.js';
 import { reducer, initialState, getSortedArtifacts } from './reducer.js';
 import { loadThemeName, saveThemeName } from '../shared/config.js';
 import { groupArtifacts, flattenGroups } from '../features/browse/grouping.js';
@@ -39,6 +38,8 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
   const { stdout } = useStdout();
   const [visibleCount, setVisibleCount] = useState(10);
   const [themeFlash, setThemeFlash] = useState<string | null>(null);
+  const [detailTotalLines, setDetailTotalLines] = useState(0);
+  const handleDetailTotalLines = useCallback((n: number) => setDetailTotalLines(n), []);
 
   // Resolve current theme palette from state
   const currentTheme = useMemo(
@@ -188,8 +189,8 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
         // Clear search and exit search mode
         dispatch({ type: 'SET_SEARCH_QUERY', query: '' });
         dispatch({ type: 'SET_SEARCH_MODE', enabled: false });
-      } else if (input && input.length === 1 && charCode > 31 && !key.ctrl && !key.meta && !key.shift) {
-        // Regular printable character (code > 31) — append to search
+      } else if (input && input.length === 1 && charCode > 31 && !key.ctrl && !key.meta) {
+        // Regular printable character (code > 31) — append to search (allow shift for uppercase)
         dispatch({
           type: 'SET_SEARCH_QUERY',
           query: state.searchQuery + input,
@@ -338,6 +339,10 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       dispatch({ type: 'CURSOR_END', itemCount: effectiveItemCount });
     } else if (input === 'x') {
       dispatch({ type: 'TOGGLE_GROUPING' });
+    } else if (input === '-' && state.detailVisible) {
+      dispatch({ type: 'DETAIL_SCROLL_UP' });
+    } else if ((input === '+' || input === '=') && state.detailVisible) {
+      dispatch({ type: 'DETAIL_SCROLL_DOWN', totalLines: detailTotalLines, maxHeight: detailMaxHeight - 2 });
     } else if (input === 'q') {
       // Immediate exit — bypass Ink's graceful shutdown which stalls
       // while the scanner's async generator and size calculations drain.
@@ -367,9 +372,15 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     .filter((a) => state.selectedPaths.has(a.path))
     .reduce((sum, a) => sum + (a.sizeBytes ?? 0), 0);
 
-  const detailWidth = state.detailVisible
+  const detailFullScreen = termSize.width < 130 && state.detailVisible;
+
+  const detailWidth = state.detailVisible && !detailFullScreen
     ? Math.max(45, Math.floor(termSize.width * 0.22))
     : 0;
+
+  // Detail panel max height: total height minus header, status bar, shortcut bar, padding
+  const headerHeight = termSize.height < 30 ? 1 : LOGO.length;
+  const detailMaxHeight = Math.max(5, termSize.height - headerHeight - 3); // status(1) + shortcuts(1) + paddingBottom(1)
 
   // Get cursor artifact from sorted list (or from flat items if grouping)
   const cursorArtifact = useMemo(() => {
@@ -410,6 +421,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           <Text color={currentTheme.yellow}>{bar}</Text>
         </Box>
         <Box marginTop={1} flexDirection="column" alignItems="center">
+          <Text color={currentTheme.overlay0}>{truncatePath(rootPath.replace(process.env.HOME || '', '~'), BAR_W)}</Text>
           {state.artifacts.length === 0 ? (
             <Text color={currentTheme.overlay0}>Scanning...</Text>
           ) : (
@@ -452,13 +464,6 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           detailWidth={detailWidth}
         />
 
-        {/* Search box — shows when searching or has active filter */}
-        <SearchBox
-          query={state.searchQuery}
-          isActive={state.isSearchMode}
-          totalResults={sortedArtifacts.length}
-        />
-
         {/* Table — always visible */}
         <Box flexGrow={1}>
           {/* Type filter picker replaces table when active */}
@@ -466,6 +471,15 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
             <Box flexGrow={1} justifyContent="center" alignItems="center">
               <TypeFilter types={availableTypes} cursorIndex={state.typeFilterCursor} width={Math.floor(termSize.width * 0.6)} />
             </Box>
+          ) : detailFullScreen && cursorArtifact !== undefined ? (
+            <DetailPanel
+              artifact={cursorArtifact}
+              width={termSize.width - 2}
+              rootPath={rootPath}
+              maxHeight={detailMaxHeight}
+              scrollOffset={state.detailScrollOffset}
+              onTotalLinesChange={handleDetailTotalLines}
+            />
           ) : (
             <>
               <ArtifactTable
@@ -477,11 +491,21 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
                 detailWidth={detailWidth}
                 onVisibleCountChange={setVisibleCount}
                 flatItems={state.groupingEnabled ? flatItems : undefined}
+                searchQuery={state.searchQuery}
+                isSearchMode={state.isSearchMode}
+                searchResultCount={sortedArtifacts.length}
               />
 
               {/* Detail panel */}
               {state.detailVisible && cursorArtifact !== undefined && (
-                <DetailPanel artifact={cursorArtifact} width={detailWidth} rootPath={rootPath} />
+                <DetailPanel
+                  artifact={cursorArtifact}
+                  width={detailWidth}
+                  rootPath={rootPath}
+                  maxHeight={detailMaxHeight}
+                  scrollOffset={state.detailScrollOffset}
+                  onTotalLinesChange={handleDetailTotalLines}
+                />
               )}
             </>
           )}
@@ -520,7 +544,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
             <Text color={currentTheme.green} bold>{`Deleted ${state.deleteToast.count} artifact(s), freed ${formatBytes(state.deleteToast.freedBytes)}`}</Text>
           </Box>
         ) : (
-          <ShortcutBar hasSelection={state.selectedPaths.size > 0} hasFilter={state.searchQuery.length > 0 && !state.isSearchMode} />
+          <ShortcutBar hasSelection={state.selectedPaths.size > 0} hasFilter={state.searchQuery.length > 0 && !state.isSearchMode} detailScrollable={state.detailVisible && detailTotalLines > detailMaxHeight - 2} />
         )}
       </Box>
     </ThemeProvider>

@@ -1,7 +1,49 @@
 #!/usr/bin/env node
 import React from 'react';
 import { render } from 'ink';
+import { statSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import App from './app/App.js';
+import { parseCli } from './cli-args.js';
+
+// Parse CLI arguments before any terminal setup
+const config = parseCli();
+
+if (config.help) {
+  const help = `dustoff — find and remove JS/TS build artifacts wasting disk space
+
+Usage: dustoff [options]
+
+Options:
+  -d, --directory <path>    Set scan root directory (default: current directory)
+  -E, --exclude <names>     Exclude directories by name, comma-separated
+                            Example: --exclude "dist,build"
+  -t, --target <names>      Override default targets, comma-separated
+                            Example: --target "node_modules,.next"
+  -h, --help                Show this help message
+  -v, --version             Show version number`;
+  console.log(help);
+  process.exit(0);
+}
+
+if (config.version) {
+  const require = createRequire(import.meta.url);
+  const pkg = require('../package.json') as { version: string };
+  console.log(pkg.version);
+  process.exit(0);
+}
+
+// Validate directory exists
+try {
+  const s = statSync(config.directory);
+  if (!s.isDirectory()) {
+    console.error(`Error: not a directory: ${config.directory}`);
+    process.exit(1);
+  }
+} catch {
+  console.error(`Error: directory not found: ${config.directory}`);
+  process.exit(1);
+}
 
 // Clear screen and scrollback (NOT alternate buffer)
 process.stdout.write('\x1b[2J\x1b[H\x1b[3J');
@@ -47,6 +89,11 @@ process.stdout.write = ((
   return originalWrite(chunk, encodingOrCb, cb);
 }) as typeof process.stdout.write;
 
-render(<App rootPath={process.cwd()} />, {
-  exitOnCtrlC: true,
-});
+render(
+  <App
+    rootPath={config.directory}
+    exclude={config.exclude ?? undefined}
+    targets={config.targets ?? undefined}
+  />,
+  { exitOnCtrlC: true },
+);

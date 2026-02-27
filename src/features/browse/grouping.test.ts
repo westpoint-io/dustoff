@@ -87,13 +87,14 @@ describe('flattenGroups', () => {
     oldestMtimeMs: 1000,
   });
 
-  it('renders single-child groups flat without header', () => {
+  it('renders single-child groups with header', () => {
     const groups = [makeGroup('solo', ['/root/solo/node_modules'])];
     const items = flattenGroups(groups, new Set());
-    expect(items).toHaveLength(1);
-    expect(items[0]!.kind).toBe('artifact');
-    if (items[0]!.kind === 'artifact') {
-      expect(items[0]!.indented).toBe(false);
+    expect(items).toHaveLength(2);
+    expect(items[0]!.kind).toBe('group-header');
+    expect(items[1]!.kind).toBe('artifact');
+    if (items[1]!.kind === 'artifact') {
+      expect(items[1]!.indented).toBe(true);
     }
   });
 
@@ -125,11 +126,12 @@ describe('flattenGroups', () => {
       makeGroup('multi', ['/root/multi/node_modules', '/root/multi/dist']),
     ];
     const items = flattenGroups(groups, new Set());
-    expect(items).toHaveLength(4);
-    expect(items[0]!.kind).toBe('artifact'); // solo
-    expect(items[1]!.kind).toBe('group-header'); // multi header
-    expect(items[2]!.kind).toBe('artifact'); // multi child 1
-    expect(items[3]!.kind).toBe('artifact'); // multi child 2
+    expect(items).toHaveLength(5);
+    expect(items[0]!.kind).toBe('group-header'); // solo header
+    expect(items[1]!.kind).toBe('artifact'); // solo child
+    expect(items[2]!.kind).toBe('group-header'); // multi header
+    expect(items[3]!.kind).toBe('artifact'); // multi child 1
+    expect(items[4]!.kind).toBe('artifact'); // multi child 2
   });
 
   it('returns empty array for empty groups', () => {

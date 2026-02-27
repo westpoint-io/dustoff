@@ -88,8 +88,8 @@ describe('SizeBar', () => {
       <SizeBar sizeBytes={1000} maxSizeBytes={1000} isCursor={false} />
     );
     const output = lastFrame() ?? '';
-    expect(output).toContain('████████');
-    expect(output).not.toContain('░');
+    expect(output).toContain('⣿⣿⣿⣿⣿⣿⣿⣿');
+    expect(output).not.toContain('⠀');
   });
 
   it('null sizeBytes renders only empty blocks', () => {
@@ -97,8 +97,8 @@ describe('SizeBar', () => {
       <SizeBar sizeBytes={null} maxSizeBytes={1000} isCursor={false} />
     );
     const output = lastFrame() ?? '';
-    expect(output).toContain('░░░░░░░░');
-    expect(output).not.toContain('█');
+    expect(output).toContain('⠀⠀⠀⠀⠀⠀⠀⠀');
+    expect(output).not.toContain('⣿');
   });
 
   it('zero maxSizeBytes renders only empty blocks', () => {
@@ -106,8 +106,8 @@ describe('SizeBar', () => {
       <SizeBar sizeBytes={500} maxSizeBytes={0} isCursor={false} />
     );
     const output = lastFrame() ?? '';
-    expect(output).toContain('░░░░░░░░');
-    expect(output).not.toContain('█');
+    expect(output).toContain('⠀⠀⠀⠀⠀⠀⠀⠀');
+    expect(output).not.toContain('⣿');
   });
 
   it('half size renders both filled and empty characters', () => {
@@ -115,8 +115,8 @@ describe('SizeBar', () => {
       <SizeBar sizeBytes={500} maxSizeBytes={1000} isCursor={false} />
     );
     const output = lastFrame() ?? '';
-    expect(output).toContain('█');
-    expect(output).toContain('░');
+    expect(output).toContain('⣿');
+    expect(output).toContain('⠀');
   });
 });
 
@@ -290,6 +290,80 @@ describe('DetailPanel', () => {
   });
 });
 
+// ─── DetailPanel sizing tests ────────────────────────────────────────────────
+
+describe('DetailPanel sizing', () => {
+  const artifact = {
+    path: '/home/user/projects/webapp/node_modules',
+    type: 'node_modules',
+    sizeBytes: 1340000000,
+    mtimeMs: Date.now() - 92 * 24 * 60 * 60 * 1000,
+  };
+
+  it('truncates content when maxHeight is small', () => {
+    const { lastFrame } = render(
+      <DetailPanel artifact={artifact} width={50} rootPath="/home/user/projects" maxHeight={10} scrollOffset={0} />
+    );
+    const output = lastFrame() ?? '';
+    // Should show basic info at top but NOT the subdir chart header
+    expect(output).toContain('node_modules');
+    expect(output).not.toContain('Largest Subdirs');
+  });
+
+  it('shows all content when maxHeight is large', () => {
+    const { lastFrame } = render(
+      <DetailPanel artifact={artifact} width={50} rootPath="/home/user/projects" maxHeight={30} scrollOffset={0} />
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('Largest Subdirs');
+  });
+
+  it('hides top content when scrollOffset > 0', () => {
+    const { lastFrame } = render(
+      <DetailPanel artifact={artifact} width={50} rootPath="/home/user/projects" maxHeight={10} scrollOffset={5} />
+    );
+    const output = lastFrame() ?? '';
+    // Top line (artifact name as header) should be scrolled away
+    expect(output).not.toContain('Type');
+    // Scrollbar should be visible (thick bar = thumb)
+    expect(output).toContain('\u2503');
+  });
+
+  it('shows scrollbar when content overflows', () => {
+    const { lastFrame } = render(
+      <DetailPanel artifact={artifact} width={50} rootPath="/home/user/projects" maxHeight={10} scrollOffset={0} />
+    );
+    const output = lastFrame() ?? '';
+    // Scrollbar track and thumb characters
+    expect(output).toContain('\u2503');
+  });
+
+  it('shows scrollbar track when scrolled down', () => {
+    const { lastFrame } = render(
+      <DetailPanel artifact={artifact} width={50} rootPath="/home/user/projects" maxHeight={10} scrollOffset={3} />
+    );
+    const output = lastFrame() ?? '';
+    // Both track (│) and thumb (┃) should be visible
+    expect(output).toContain('\u2503');
+    expect(output).toContain('\u2502');
+  });
+
+  it('reports totalLines via onTotalLinesChange callback', () => {
+    let reportedLines = 0;
+    render(
+      <DetailPanel
+        artifact={artifact}
+        width={50}
+        rootPath="/home/user/projects"
+        maxHeight={10}
+        scrollOffset={0}
+        onTotalLinesChange={(n) => { reportedLines = n; }}
+      />
+    );
+    expect(reportedLines).toBeGreaterThan(10);
+  });
+});
+
 // ─── ShortcutBar tests ──────────────────────────────────────────────────────
 
 describe('ShortcutBar', () => {
@@ -311,6 +385,15 @@ describe('ShortcutBar', () => {
   it('shows quit hint', () => {
     const { lastFrame } = render(<ShortcutBar hasSelection={false} hasFilter={false} />);
     expect(lastFrame()).toContain('quit');
+  });
+
+  it('shows scroll hint when detailScrollable is true', () => {
+    const { lastFrame } = render(
+      <ShortcutBar hasSelection={false} hasFilter={false} detailScrollable={true} />,
+    );
+    const output = lastFrame() ?? '';
+    expect(output).toContain('+-');
+    expect(output).toContain('scroll');
   });
 });
 

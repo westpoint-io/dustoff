@@ -55,6 +55,7 @@ interface ArtifactTableProps {
   searchQuery?: string;
   isSearchMode?: boolean;
   searchResultCount?: number;
+  extraReservedRows?: number;
 }
 
 // Left-side fixed columns: checkbox (5) + type (TYPE_W)
@@ -72,10 +73,11 @@ export function ArtifactTable({
   searchQuery = '',
   isSearchMode = false,
   searchResultCount = 0,
+  extraReservedRows = 0,
 }: ArtifactTableProps): React.ReactElement {
   const theme = useTheme();
   const sortedArtifacts = getSortedArtifacts(state);
-  const reservedRows = termHeight >= 30 ? RESERVED_ROWS_FULL : RESERVED_ROWS_COMPACT;
+  const reservedRows = (termHeight >= 30 ? RESERVED_ROWS_FULL : RESERVED_ROWS_COMPACT) + extraReservedRows;
 
   // In grouping mode, use flat items; otherwise use sorted artifacts
   const totalItemCount = state.groupingEnabled && flatItems

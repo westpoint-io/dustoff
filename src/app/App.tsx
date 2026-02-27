@@ -380,7 +380,8 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
 
   // Detail panel max height: total height minus header, status bar, shortcut bar, padding
   const headerHeight = termSize.height < 30 ? 1 : LOGO.length;
-  const detailMaxHeight = Math.max(5, termSize.height - headerHeight - 4); // status(1) + shortcuts(1) + paddingBottom(1) + headerMarginTop(1)
+  const overlayHeight = state.viewMode === 'confirm-delete' ? 2 : state.viewMode === 'deleting' ? 1 : 0; // confirm: 3 rows - 1 marginTop overlap
+  const detailMaxHeight = Math.max(5, termSize.height - headerHeight - 4 - overlayHeight); // status(1) + shortcuts(1) + paddingBottom(1) + headerMarginTop(1)
 
   // Get cursor artifact from sorted list (or from flat items if grouping)
   const cursorArtifact = useMemo(() => {
@@ -515,6 +516,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
                 searchQuery={state.searchQuery}
                 isSearchMode={state.isSearchMode}
                 searchResultCount={sortedArtifacts.length}
+                extraReservedRows={overlayHeight}
               />
 
               {/* Detail panel */}

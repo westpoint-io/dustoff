@@ -15,7 +15,7 @@ export function DeleteConfirm({ selectedCount, selectedBytes, focus }: DeleteCon
   const cancelColor = focus === 'cancel' ? theme.accent : theme.overlay0;
 
   return (
-    <Box borderStyle="single" borderColor={theme.accent} justifyContent="center" paddingX={2} marginTop={-1}>
+    <Box borderStyle="round" borderColor={theme.accent} justifyContent="center" paddingX={2} marginTop={-1}>
       <Text color={theme.red} bold>
         {`  Delete ${selectedCount} artifact${selectedCount > 1 ? 's' : ''}?  `}
       </Text>

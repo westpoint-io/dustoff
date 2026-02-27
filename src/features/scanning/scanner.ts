@@ -38,6 +38,8 @@ export async function* scan(
   rootPath: string,
   options?: ScanOptions,
 ): AsyncGenerator<ScanResult> {
+  const targets = options?.targets ?? TARGET_DIRS;
+  const exclude = options?.exclude;
   const queue: string[] = [rootPath];
   let directoriesVisited = 0;
 
@@ -84,7 +86,10 @@ export async function* scan(
           continue;
         }
 
-        if (TARGET_DIRS.has(entry.name)) {
+        if (targets.has(entry.name)) {
+          if (exclude?.has(entry.name)) {
+            continue;
+          }
           // Found an artifact directory — get mtimeMs and yield it; do NOT recurse
           let mtimeMs: number | undefined;
           try {

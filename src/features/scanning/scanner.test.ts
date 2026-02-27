@@ -209,6 +209,68 @@ describe('scan()', () => {
     expect(results.length).toBeLessThan(4);
   });
 
+  test('excludes artifact types when exclude option is set', async () => {
+    vol.fromJSON({
+      '/project/node_modules/pkg/index.js': '',
+      '/project/dist/bundle.js': '',
+      '/project/.next/server/index.js': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project', { exclude: new Set(['dist']) })) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(2);
+    const types = results.map((r) => r.type);
+    expect(types).not.toContain('dist');
+    expect(types).toContain('node_modules');
+    expect(types).toContain('.next');
+  });
+
+  test('uses custom targets when targets option is set', async () => {
+    vol.fromJSON({
+      '/project/node_modules/pkg/index.js': '',
+      '/project/dist/bundle.js': '',
+      '/project/.next/server/index.js': '',
+      '/project/custom_out/bundle.js': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project', { targets: new Set(['custom_out', 'dist']) })) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(2);
+    const types = new Set(results.map((r) => r.type));
+    expect(types).toContain('custom_out');
+    expect(types).toContain('dist');
+    expect(types).not.toContain('node_modules');
+    expect(types).not.toContain('.next');
+  });
+
+  test('exclude and targets can be combined', async () => {
+    vol.fromJSON({
+      '/project/dist/bundle.js': '',
+      '/project/build/output.js': '',
+      '/project/coverage/lcov.info': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project', {
+      targets: new Set(['dist', 'build', 'coverage']),
+      exclude: new Set(['coverage']),
+    })) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(2);
+    const types = new Set(results.map((r) => r.type));
+    expect(types).toContain('dist');
+    expect(types).toContain('build');
+    expect(types).not.toContain('coverage');
+  });
+
   test('returns ScanResult with correct shape', async () => {
     vol.fromJSON({
       '/project/node_modules/react/index.js': '',

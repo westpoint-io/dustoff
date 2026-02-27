@@ -8,6 +8,8 @@ export interface ScanResult {
 export interface ScanOptions {
   signal?: AbortSignal;   // allow cancellation
   onProgress?: (event: { directoriesVisited: number }) => void; // called on each directory visited
+  exclude?: ReadonlySet<string>;  // artifact types to skip (e.g. new Set(['dist']))
+  targets?: ReadonlySet<string>;  // override TARGET_DIRS with custom set
 }
 
 export interface ScanStats {

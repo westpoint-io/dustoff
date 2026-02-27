@@ -22,7 +22,7 @@
 <p align="center">
   <img src="assets/demo.gif" alt="dustoff in action" width="800" />
   <br />
-  <em>Demo recorded with the Tokyo Night theme. See <a href="#themes">Theme Gallery</a> for all 10 themes.</em>
+  <em>Demo recorded with the Catppuccin Mocha theme. See <a href="#themes">Theme Gallery</a> for all 10 themes.</em>
 </p>
 
 ---
@@ -158,24 +158,24 @@ Cycle through themes with `t` during a session. Your preference is persisted aut
 
 <table>
   <tr>
-    <td align="center"><img src="docs/themes/ansi-pure.png" width="400" /><br /><strong>ANSI Pure</strong></td>
-    <td align="center"><img src="docs/themes/tokyo-night.png" width="400" /><br /><strong>Tokyo Night</strong></td>
+    <td align="center"><img src="assets/themes/tokyo-night.png" width="400" /><br /><strong>Tokyo Night</strong></td>
+    <td align="center"><img src="assets/themes/nord-frost.png" width="400" /><br /><strong>Nord Frost</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/themes/nord-frost.png" width="400" /><br /><strong>Nord Frost</strong></td>
-    <td align="center"><img src="docs/themes/dracula.png" width="400" /><br /><strong>Dracula</strong></td>
+    <td align="center"><img src="assets/themes/dracula.png" width="400" /><br /><strong>Dracula</strong></td>
+    <td align="center"><img src="assets/themes/gruvbox-dark.png" width="400" /><br /><strong>Gruvbox Dark</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/themes/gruvbox-dark.png" width="400" /><br /><strong>Gruvbox Dark</strong></td>
-    <td align="center"><img src="docs/themes/rose-pine.png" width="400" /><br /><strong>Ros&eacute; Pine</strong></td>
+    <td align="center"><img src="assets/themes/rose-pine.png" width="400" /><br /><strong>Ros&eacute; Pine</strong></td>
+    <td align="center"><img src="assets/themes/kanagawa.png" width="400" /><br /><strong>Kanagawa</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/themes/kanagawa.png" width="400" /><br /><strong>Kanagawa</strong></td>
-    <td align="center"><img src="docs/themes/everforest.png" width="400" /><br /><strong>Everforest</strong></td>
+    <td align="center"><img src="assets/themes/everforest.png" width="400" /><br /><strong>Everforest</strong></td>
+    <td align="center"><img src="assets/themes/solarized-dark.png" width="400" /><br /><strong>Solarized Dark</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/themes/solarized-dark.png" width="400" /><br /><strong>Solarized Dark</strong></td>
-    <td align="center"><img src="docs/themes/cyberpunk-neon.png" width="400" /><br /><strong>Cyberpunk Neon</strong></td>
+    <td align="center"><img src="assets/themes/cyberpunk-neon.png" width="400" /><br /><strong>Cyberpunk Neon</strong></td>
+    <td align="center"><img src="assets/themes/catppuccin-mocha.png" width="400" /><br /><strong>Catppuccin Mocha</strong></td>
   </tr>
 </table>
 

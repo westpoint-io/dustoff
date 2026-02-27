@@ -246,6 +246,24 @@ const solarizedDark: ThemePalette = {
   },
 };
 
+const catppuccinMocha: ThemePalette = {
+  name: 'Catppuccin Mocha',
+  text: '#cdd6f4', subtext0: '#a6adc8', overlay0: '#6c7086',
+  red: '#f38ba8', green: '#a6e3a1', yellow: '#f9e2af', blue: '#89b4fa',
+  cyan: '#94e2d5', magenta: '#cba6f7', white: '#cdd6f4',
+  peach: '#fab387', sky: '#89dceb', pink: '#f5c2e7', flamingo: '#f2cdcd',
+  rosewater: '#f5e0dc', maroon: '#eba0ac', teal: '#94e2d5',
+  mauve: '#cba6f7', sapphire: '#74c7ec', lavender: '#b4befe',
+  accent: '#cba6f7', cursorBg: '#cba6f7', cursorFg: '#1e1e2e', headerColor: '#f5c2e7', selectedBg: '#313244',
+  logoColors: ['#89dceb', '#89b4fa', '#cba6f7', '#f5c2e7', '#f38ba8'],
+  typeBadgeColor: {
+    'node_modules': '#a6e3a1', '.next': '#fab387', '.nuxt': '#fab387',
+    'dist': '#f9e2af', 'build': '#fab387', '.turbo': '#cba6f7',
+    '.cache': '#f5c2e7', 'coverage': '#f38ba8', '.parcel-cache': '#f5c2e7',
+    '.svelte-kit': '#fab387', '.output': '#fab387', '.vite': '#89dceb',
+  },
+};
+
 const ansiPure: ThemePalette = {
   name: 'ANSI Pure',
   text: 'white', subtext0: 'gray', overlay0: 'gray',
@@ -279,6 +297,7 @@ export const THEMES: readonly ThemePalette[] = [
   everforest,
   solarizedDark,
   cyberpunkNeon,
+  catppuccinMocha,
 ];
 
 export const DEFAULT_THEME_NAME = 'ANSI Pure';

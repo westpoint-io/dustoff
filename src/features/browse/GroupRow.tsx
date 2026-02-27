@@ -2,7 +2,12 @@ import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import type { ArtifactGroup } from './grouping.js';
 import { useTheme } from '../../shared/ThemeContext.js';
+import { SIZE_W, AGE_W } from '../../shared/themes.js';
 import { formatBytes } from '../../shared/formatters.js';
+import { BAR_WIDTH } from './SizeBar.js';
+
+// Match ArtifactRow's RIGHT_W: space + bar + space + size + space + age + space
+const RIGHT_W = 1 + BAR_WIDTH + 1 + SIZE_W + 1 + AGE_W + 1;
 
 interface GroupRowProps {
   group: ArtifactGroup;
@@ -30,15 +35,17 @@ export const GroupRow = memo(function GroupRow({
   const displayKey = group.key === '.' ? './' : group.key + '/';
 
   return (
-    <Box backgroundColor={bg}>
+    <Box backgroundColor={bg} flexGrow={1}>
       <Text color={checkFg}>{` ${checkbox} `}</Text>
       <Text color={arrowFg}>{arrow} </Text>
       <Text color={nameFg} bold>{displayKey}</Text>
       <Box flexGrow={1} />
-      <Text color={infoFg}>
-        {`${group.children.length} items  ${formatBytes(group.totalSize)}`}
-      </Text>
-      <Text>{' '}</Text>
+      <Box width={RIGHT_W} flexShrink={0}>
+        <Text color={infoFg}>
+          {`${group.children.length} items  ${formatBytes(group.totalSize)}`.padStart(RIGHT_W - 1)}
+        </Text>
+        <Text>{' '}</Text>
+      </Box>
     </Box>
   );
 });

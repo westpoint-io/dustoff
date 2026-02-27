@@ -16,7 +16,7 @@ export function SearchBox({ query, isActive, totalResults }: SearchBoxProps): Re
   }
 
   return (
-    <Box borderStyle="single" borderColor={theme.blue} paddingX={2}>
+    <Box borderStyle="round" borderColor={theme.accent} paddingX={2}>
       <Text bold>{query || '_'}</Text>
       {query.length > 0 && (
         <Text color={theme.overlay0}>{` (${totalResults} results)`}</Text>

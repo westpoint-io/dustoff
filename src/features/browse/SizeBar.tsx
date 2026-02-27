@@ -14,7 +14,7 @@ interface SizeBarProps {
 export function SizeBar({ sizeBytes, maxSizeBytes, isCursor }: SizeBarProps): React.ReactElement {
   const theme = useTheme();
   if (sizeBytes === null || maxSizeBytes === 0) {
-    return <Text color={isCursor ? theme.cursorFg : theme.overlay0}>{'░'.repeat(BAR_WIDTH)}</Text>;
+    return <Text color={isCursor ? theme.cursorFg : theme.overlay0}>{'⠀'.repeat(BAR_WIDTH)}</Text>;
   }
   const ratio = Math.min(1, sizeBytes / maxSizeBytes);
   const filled = Math.round(ratio * BAR_WIDTH);
@@ -23,8 +23,8 @@ export function SizeBar({ sizeBytes, maxSizeBytes, isCursor }: SizeBarProps): Re
   const trackColor = isCursor ? theme.cursorFg : theme.overlay0;
   return (
     <Text>
-      <Text color={barColor}>{'█'.repeat(filled)}</Text>
-      <Text color={trackColor}>{'░'.repeat(empty)}</Text>
+      <Text color={barColor}>{'⣿'.repeat(filled)}</Text>
+      <Text color={trackColor}>{'⠀'.repeat(empty)}</Text>
     </Text>
   );
 }

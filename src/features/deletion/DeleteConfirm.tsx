@@ -11,18 +11,18 @@ interface DeleteConfirmProps {
 
 export function DeleteConfirm({ selectedCount, selectedBytes, focus }: DeleteConfirmProps): React.ReactElement {
   const theme = useTheme();
-  const yesColor = focus === 'yes' ? 'green' : theme.white;
-  const cancelColor = focus === 'cancel' ? 'green' : theme.white;
+  const yesColor = focus === 'yes' ? theme.accent : theme.overlay0;
+  const cancelColor = focus === 'cancel' ? theme.accent : theme.overlay0;
 
   return (
-    <Box borderStyle="single" borderColor={theme.red} justifyContent="center" paddingX={2} marginTop={-1}>
+    <Box borderStyle="single" borderColor={theme.accent} justifyContent="center" paddingX={2} marginTop={-1}>
       <Text color={theme.red} bold>
         {`  Delete ${selectedCount} artifact${selectedCount > 1 ? 's' : ''}?  `}
       </Text>
       <Text color={theme.yellow} bold>{`(${formatBytes(selectedBytes)} will be freed)  `}</Text>
-      <Text backgroundColor={yesColor} color="black">{' Yes '}</Text>
+      <Text backgroundColor={yesColor} color={theme.cursorFg}>{' Yes '}</Text>
       <Text>{' '}</Text>
-      <Text backgroundColor={cancelColor} color="black">{' Cancel '}</Text>
+      <Text backgroundColor={cancelColor} color={theme.cursorFg}>{' Cancel '}</Text>
     </Box>
   );
 }

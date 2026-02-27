@@ -11,52 +11,44 @@ export interface TypeInfo {
 interface TypeFilterProps {
   types: TypeInfo[];
   cursorIndex: number;
+  width?: number;
 }
 
-export function TypeFilter({ types, cursorIndex }: TypeFilterProps): React.ReactElement {
+export function TypeFilter({ types, cursorIndex, width = 60 }: TypeFilterProps): React.ReactElement {
   const theme = useTheme();
+  const INNER_W = Math.max(30, width - 4);
 
   return (
     <Box
       flexDirection="column"
       borderStyle="round"
       borderColor={theme.accent}
+      width={width}
       paddingX={1}
     >
-      <Box marginBottom={0}>
-        <Text color={theme.accent} bold>
-          {'Filter by type (Enter to toggle, Esc to close)'}
-        </Text>
-      </Box>
+      <Text color={theme.accent} bold>
+        {'Filter by type (a:all Esc)'.padEnd(INNER_W)}
+      </Text>
       {types.map((info, i) => {
         const isCursor = i === cursorIndex;
         const checkbox = info.selected ? '[x]' : '[ ]';
-        const badgeColor = theme.typeBadgeColor[info.type] ?? theme.text;
+        const countStr = ` (${info.count})`;
+        const maxTypeLen = INNER_W - checkbox.length - 1 - countStr.length;
+        const typeName = info.type.length > maxTypeLen
+          ? info.type.slice(0, maxTypeLen - 1) + '\u2026'
+          : info.type;
+        const row = `${checkbox} ${typeName}${countStr}`;
+        const padded = row.padEnd(INNER_W);
 
         return (
-          <Box key={info.type}>
-            <Text
-              backgroundColor={isCursor ? theme.cursorBg : undefined}
-              color={isCursor ? theme.cursorFg : theme.text}
-            >
-              {'  '}
-              {checkbox}
-              {' '}
-            </Text>
-            <Text
-              backgroundColor={isCursor ? theme.cursorBg : undefined}
-              color={isCursor ? theme.cursorFg : badgeColor}
-              bold
-            >
-              {info.type}
-            </Text>
-            <Text
-              backgroundColor={isCursor ? theme.cursorBg : undefined}
-              color={isCursor ? theme.cursorFg : theme.overlay0}
-            >
-              {` (${info.count})`}
-            </Text>
-          </Box>
+          <Text
+            key={info.type}
+            backgroundColor={isCursor ? theme.cursorBg : undefined}
+            color={isCursor ? theme.cursorFg : (theme.typeBadgeColor[info.type] ?? theme.text)}
+            bold={isCursor}
+          >
+            {padded}
+          </Text>
         );
       })}
     </Box>

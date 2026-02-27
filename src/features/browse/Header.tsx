@@ -19,6 +19,7 @@ interface HeaderProps {
   isSearchMode?: boolean;
   filteredCount?: number;
   typeFilter?: Set<string> | null;
+  detailWidth?: number;
 }
 
 // Fixed-width label column for alignment
@@ -45,6 +46,7 @@ export function Header({
   isSearchMode = false,
   filteredCount = 0,
   typeFilter = null,
+  detailWidth = 0,
 }: HeaderProps): React.ReactElement {
   const theme = useTheme();
   const reclaimable = totalBytes > 0 ? formatBytes(totalBytes) : '—';
@@ -81,10 +83,9 @@ export function Header({
   }
 
   return (
-    <>
-      <Box alignItems="flex-end" marginLeft={1}>
-        {/* Left column — Scan, Artifacts, Reclaimable */}
-        <Box flexDirection="column">
+      <Box height={LOGO.length} flexShrink={0} alignItems="flex-start" marginLeft={1}>
+        {/* Left column — stats spread across 5 lines to match logo height */}
+        <Box flexDirection="column" flexShrink={0}>
           <Box>
             <Text color={theme.text} bold>{'Scan:'.padEnd(LABEL_W)}</Text>
             <Text color={theme.sky}>{displayPath}</Text>
@@ -97,48 +98,42 @@ export function Header({
             <Text color={theme.text} bold>{'Reclaimable:'.padEnd(LABEL_W)}</Text>
             <Text color={theme.yellow} bold>{reclaimable}</Text>
           </Box>
-        </Box>
-
-        {/* Right column — Oldest, Sort, Selected */}
-        <Box flexDirection="column" marginLeft={3}>
           <Box>
             <Text color={theme.text} bold>{'Oldest:'.padEnd(LABEL_W)}</Text>
             <Text color={theme.red}>{oldest}</Text>
           </Box>
-          <Box>
+          <Box flexShrink={0}>
             <Text color={theme.text} bold>{'Sort:'.padEnd(LABEL_W)}</Text>
-            <Text color={theme.yellow}>{sortLabel}</Text>
-          </Box>
-          <Box>
-            <Text color={theme.text} bold>{'Selected:'.padEnd(LABEL_W)}</Text>
-            <Text color={theme.blue}>{selectedLabel}</Text>
+            <Text color={theme.text}>{sortLabel}</Text>
+            <Text color={theme.overlay0}>{'   '}</Text>
+            <Text color={theme.text} bold>{'Selected: '}</Text>
+            <Text color={theme.text}>{selectedLabel}</Text>
+            {typeFilter !== null && typeFilter.size > 0 && (
+              <>
+                <Text color={theme.overlay0}>{'   '}</Text>
+                <Text color={theme.text} bold>{'Type: '}</Text>
+                <Text color={theme.text}>{[...typeFilter].join(', ')}</Text>
+              </>
+            )}
+            {hasFilter && (
+              <>
+                <Text color={theme.overlay0}>{'   '}</Text>
+                <Text color={theme.text} bold>{'Filter: '}</Text>
+                <Text color={theme.text}>{`"${searchQuery}" (${filteredCount})`}</Text>
+              </>
+            )}
           </Box>
         </Box>
 
         {/* Spacer */}
         <Box flexGrow={1} />
 
-        {/* ASCII logo — far right */}
-        <Box flexDirection="column" alignItems="flex-end">
+        {/* ASCII logo — far right, aligned with detail panel */}
+        <Box flexDirection="column" alignItems="flex-end" flexShrink={1} {...(detailWidth > 0 ? { width: detailWidth } : {})}>
           {LOGO.map((line, i) => (
             <Text key={`logo-${i}`} color={theme.logoColors[i]}>{line}</Text>
           ))}
         </Box>
       </Box>
-
-      {/* Filter persistence indicator */}
-      {hasFilter && (
-        <Box marginLeft={1}>
-          <Text color={theme.blue}>{`Filter: "${searchQuery}" (${filteredCount} results)`}</Text>
-        </Box>
-      )}
-
-      {/* Type filter indicator */}
-      {typeFilter !== null && typeFilter.size > 0 && (
-        <Box marginLeft={1}>
-          <Text color={theme.yellow}>{`Type: ${[...typeFilter].join(', ')}`}</Text>
-        </Box>
-      )}
-    </>
   );
 }

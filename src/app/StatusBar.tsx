@@ -19,7 +19,7 @@ export function StatusBar({
 }: StatusBarProps): React.ReactElement {
   const theme = useTheme();
   return (
-    <Box justifyContent="space-between">
+    <Box justifyContent="space-between" marginRight={1}>
       {/* Left: spacer */}
       <Box />
 

@@ -5,6 +5,7 @@ import { useTheme } from '../shared/ThemeContext.js';
 interface ShortcutBarProps {
   hasSelection: boolean;
   hasFilter?: boolean;
+  detailScrollable?: boolean;
 }
 
 const BASE_SHORTCUTS = [
@@ -13,6 +14,7 @@ const BASE_SHORTCUTS = [
   { key: 'a', desc: 'select all' },
   { key: '\u21E5', desc: 'detail' },
   { key: 's', desc: 'sort' },
+  { key: '/', desc: 'search' },
   { key: 'f', desc: 'filter' },
   { key: 'x', desc: 'group' },
   { key: 't', desc: 'theme' },
@@ -22,7 +24,7 @@ const BASE_SHORTCUTS = [
 const DELETE_SHORTCUTS = [
   { key: '\u25B2\u25BC', desc: 'navigate' },
   { key: '\u2423', desc: 'select' },
-  { key: 'S+\u25B2\u25BC', desc: 'range' },
+  { key: 'shift+\u25B2\u25BC', desc: 'range' },
   { key: 'a', desc: 'select all' },
   { key: 'd', desc: 'delete' },
   { key: 'f', desc: 'filter' },
@@ -43,7 +45,7 @@ const FILTER_SHORTCUTS = [
   { key: 'q', desc: 'quit' },
 ];
 
-export function ShortcutBar({ hasSelection, hasFilter = false }: ShortcutBarProps): React.ReactElement {
+export function ShortcutBar({ hasSelection, hasFilter = false, detailScrollable = false }: ShortcutBarProps): React.ReactElement {
   const theme = useTheme();
   let shortcuts: Array<{ key: string; desc: string }>;
   if (hasSelection) {
@@ -52,6 +54,10 @@ export function ShortcutBar({ hasSelection, hasFilter = false }: ShortcutBarProp
     shortcuts = FILTER_SHORTCUTS;
   } else {
     shortcuts = BASE_SHORTCUTS;
+  }
+
+  if (detailScrollable) {
+    shortcuts = [...shortcuts, { key: '+-', desc: 'scroll' }];
   }
 
   return (

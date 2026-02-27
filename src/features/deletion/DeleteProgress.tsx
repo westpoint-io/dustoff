@@ -13,7 +13,7 @@ interface DeleteProgressProps {
 export function DeleteProgress({ done, total, freedBytes }: DeleteProgressProps): React.ReactElement {
   const theme = useTheme();
   return (
-    <Box borderStyle="single" borderColor={theme.yellow} justifyContent="center" paddingX={2}>
+    <Box borderStyle="round" borderColor={theme.yellow} justifyContent="center" paddingX={2} marginTop={-1}>
       <Spinner type="dots" />
       <Text color={theme.red} bold>
         {`  Deleting... ${done}/${total}  `}

@@ -1,5 +1,4 @@
 <p align="center">
-  <br />
   <img src="assets/logo.svg" alt="DUSTOFF" width="500" />
   <br />
   <br />

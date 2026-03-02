@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 140">
-  <rect width="380" height="140" rx="12" fill="#1e1e2e"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 120">
+  <rect width="380" height="120" rx="12" fill="#1e1e2e"/>
   <text font-family="'SFMono-Regular','Consolas','Liberation Mono','Menlo',monospace" font-size="14" font-weight="bold" xml:space="preserve">
-    <tspan x="18" y="28" fill="#89dceb"> ____  _   _ ____ _____ ___  _____ _____</tspan>
-    <tspan x="18" y="48" fill="#89b4fa">|  _ \| | | / ___|_   _/ _ \|  ___|  ___|</tspan>
-    <tspan x="18" y="68" fill="#cba6f7">| | | | | | \___ \ | || | | | |_  | |_</tspan>
-    <tspan x="18" y="88" fill="#f5c2e7">| |_| | |_| |___) || || |_| |  _| |  _|</tspan>
-    <tspan x="18" y="108" fill="#f38ba8">|____/ \___/|____/ |_| \___/|_|   |_|</tspan>
+    <tspan x="18" y="18" fill="#89dceb"> ____  _   _ ____ _____ ___  _____ _____</tspan>
+    <tspan x="18" y="38" fill="#89b4fa">|  _ \| | | / ___|_   _/ _ \|  ___|  ___|</tspan>
+    <tspan x="18" y="58" fill="#cba6f7">| | | | | | \___ \ | || | | | |_  | |_</tspan>
+    <tspan x="18" y="78" fill="#f5c2e7">| |_| | |_| |___) || || |_| |  _| |  _|</tspan>
+    <tspan x="18" y="98" fill="#f38ba8">|____/ \___/|____/ |_| \___/|_|   |_|</tspan>
   </text>
 </svg>

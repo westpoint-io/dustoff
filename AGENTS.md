@@ -4,8 +4,7 @@
 
 ```bash
 bun test                    # bun test (all tests)
-bun test src/features/      # unit tests only
-bun test test/integration/  # integration tests only
+bun test src/features/      # unit + integration tests
 bun run build               # bun build → dist/
 bun run typecheck           # tsc --noEmit
 ```
@@ -30,6 +29,14 @@ Dustoff is a CLI tool (`npx dustoff`) that scans the filesystem for JavaScript/T
 src/
   index.ts                       Public API entry (exports scanner)
   cli.tsx                        CLI entry — renders <App />
+  cli-args.ts                    CLI argument parsing (parseArgs)
+  cli-args.test.ts               CLI args tests (bun:test)
+  app/
+    App.tsx                      Root component: useReducer, useInput, layout
+    reducer.ts                   AppState, AppAction, reducer, getSortedArtifacts
+    reducer.test.ts              Reducer + pure function tests (bun:test)
+    ShortcutBar.tsx              Context-sensitive keyboard shortcut hints
+    StatusBar.tsx                View name, scan state, cursor position
   features/
     scanning/
       scanner.ts                 BFS AsyncGenerator scan()
@@ -39,11 +46,19 @@ src/
       useScan.ts                 Bridges scanner AsyncGenerator to dispatch (useTransition)
       scanner.test.ts            Scanner BFS logic (memfs, bun:test)
       size.test.ts               Size calculation (memfs, bun:test)
+      inode-dedup.integration.test.ts  Real-filesystem hardlink dedup (bun:test)
     browse/
       ArtifactTable.tsx          Table with column headers + windowed rows
       ArtifactRow.tsx            Memo-wrapped row: checkbox, type, path, size, age
       Header.tsx                 Scan path, count, reclaimable, logo
       DetailPanel.tsx            Right panel: type/size/age/path for cursor item
+      SearchBox.tsx              Search input overlay
+      TypeFilter.tsx             Type filter selection panel
+      GroupRow.tsx                Collapsed/expanded group header row
+      SizeBar.tsx                Braille-character size bar visualization
+      grouping.ts                Group artifacts by parent directory
+      grouping.test.ts           Grouping logic tests (bun:test)
+      subdirSizes.ts             Subdirectory size breakdown for detail panel
       useWindow.ts               Virtual scroll viewport for Ink
       browse.test.tsx            Component render tests (ink-testing-library, bun:test)
     deletion/
@@ -51,17 +66,17 @@ src/
       DeleteConfirm.tsx          Confirmation dialog component
       DeleteProgress.tsx         Progress bar during deletion
   shared/
-    theme.ts                     Color constants, LOGO, color helper fns
+    theme.ts                     Legacy re-export shim (use themes.ts / useTheme() instead)
+    themes.ts                    Theme palettes, color helpers, LOGO, constants
+    ThemeContext.tsx              React context provider for active theme
     formatters.ts                formatBytes, formatAge, ageDays, truncatePath
-  app/
-    App.tsx                      Root component: useReducer, useInput, layout
-    reducer.ts                   AppState, AppAction, reducer, getSortedArtifacts
-    reducer.test.ts              Reducer + pure function tests (bun:test)
-    ShortcutBar.tsx              Context-sensitive keyboard shortcut hints
-    StatusBar.tsx                View name, scan state, cursor position
-test/
-  integration/
-    inode-dedup.test.ts          Real-filesystem hardlink dedup (bun:test)
+    artifactMeta.ts              Static metadata (description, regen command) per artifact type
+    config.ts                    User config (~/.config/dustoff) read/write
+    debug.ts                     File-based debug logger
+    pathUtils.ts                 Path utilities (common prefix extraction)
+    pathUtils.test.ts            Path utils tests (bun:test)
+    sensitive.ts                 Detect sensitive paths (~/.config, AppData, etc.)
+    sensitive.test.ts            Sensitive path tests (bun:test)
 ```
 
 ## TypeScript Rules
@@ -84,7 +99,7 @@ test/
 ## Testing Rules
 
 - Unit tests use `memfs` to mock the filesystem — never touch the real FS in unit tests.
-- Integration tests (`test/integration/`) may use real filesystem.
+- Integration tests use `*.integration.test.ts` suffix and may use real filesystem.
 - Component tests use `ink-testing-library` with `render()`.
 - Reducer tests call `reducer()` directly with crafted state and actions.
 - Test files are colocated with their feature: `src/features/scanning/scanner.test.ts` tests `scanner.ts`.

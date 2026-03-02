@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { calculateSize } from '../../src/features/scanning/size.js';
+import { calculateSize } from './size.js';
 
 // Hardlinks require elevated permissions on Windows (developer mode or admin).
 // Skip all tests on Windows to avoid platform-specific failures in CI.

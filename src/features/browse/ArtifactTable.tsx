@@ -17,8 +17,8 @@ const RIGHT_W = 1 + BAR_WIDTH + 1 + SIZE_W + 1 + AGE_W + 1;
 import { groupArtifacts, flattenGroups } from './grouping.js';
 import type { FlatItem } from './grouping.js';
 
-// Full header (5 logo lines) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 11
-const RESERVED_ROWS_FULL = 11;
+// Full header (5 logo lines + 1 marginTop) + border(2) + colHeader(1) + status(1) + shortcut(1) + paddingBottom(1) = 12
+const RESERVED_ROWS_FULL = 12;
 // Compact header (1 line) + border(2) + colHeader(1) + status(1) + shortcut(1) + selection(1) = 7
 const RESERVED_ROWS_COMPACT = 7;
 

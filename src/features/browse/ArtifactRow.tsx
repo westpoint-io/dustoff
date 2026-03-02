@@ -64,6 +64,11 @@ export const ArtifactRow = memo(function ArtifactRow({
 
   const checkbox = isSelected ? '[x]' : '[ ]';
 
+  // Pad path to fill the full allocated width so Ink overwrites every character
+  // on each render — prevents ghost characters when cursor highlight moves.
+  const paddedPath = truncatedPath.padEnd(effectivePathWidth);
+  const pathPadding = ' '.repeat(Math.max(0, effectivePathWidth - truncatedDim.length - truncatedBright.length));
+
   return (
     <Box backgroundColor={bg} flexGrow={1}>
       <Text color={checkFg}>{` ${checkbox} `}</Text>
@@ -71,11 +76,11 @@ export const ArtifactRow = memo(function ArtifactRow({
       <Box flexGrow={1}>
         {isSensitive && <Text color={isCursor ? theme.cursorFg : theme.yellow}>{'\u26A0 '}</Text>}
         {isCursor ? (
-          <Text color={fg}>{truncatedPath}</Text>
+          <Text color={fg}>{paddedPath}</Text>
         ) : (
           <Text>
             <Text color={theme.overlay0}>{truncatedDim}</Text>
-            <Text color={fg}>{truncatedBright}</Text>
+            <Text color={fg}>{truncatedBright}{pathPadding}</Text>
           </Text>
         )}
       </Box>

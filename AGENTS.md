@@ -129,3 +129,6 @@ src/
 Use [Conventional Commits](https://www.conventionalcommits.org/). Scope is optional.
 
 **Types:** `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `style`
+
+**Changelog-visible types:** Only `feat`, `fix`, and `perf` appear in the changelog (via semantic-release).
+Use `chore` for CI/CD, build config, tooling, and infrastructure changes — never `fix` or `feat` for non-user-facing work.

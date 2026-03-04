@@ -14,5 +14,5 @@ jobs:
       - uses: oven-sh/setup-bun@v1
       - run: bun install
       - run: bun run typecheck
-      - run: bun test src/features/ src/cli-args.test.ts src/shared/ src/app/
+      - run: bun test $(find src -name '*.test.*' ! -name '*.integration.test.*')
       - run: bun run build

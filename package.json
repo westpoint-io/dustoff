@@ -14,6 +14,23 @@
   "bin": {
     "dustoff": "dist/cli.js"
   },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/westpoint-io/dustoff.git"
+  },
+  "keywords": [
+    "cli",
+    "cleanup",
+    "disk-space",
+    "node_modules",
+    "build-artifacts",
+    "tui"
+  ],
+  "author": "westpoint.io",
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=18.18.0"
   },
@@ -21,7 +38,7 @@
     "test": "bun test",
     "test:unit": "bun test src/features/",
     "test:integration": "bun test test/integration/",
-    "build": "bun build src/cli.tsx --outfile dist/cli.js --target node --packages external",
+    "build": "bun build src/cli.tsx --outfile dist/cli.js --target node --packages external && bun build src/index.ts --outfile dist/index.js --target node --packages external && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

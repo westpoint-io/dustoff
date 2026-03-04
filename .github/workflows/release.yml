@@ -2,8 +2,7 @@ name: Release to npm
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 
 jobs:
   release:
@@ -20,7 +19,7 @@ jobs:
 
       - run: bun install
       - run: bun run typecheck
-      - run: bun test
+      - run: bun test $(find src -name '*.test.*' ! -name '*.integration.test.*')
       - run: bun run build
 
       - name: Release

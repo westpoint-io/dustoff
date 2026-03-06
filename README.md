@@ -7,6 +7,8 @@
   <br />
   <a href="https://www.npmjs.com/package/dustoff"><img src="https://img.shields.io/npm/v/dustoff.svg" alt="npm version" /></a>
   <a href="https://www.npmjs.com/package/dustoff"><img src="https://img.shields.io/npm/dm/dustoff.svg" alt="npm downloads" /></a>
+  <a href="https://aur.archlinux.org/packages/dustoff"><img src="https://img.shields.io/aur/version/dustoff" alt="AUR version" /></a>
+  <a href="https://github.com/westpoint-io/homebrew-dustoff"><img src="https://img.shields.io/homebrew/v/westpoint-io/dustoff/dustoff" alt="Homebrew version" /></a>
   <a href="https://github.com/westpoint-io/dustoff/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/dustoff.svg" alt="license" /></a>
   <img src="https://img.shields.io/node/v/dustoff.svg" alt="node version" />
 </p>
@@ -39,6 +41,18 @@ That's it. No install required.
 npm install -g dustoff
 # or
 bun install -g dustoff
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew install westpoint-io/dustoff/dustoff
+```
+
+### Arch Linux (AUR)
+
+```bash
+yay -S dustoff
 ```
 
 Requires Node.js >= 18.18.0.

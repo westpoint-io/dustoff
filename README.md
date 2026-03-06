@@ -7,6 +7,8 @@
   <br />
   <a href="https://www.npmjs.com/package/dustoff"><img src="https://img.shields.io/npm/v/dustoff.svg" alt="npm version" /></a>
   <a href="https://www.npmjs.com/package/dustoff"><img src="https://img.shields.io/npm/dm/dustoff.svg" alt="npm downloads" /></a>
+  <a href="https://aur.archlinux.org/packages/dustoff"><img src="https://img.shields.io/aur/version/dustoff" alt="AUR version" /></a>
+  <a href="https://github.com/westpoint-io/homebrew-dustoff"><img src="https://img.shields.io/badge/homebrew-available-orange?logo=homebrew" alt="Homebrew" /></a>
   <a href="https://github.com/westpoint-io/dustoff/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/dustoff.svg" alt="license" /></a>
   <img src="https://img.shields.io/node/v/dustoff.svg" alt="node version" />
 </p>
@@ -25,23 +27,37 @@
 
 Scan your filesystem for JavaScript/TypeScript build artifacts — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, and [30+ more](#detected-artifacts) — then interactively browse, sort, select, and safely delete them to reclaim disk space.
 
-## 🚀 Quick Start
-
-```bash
-npx dustoff
-```
-
-That's it. No install required.
-
-### Global Install
-
-```bash
-npm install -g dustoff
-# or
-bun install -g dustoff
-```
+## 🚀 Installation
 
 Requires Node.js >= 18.18.0.
+
+- **Via [npm](https://www.npmjs.com/package/dustoff)** — no install required
+
+  ```bash
+  npx dustoff
+  ```
+
+- **Via npm or bun** global install
+
+  ```bash
+  npm install -g dustoff
+  # or
+  bun install -g dustoff
+  ```
+
+- **Via [Homebrew](https://github.com/westpoint-io/homebrew-dustoff)** for macOS
+
+  ```bash
+  brew install westpoint-io/dustoff/dustoff
+  ```
+
+- **On [Arch Linux](https://aur.archlinux.org/packages/dustoff)** (AUR) — requires an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers)
+
+  ```bash
+  yay -S dustoff
+  # or
+  paru -S dustoff
+  ```
 
 ### CLI Options
 

@@ -43,7 +43,7 @@ npm install -g dustoff
 bun install -g dustoff
 ```
 
-### Homebrew (macOS/Linux)
+### Homebrew (macOS)
 
 ```bash
 brew install westpoint-io/dustoff/dustoff

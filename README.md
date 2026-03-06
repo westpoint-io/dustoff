@@ -27,35 +27,35 @@
 
 Scan your filesystem for JavaScript/TypeScript build artifacts — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, and [30+ more](#detected-artifacts) — then interactively browse, sort, select, and safely delete them to reclaim disk space.
 
-## 🚀 Quick Start
-
-```bash
-npx dustoff
-```
-
-That's it. No install required.
-
-### Global Install
-
-```bash
-npm install -g dustoff
-# or
-bun install -g dustoff
-```
-
-### Homebrew (macOS)
-
-```bash
-brew install westpoint-io/dustoff/dustoff
-```
-
-### Arch Linux (AUR)
-
-```bash
-yay -S dustoff
-```
+## 🚀 Installation
 
 Requires Node.js >= 18.18.0.
+
+- **Via [npm](https://www.npmjs.com/package/dustoff)** — no install required
+
+  ```bash
+  npx dustoff
+  ```
+
+- **Via npm or bun** global install
+
+  ```bash
+  npm install -g dustoff
+  # or
+  bun install -g dustoff
+  ```
+
+- **Via [Homebrew](https://github.com/westpoint-io/homebrew-dustoff)** for macOS
+
+  ```bash
+  brew install westpoint-io/dustoff/dustoff
+  ```
+
+- **On [Arch Linux](https://aur.archlinux.org/packages/dustoff)** (AUR)
+
+  ```bash
+  yay -S dustoff
+  ```
 
 ### CLI Options
 

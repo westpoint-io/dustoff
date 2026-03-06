@@ -51,10 +51,12 @@ Requires Node.js >= 18.18.0.
   brew install westpoint-io/dustoff/dustoff
   ```
 
-- **On [Arch Linux](https://aur.archlinux.org/packages/dustoff)** (AUR)
+- **On [Arch Linux](https://aur.archlinux.org/packages/dustoff)** (AUR) — requires an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers)
 
   ```bash
   yay -S dustoff
+  # or
+  paru -S dustoff
   ```
 
 ### CLI Options

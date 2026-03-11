@@ -123,3 +123,23 @@ describe('calculateSizeWithTimeout()', () => {
     expect(size === null || typeof size === 'number').toBe(true);
   });
 });
+
+describe('calculateSize() with file path', () => {
+  test('returns size of a single file directly (e.g. .tsbuildinfo)', async () => {
+    vol.fromJSON({
+      '/project/tsconfig.tsbuildinfo': 'x'.repeat(256),
+    });
+
+    const size = await calculateSize('/project/tsconfig.tsbuildinfo');
+
+    // memfs falls back to stat.size — should be 256 bytes
+    expect(typeof size).toBe('number');
+    expect(size).toBeGreaterThanOrEqual(256);
+  });
+
+  test('returns 0 for non-existent file path — does not throw', async () => {
+    const size = await calculateSize('/project/nonexistent.tsbuildinfo');
+
+    expect(size).toBe(0);
+  });
+});

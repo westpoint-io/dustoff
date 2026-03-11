@@ -52,6 +52,15 @@ export const TARGET_DIRS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * File name suffixes to match as artifact files — complementing TARGET_DIRS.
+ * Files with these suffixes are yielded as scan results alongside directory artifacts.
+ */
+export const TARGET_FILE_SUFFIXES: ReadonlySet<string> = new Set([
+  // TypeScript incremental compiler output
+  '.tsbuildinfo',
+]);
+
+/**
  * Directories to skip entirely during traversal — system directories and SCM metadata.
  * These are never artifact directories and should not be recursed into.
  */

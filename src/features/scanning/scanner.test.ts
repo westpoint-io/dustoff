@@ -291,4 +291,94 @@ describe('scan()', () => {
     expect(result.path).toBe('/project/node_modules');
     expect(result.type).toBe('node_modules');
   });
+
+  test('finds .tsbuildinfo file', async () => {
+    vol.fromJSON({
+      '/project/tsconfig.tsbuildinfo': '{}',
+      '/project/src/index.ts': 'export {};',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.path).toBe('/project/tsconfig.tsbuildinfo');
+    expect(results[0]!.type).toBe('.tsbuildinfo');
+    expect(results[0]!.sizeBytes).toBeNull();
+  });
+
+  test('finds multiple .tsbuildinfo files in a tree', async () => {
+    vol.fromJSON({
+      '/project/tsconfig.tsbuildinfo': '{}',
+      '/project/packages/app/tsconfig.app.tsbuildinfo': '{}',
+      '/project/packages/lib/tsconfig.lib.tsbuildinfo': '{}',
+      '/project/src/index.ts': 'export {};',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(3);
+    const types = new Set(results.map((r) => r.type));
+    expect(types.has('.tsbuildinfo')).toBe(true);
+    const paths = new Set(results.map((r) => r.path));
+    expect(paths).toContain('/project/tsconfig.tsbuildinfo');
+    expect(paths).toContain('/project/packages/app/tsconfig.app.tsbuildinfo');
+    expect(paths).toContain('/project/packages/lib/tsconfig.lib.tsbuildinfo');
+  });
+
+  test('finds .tsbuildinfo alongside directory artifacts', async () => {
+    vol.fromJSON({
+      '/project/tsconfig.tsbuildinfo': '{}',
+      '/project/dist/bundle.js': '',
+      '/project/node_modules/react/index.js': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(3);
+    const types = new Set(results.map((r) => r.type));
+    expect(types).toContain('.tsbuildinfo');
+    expect(types).toContain('dist');
+    expect(types).toContain('node_modules');
+  });
+
+  test('excludes .tsbuildinfo when exclude option is set', async () => {
+    vol.fromJSON({
+      '/project/tsconfig.tsbuildinfo': '{}',
+      '/project/dist/bundle.js': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project', {
+      exclude: new Set(['.tsbuildinfo']),
+    })) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.type).toBe('dist');
+  });
+
+  test('ignores regular non-matching files', async () => {
+    vol.fromJSON({
+      '/project/src/index.ts': 'export {};',
+      '/project/src/index.js': 'module.exports = {};',
+      '/project/package.json': '{}',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(0);
+  });
 });

@@ -198,6 +198,7 @@ dustoff scans for these directories:
 | **Docs/storybook** | `storybook-static`, `gatsby_cache`, `.docusaurus` |
 | **Runtime** | `deno_cache` |
 | **Build outputs** | `dist`, `build`, `.output` |
+| **TypeScript compiler** | `.tsbuildinfo` |
 
 ## 🤝 Contributing
 

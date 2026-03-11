@@ -1,6 +1,6 @@
 import { opendir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { TARGET_DIRS, IGNORE_DIRS } from './constants.js';
+import { TARGET_DIRS, IGNORE_DIRS, TARGET_FILE_SUFFIXES } from './constants.js';
 import type { ScanResult, ScanOptions } from './types.js';
 
 /**
@@ -15,15 +15,17 @@ function isPermissionError(err: unknown): boolean {
 }
 
 /**
- * BFS directory scanner that yields artifact directories as they are found.
+ * BFS directory scanner that yields artifact directories and files as they are found.
  *
  * Algorithm:
  * 1. Start a queue with [rootPath]
  * 2. Dequeue directory, open it, iterate entries
- * 3. Skip symlinks and non-directories
- * 4. Skip IGNORE_DIRS entries entirely
- * 5. If entry name is in TARGET_DIRS: yield it, do NOT recurse into it
- * 6. Otherwise: enqueue for further traversal
+ * 3. Skip symlinks
+ * 4. For file entries: yield if name ends with a TARGET_FILE_SUFFIXES suffix
+ * 5. Skip non-directories (after file check)
+ * 6. Skip IGNORE_DIRS entries entirely
+ * 7. If entry name is in TARGET_DIRS: yield it, do NOT recurse into it
+ * 8. Otherwise: enqueue for further traversal
  *
  * Key properties:
  * - Skips children of matched directories (avoids redundant traversal)
@@ -73,6 +75,27 @@ export async function* scan(
         // CRITICAL: check isSymbolicLink() BEFORE isDirectory()
         // A symlink to a directory returns true for both — skip all symlinks
         if (entry.isSymbolicLink()) {
+          continue;
+        }
+
+        // Check file entries against TARGET_FILE_SUFFIXES before skipping non-directories
+        if (entry.isFile()) {
+          for (const suffix of TARGET_FILE_SUFFIXES) {
+            if (entry.name.endsWith(suffix)) {
+              if (exclude?.has(suffix)) break;
+              const filePath = join(currentDir, entry.name);
+              let mtimeMs: number | undefined;
+              try {
+                const s = await stat(filePath);
+                mtimeMs = s.mtimeMs;
+              } catch {
+                // stat failed — leave mtimeMs undefined
+              }
+              debug?.(`scan: artifact file found ${filePath} (${suffix})`);
+              yield { path: filePath, type: suffix, sizeBytes: null, mtimeMs };
+              break;
+            }
+          }
           continue;
         }
 

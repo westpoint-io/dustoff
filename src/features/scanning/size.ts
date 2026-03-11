@@ -90,6 +90,18 @@ async function sumDir(dirPath: string, seenInodes: Set<string>): Promise<number>
  */
 export async function calculateSize(dirPath: string): Promise<number> {
   const seenInodes = new Set<string>();
+  // Support file paths (e.g. .tsbuildinfo) in addition to directories
+  try {
+    const s = await stat(dirPath);
+    if (s.isFile()) {
+      if (s.blocks != null && s.blocks > 0) {
+        return s.blocks * 512;
+      }
+      return s.size;
+    }
+  } catch {
+    return 0;
+  }
   return sumDir(dirPath, seenInodes);
 }
 

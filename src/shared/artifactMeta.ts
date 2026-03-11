@@ -54,6 +54,12 @@ const META_MAP: Record<string, ArtifactMeta> = {
   'dist': { description: 'Build output', regenerate: 'npm run build' },
   'build': { description: 'Build output', regenerate: 'npm run build' },
   '.output': { description: 'Build output', regenerate: 'npm run build' },
+  
+    // TypeScript compiler output files
+  '.tsbuildinfo': {
+    description: 'TypeScript incremental build info',
+    regenerate: 'Auto-regenerated on tsc --incremental',
+  },
 };
 
 export function getArtifactMeta(type: string): ArtifactMeta | undefined {

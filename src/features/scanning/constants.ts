@@ -42,6 +42,9 @@ export const TARGET_DIRS: ReadonlySet<string> = new Set([
   'gatsby_cache',
   '.docusaurus',
 
+  // Serverless Framework outputs
+  '.serverless',
+
   // Runtime caches
   'deno_cache',
 

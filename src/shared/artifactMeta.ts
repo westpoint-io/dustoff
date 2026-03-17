@@ -47,6 +47,9 @@ const META_MAP: Record<string, ArtifactMeta> = {
   'gatsby_cache': { description: 'Gatsby build cache', regenerate: 'gatsby build' },
   '.docusaurus': { description: 'Docusaurus build cache', regenerate: 'docusaurus build' },
 
+  // Serverless Framework outputs
+  '.serverless': { description: 'Serverless Framework deployment artifacts', regenerate: 'serverless package' },
+
   // Runtime caches
   'deno_cache': { description: 'Deno module cache', regenerate: 'Auto-regenerated on run' },
 

@@ -271,6 +271,23 @@ describe('scan()', () => {
     expect(types).not.toContain('coverage');
   });
 
+  test('finds .serverless directory', async () => {
+    vol.fromJSON({
+      '/project/.serverless/cloudformation-template.json': '{}',
+      '/project/.serverless/function.zip': '',
+      '/project/handler.js': 'module.exports.hello = () => {};',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.path).toBe('/project/.serverless');
+    expect(results[0]!.type).toBe('.serverless');
+  });
+
   test('returns ScanResult with correct shape', async () => {
     vol.fromJSON({
       '/project/node_modules/react/index.js': '',

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useTransition } from 'react';
 import type { Dispatch } from 'react';
 import { resolve } from 'node:path';
+import { stat } from 'node:fs/promises';
 import { scan } from './scanner.js';
 import { calculateSizeWithTimeout } from './size.js';
 import { createDebugLogger } from '../../shared/debug.js';
@@ -58,11 +59,15 @@ export function useScan(
         });
 
         const sizeStartMs = Date.now();
-        const p = calculateSizeWithTimeout(artifact.path, 30_000).then((sizeBytes) => {
+        const sizePromise = artifact.kind === 'file'
+          ? stat(artifact.path).then((s) => s.size).catch(() => 0)
+          : calculateSizeWithTimeout(artifact.path, 30_000).then((s) => s ?? 0);
+
+        const p = sizePromise.then((sizeBytes) => {
           if (!controller.signal.aborted) {
-            logger?.log(`size: ${artifact.path} → ${sizeBytes ?? 0} bytes (${Date.now() - sizeStartMs}ms)`);
+            logger?.log(`size: ${artifact.path} → ${sizeBytes} bytes (${Date.now() - sizeStartMs}ms)`);
             startTransition(() => {
-              dispatch({ type: 'SIZE_RESOLVED', path: artifact.path, sizeBytes: sizeBytes ?? 0 });
+              dispatch({ type: 'SIZE_RESOLVED', path: artifact.path, sizeBytes });
             });
           }
         }).catch((err: unknown) => {

@@ -249,12 +249,27 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
 
     if (rangeUp || rangeDown) {
       const anchor = state.selectionAnchor ?? state.cursorIndex;
+      const maxIndex = state.groupingEnabled && flatItems.length > 0
+        ? flatItems.length - 1
+        : displayItems.length - 1;
       const newCursor = rangeUp
         ? Math.max(0, state.cursorIndex - 1)
-        : Math.min(sortedArtifacts.length - 1, state.cursorIndex + 1);
+        : Math.min(maxIndex, state.cursorIndex + 1);
       const start = Math.min(anchor, newCursor);
       const end = Math.max(anchor, newCursor);
-      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
+
+      let paths: string[];
+      if (state.groupingEnabled && flatItems.length > 0) {
+        paths = flatItems.slice(start, end + 1)
+          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> => item.kind === 'artifact')
+          .map((item) => item.artifact.path);
+      } else {
+        paths = displayItems.slice(start, end + 1)
+          .filter((item): item is Extract<DisplayItem, { kind: 'directory' | 'file' }> =>
+            item.kind === 'directory' || item.kind === 'file')
+          .map((item) => item.artifact.path);
+      }
+
       dispatch({ type: 'SET_RANGE_SELECTION', paths });
       dispatch({ type: 'SET_SELECTION_ANCHOR', anchor });
       dispatch({ type: 'SET_CURSOR', index: newCursor });
@@ -309,7 +324,17 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     } else if (input === ' ' && key.shift && state.selectionAnchor !== null) {
       const start = Math.min(state.selectionAnchor, state.cursorIndex);
       const end = Math.max(state.selectionAnchor, state.cursorIndex);
-      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
+      let paths: string[];
+      if (state.groupingEnabled && flatItems.length > 0) {
+        paths = flatItems.slice(start, end + 1)
+          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> => item.kind === 'artifact')
+          .map((item) => item.artifact.path);
+      } else {
+        paths = displayItems.slice(start, end + 1)
+          .filter((item): item is Extract<DisplayItem, { kind: 'directory' | 'file' }> =>
+            item.kind === 'directory' || item.kind === 'file')
+          .map((item) => item.artifact.path);
+      }
       dispatch({ type: 'SELECT_PATHS', paths });
       return;
     } else if (input === ' ') {

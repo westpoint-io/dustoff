@@ -45,8 +45,8 @@ describe('sizeColor', () => {
 describe('reducer — selection', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
-      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -131,9 +131,9 @@ describe('reducer — selection', () => {
 describe('CURSOR_HOME action', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
-      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
-      { path: '/c/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', kind: 'directory', sizeBytes: 300, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -175,9 +175,9 @@ describe('CURSOR_HOME action', () => {
 describe('CURSOR_END action', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
-      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
-      { path: '/c/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', kind: 'directory', sizeBytes: 300, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -319,9 +319,9 @@ describe('SET_SEARCH_QUERY action', () => {
 describe('DELETE_COMPLETE sets toast', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 500, mtimeMs: Date.now() },
-      { path: '/b/dist', type: 'dist', sizeBytes: 300, mtimeMs: Date.now() },
-      { path: '/c/.next', type: '.next', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 500, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 300, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -368,7 +368,7 @@ describe('DELETE_COMPLETE sets toast', () => {
     const stateWithNull: AppState = {
       ...baseState,
       artifacts: [
-        { path: '/a/node_modules', type: 'node_modules', sizeBytes: null, mtimeMs: Date.now() },
+        { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: null, mtimeMs: Date.now() },
       ],
     };
     const next = reducer(stateWithNull, {
@@ -449,9 +449,9 @@ describe('getSortedArtifacts with search filter', () => {
 
   it('returns all artifacts when searchQuery is empty', () => {
     const artifacts = [
-      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 100, mtimeMs: 1 },
-      { path: '/b/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 2 },
-      { path: '/c/build', type: 'dir' as const, sizeBytes: 300, mtimeMs: 3 },
+      { path: '/a/node_modules', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 200, mtimeMs: 2 },
+      { path: '/c/build', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 300, mtimeMs: 3 },
     ];
     const state = { ...baseState, artifacts, searchQuery: '' };
     const result = getSortedArtifacts(state);
@@ -464,9 +464,9 @@ describe('getSortedArtifacts with search filter', () => {
 
   it('filters artifacts by path substring (case-insensitive)', () => {
     const artifacts = [
-      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 100, mtimeMs: 1 },
-      { path: '/b/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 2 },
-      { path: '/c/NODE_MODULES', type: 'dir' as const, sizeBytes: 300, mtimeMs: 3 },
+      { path: '/a/node_modules', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 200, mtimeMs: 2 },
+      { path: '/c/NODE_MODULES', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 300, mtimeMs: 3 },
     ];
     const state = { ...baseState, artifacts, searchQuery: 'node' };
     const result = getSortedArtifacts(state);
@@ -478,8 +478,8 @@ describe('getSortedArtifacts with search filter', () => {
 
   it('returns empty array when no artifacts match filter', () => {
     const artifacts = [
-      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 100, mtimeMs: 1 },
-      { path: '/b/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 2 },
+      { path: '/a/node_modules', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 200, mtimeMs: 2 },
     ];
     const state = { ...baseState, artifacts, searchQuery: 'nomatch' };
     const result = getSortedArtifacts(state);
@@ -488,9 +488,9 @@ describe('getSortedArtifacts with search filter', () => {
 
   it('preserves sort order when filtering', () => {
     const artifacts = [
-      { path: '/a/node_modules', type: 'dir' as const, sizeBytes: 300, mtimeMs: 1 },
-      { path: '/b/node_modules2', type: 'dir' as const, sizeBytes: 100, mtimeMs: 2 },
-      { path: '/c/dist', type: 'dir' as const, sizeBytes: 200, mtimeMs: 3 },
+      { path: '/a/node_modules', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 300, mtimeMs: 1 },
+      { path: '/b/node_modules2', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 100, mtimeMs: 2 },
+      { path: '/c/dist', type: 'dir' as const, kind: 'directory' as const, sizeBytes: 200, mtimeMs: 3 },
     ];
     const state = {
       ...baseState,
@@ -511,7 +511,7 @@ describe('getSortedArtifacts with search filter', () => {
 describe('TOGGLE_GROUPING action', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -604,9 +604,9 @@ describe('TOGGLE_GROUP_COLLAPSE action', () => {
 describe('SELECT_PATHS action', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
-      { path: '/a/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
-      { path: '/b/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/a/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/b/.next', type: '.next', kind: 'directory', sizeBytes: 300, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -749,9 +749,9 @@ describe('SET_TYPE_FILTER_MODE action', () => {
 describe('TOGGLE_TYPE_FILTER action', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
-      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
-      { path: '/c/.cache', type: '.cache', sizeBytes: 50, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.cache', type: '.cache', kind: 'directory', sizeBytes: 50, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -895,9 +895,9 @@ describe('CLEAR_TYPE_FILTER action', () => {
 describe('getSortedArtifacts with type filter', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 1 },
-      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: 2 },
-      { path: '/c/.cache', type: '.cache', sizeBytes: 300, mtimeMs: 3 },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: 1 },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: 2 },
+      { path: '/c/.cache', type: '.cache', kind: 'directory', sizeBytes: 300, mtimeMs: 3 },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -959,8 +959,8 @@ describe('getSortedArtifacts with type filter', () => {
 describe('SET_CURSOR action', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
-      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,
@@ -1036,9 +1036,9 @@ describe('SET_SELECTION_ANCHOR action', () => {
 describe('cursor movement clears selectionAnchor', () => {
   const baseState: AppState = {
     artifacts: [
-      { path: '/a/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: Date.now() },
-      { path: '/b/dist', type: 'dist', sizeBytes: 200, mtimeMs: Date.now() },
-      { path: '/c/.next', type: '.next', sizeBytes: 300, mtimeMs: Date.now() },
+      { path: '/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: Date.now() },
+      { path: '/b/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: Date.now() },
+      { path: '/c/.next', type: '.next', kind: 'directory', sizeBytes: 300, mtimeMs: Date.now() },
     ],
     scanStatus: 'complete',
     scanDurationMs: 100,

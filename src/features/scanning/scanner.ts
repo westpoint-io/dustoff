@@ -91,8 +91,8 @@ export async function* scan(
         }
 
         if (!entry.isDirectory()) {
-          // Check if this is a target file
-          if (entry.isFile() && isTargetFile(entry.name)) {
+          // Only scan for files when using default targets (not custom targets)
+          if (!options?.targets && entry.isFile() && isTargetFile(entry.name)) {
             const filePath = join(currentDir, entry.name);
             if (exclude?.has(entry.name)) {
               continue;

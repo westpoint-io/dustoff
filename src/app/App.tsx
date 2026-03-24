@@ -146,10 +146,31 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     const item = displayItems[state.cursorIndex];
     if (item?.kind === 'section-separator') {
       const movingUp = state.cursorIndex < prevCursorRef.current;
-      if (movingUp && state.cursorIndex > 0) {
-        dispatch({ type: 'SET_CURSOR', index: state.cursorIndex - 1 });
-      } else if (state.cursorIndex + 1 < displayItems.length) {
-        dispatch({ type: 'SET_CURSOR', index: state.cursorIndex + 1 });
+      // Find nearest non-separator in the preferred direction
+      if (movingUp) {
+        // Look upward for a non-separator, fall back to downward
+        let target = -1;
+        for (let i = state.cursorIndex - 1; i >= 0; i--) {
+          if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
+        }
+        if (target === -1) {
+          for (let i = state.cursorIndex + 1; i < displayItems.length; i++) {
+            if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
+          }
+        }
+        if (target !== -1) dispatch({ type: 'SET_CURSOR', index: target });
+      } else {
+        // Look downward for a non-separator, fall back to upward
+        let target = -1;
+        for (let i = state.cursorIndex + 1; i < displayItems.length; i++) {
+          if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
+        }
+        if (target === -1) {
+          for (let i = state.cursorIndex - 1; i >= 0; i--) {
+            if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
+          }
+        }
+        if (target !== -1) dispatch({ type: 'SET_CURSOR', index: target });
       }
     }
     prevCursorRef.current = state.cursorIndex;

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, test, expect } from 'bun:test';
 import { formatBytes } from '../shared/formatters.js';
 import { sizeColor, theme } from '../shared/theme.js';
-import { reducer, getSortedArtifacts, initialState } from './reducer.js';
+import { reducer, getSortedArtifacts, getDisplayItems, initialState } from './reducer.js';
 import type { AppState } from './reducer.js';
 
 // ─── Pure function tests (no Ink render required) ───────────────────────────
@@ -1140,5 +1140,61 @@ describe('TOGGLE_FILE_GROUP_SELECT action', () => {
       paths: ['/a/.tsbuildinfo', '/b/.tsbuildinfo'],
     });
     expect(next.selectedPaths.size).toBe(0);
+  });
+});
+
+// ─── getDisplayItems tests ──────────────────────────────────────────────────
+
+describe('getDisplayItems()', () => {
+  test('groups file artifacts by type', () => {
+    const state: AppState = {
+      ...initialState,
+      artifacts: [
+        { path: '/project/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 500, mtimeMs: 1000 },
+        { path: '/a/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 100, mtimeMs: 2000 },
+        { path: '/b/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 200, mtimeMs: 3000 },
+      ],
+    };
+    const items = getDisplayItems(state);
+
+    const dirItems = items.filter((i) => i.kind === 'directory');
+    const groupItems = items.filter((i) => i.kind === 'file-group');
+    expect(dirItems).toHaveLength(1);
+    expect(groupItems).toHaveLength(1);
+    if (groupItems[0]!.kind === 'file-group') {
+      expect(groupItems[0]!.group.files).toHaveLength(2);
+      expect(groupItems[0]!.group.totalSize).toBe(300);
+    }
+  });
+
+  test('expands file group when type is in expandedFileTypes', () => {
+    const state: AppState = {
+      ...initialState,
+      expandedFileTypes: new Set(['.tsbuildinfo']),
+      artifacts: [
+        { path: '/a/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 100, mtimeMs: 1000 },
+        { path: '/b/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 200, mtimeMs: 2000 },
+      ],
+    };
+    const items = getDisplayItems(state);
+
+    expect(items).toHaveLength(3); // 1 group header + 2 files
+    expect(items[0]!.kind).toBe('file-group');
+    expect(items[1]!.kind).toBe('file');
+    expect(items[2]!.kind).toBe('file');
+  });
+
+  test('collapsed file group shows only header', () => {
+    const state: AppState = {
+      ...initialState,
+      artifacts: [
+        { path: '/a/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 100, mtimeMs: 1000 },
+        { path: '/b/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 200, mtimeMs: 2000 },
+      ],
+    };
+    const items = getDisplayItems(state);
+
+    expect(items).toHaveLength(1); // just the group header
+    expect(items[0]!.kind).toBe('file-group');
   });
 });

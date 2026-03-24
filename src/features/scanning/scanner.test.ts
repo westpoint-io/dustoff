@@ -382,6 +382,40 @@ describe('scan()', () => {
     expect(dirs[0]!.type).toBe('node_modules');
   });
 
+  test('finds both directory and file artifacts in a monorepo', async () => {
+    vol.fromJSON({
+      '/monorepo/packages/a/node_modules/react/index.js': '',
+      '/monorepo/packages/a/.tsbuildinfo': '{}',
+      '/monorepo/packages/b/node_modules/lodash/index.js': '',
+      '/monorepo/packages/b/.tsbuildinfo': '{}',
+      '/monorepo/packages/b/.eslintcache': '',
+      '/monorepo/.stylelintcache': '',
+      '/monorepo/npm-debug.log': 'error',
+      '/monorepo/npm-debug.log.0': 'old error',
+      '/monorepo/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/monorepo')) {
+      results.push(result);
+    }
+
+    const dirs = results.filter((r) => r.kind === 'directory');
+    const files = results.filter((r) => r.kind === 'file');
+
+    expect(dirs).toHaveLength(2); // 2 node_modules
+    expect(files.length).toBeGreaterThanOrEqual(5); // 2 tsbuildinfo + 1 eslintcache + 1 stylelintcache + 2 npm-debug.log*
+
+    // Verify all results have required shape
+    for (const r of results) {
+      expect(r.path).toBeDefined();
+      expect(r.type).toBeDefined();
+      expect(r.kind).toBeDefined();
+      expect(r.sizeBytes).toBeNull();
+      expect(['file', 'directory']).toContain(r.kind);
+    }
+  });
+
   test('file results have sizeBytes as null', async () => {
     vol.fromJSON({
       '/project/.tsbuildinfo': '{}',

@@ -25,10 +25,6 @@ export const TARGET_DIRS: ReadonlySet<string> = new Set([
   '.rollup.cache',
   '.cache',
 
-  // Linter/formatter caches
-  '.eslintcache',
-  '.stylelintcache',
-
   // Transpiler caches
   '.swc',
 

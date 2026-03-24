@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { formatBytes } from '../shared/formatters.js';
 import { sizeColor, theme } from '../shared/theme.js';
-import { reducer, getSortedArtifacts } from './reducer.js';
+import { reducer, getSortedArtifacts, initialState } from './reducer.js';
 import type { AppState } from './reducer.js';
 
 // ─── Pure function tests (no Ink render required) ───────────────────────────
@@ -70,6 +70,7 @@ describe('reducer — selection', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('TOGGLE_SELECT adds a path', () => {
@@ -156,6 +157,7 @@ describe('CURSOR_HOME action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('sets cursorIndex to 0', () => {
@@ -199,6 +201,7 @@ describe('CURSOR_END action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('sets cursorIndex to last artifact', () => {
@@ -244,6 +247,7 @@ describe('SET_SEARCH_MODE action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('enables search mode', () => {
@@ -285,6 +289,7 @@ describe('SET_SEARCH_QUERY action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('updates search query', () => {
@@ -340,6 +345,7 @@ describe('DELETE_COMPLETE sets toast', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('sets deleteToast with count and freed bytes', () => {
@@ -398,6 +404,7 @@ describe('DISMISS_TOAST action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('clears deleteToast', () => {
@@ -437,6 +444,7 @@ describe('getSortedArtifacts with search filter', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('returns all artifacts when searchQuery is empty', () => {
@@ -527,6 +535,7 @@ describe('TOGGLE_GROUPING action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('enables grouping', () => {
@@ -577,6 +586,7 @@ describe('TOGGLE_GROUP_COLLAPSE action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('adds key to collapsed groups', () => {
@@ -620,6 +630,7 @@ describe('SELECT_PATHS action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('adds multiple paths to selection', () => {
@@ -666,6 +677,7 @@ describe('DESELECT_PATHS action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('removes multiple paths from selection', () => {
@@ -713,6 +725,7 @@ describe('SET_TYPE_FILTER_MODE action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('enables type filter mode', () => {
@@ -762,6 +775,7 @@ describe('TOGGLE_TYPE_FILTER action', () => {
     isTypeFilterMode: true,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('creates set excluding toggled type from null', () => {
@@ -817,6 +831,8 @@ describe('TYPE_FILTER_CURSOR_UP/DOWN actions', () => {
     typeFilter: null,
     isTypeFilterMode: true,
     typeFilterCursor: 1,
+    selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('moves cursor up', () => {
@@ -867,6 +883,7 @@ describe('CLEAR_TYPE_FILTER action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('resets typeFilter to null', () => {
@@ -904,6 +921,7 @@ describe('getSortedArtifacts with type filter', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('returns all artifacts when typeFilter is null', () => {
@@ -966,6 +984,7 @@ describe('SET_CURSOR action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('sets cursorIndex to the given index', () => {
@@ -1005,6 +1024,7 @@ describe('SET_SELECTION_ANCHOR action', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: null,
+    expandedFileTypes: new Set(),
   };
 
   it('sets selectionAnchor', () => {
@@ -1042,6 +1062,7 @@ describe('cursor movement clears selectionAnchor', () => {
     isTypeFilterMode: false,
     typeFilterCursor: 0,
     selectionAnchor: 0,
+    expandedFileTypes: new Set(),
   };
 
   it('CURSOR_UP clears selectionAnchor', () => {
@@ -1072,5 +1093,52 @@ describe('cursor movement clears selectionAnchor', () => {
   it('CURSOR_PAGE_DOWN clears selectionAnchor', () => {
     const next = reducer(baseState, { type: 'CURSOR_PAGE_DOWN', visibleCount: 5 });
     expect(next.selectionAnchor).toBeNull();
+  });
+});
+
+// ─── File type expand & group select reducer tests ──────────────────────────
+
+describe('TOGGLE_FILE_TYPE_EXPAND action', () => {
+  it('toggles file type in expandedFileTypes', () => {
+    const state = { ...initialState };
+    const next = reducer(state, { type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: '.tsbuildinfo' });
+    expect(next.expandedFileTypes.has('.tsbuildinfo')).toBe(true);
+
+    const next2 = reducer(next, { type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: '.tsbuildinfo' });
+    expect(next2.expandedFileTypes.has('.tsbuildinfo')).toBe(false);
+  });
+});
+
+describe('TOGGLE_FILE_GROUP_SELECT action', () => {
+  it('selects all files when none selected', () => {
+    const state: AppState = {
+      ...initialState,
+      artifacts: [
+        { path: '/a/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 100, mtimeMs: 1000 },
+        { path: '/b/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 200, mtimeMs: 2000 },
+      ],
+    };
+    const next = reducer(state, {
+      type: 'TOGGLE_FILE_GROUP_SELECT',
+      paths: ['/a/.tsbuildinfo', '/b/.tsbuildinfo'],
+    });
+    expect(next.selectedPaths.has('/a/.tsbuildinfo')).toBe(true);
+    expect(next.selectedPaths.has('/b/.tsbuildinfo')).toBe(true);
+  });
+
+  it('deselects all files when all selected', () => {
+    const state: AppState = {
+      ...initialState,
+      selectedPaths: new Set(['/a/.tsbuildinfo', '/b/.tsbuildinfo']),
+      artifacts: [
+        { path: '/a/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 100, mtimeMs: 1000 },
+        { path: '/b/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 200, mtimeMs: 2000 },
+      ],
+    };
+    const next = reducer(state, {
+      type: 'TOGGLE_FILE_GROUP_SELECT',
+      paths: ['/a/.tsbuildinfo', '/b/.tsbuildinfo'],
+    });
+    expect(next.selectedPaths.size).toBe(0);
   });
 });

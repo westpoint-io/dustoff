@@ -32,6 +32,7 @@ export interface AppState {
   typeFilterCursor: number;
   selectionAnchor: number | null;
   detailScrollOffset: number;
+  expandedFileTypes: Set<string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,7 +78,9 @@ export type AppAction =
   | { type: 'SET_CURSOR'; index: number }
   | { type: 'SET_SELECTION_ANCHOR'; anchor: number }
   | { type: 'DETAIL_SCROLL_UP' }
-  | { type: 'DETAIL_SCROLL_DOWN'; totalLines: number; maxHeight: number };
+  | { type: 'DETAIL_SCROLL_DOWN'; totalLines: number; maxHeight: number }
+  | { type: 'TOGGLE_FILE_TYPE_EXPAND'; fileType: string }
+  | { type: 'TOGGLE_FILE_GROUP_SELECT'; paths: string[] };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -115,6 +118,7 @@ export const initialState: AppState = {
   typeFilterCursor: 0,
   selectionAnchor: null,
   detailScrollOffset: 0,
+  expandedFileTypes: new Set(),
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -425,6 +429,31 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         detailScrollOffset: Math.min(maxOffset, state.detailScrollOffset + 1),
       };
+    }
+
+    case 'TOGGLE_FILE_TYPE_EXPAND': {
+      const next = new Set(state.expandedFileTypes);
+      if (next.has(action.fileType)) {
+        next.delete(action.fileType);
+      } else {
+        next.add(action.fileType);
+      }
+      return { ...state, expandedFileTypes: next };
+    }
+
+    case 'TOGGLE_FILE_GROUP_SELECT': {
+      const allSelected = action.paths.every((p) => state.selectedPaths.has(p));
+      const next = new Set(state.selectedPaths);
+      if (allSelected) {
+        for (const p of action.paths) {
+          next.delete(p);
+        }
+      } else {
+        for (const p of action.paths) {
+          next.add(p);
+        }
+      }
+      return { ...state, selectedPaths: next };
     }
 
     default: {

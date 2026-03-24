@@ -6,9 +6,9 @@ import type { ScanResult } from '../scanning/types.js';
 describe('groupArtifacts', () => {
   it('groups artifacts by parent directory', () => {
     const artifacts: ScanResult[] = [
-      { path: '/root/frontend/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 1000 },
-      { path: '/root/frontend/dist', type: 'dist', sizeBytes: 200, mtimeMs: 2000 },
-      { path: '/root/backend/node_modules', type: 'node_modules', sizeBytes: 300, mtimeMs: 3000 },
+      { path: '/root/frontend/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: 1000 },
+      { path: '/root/frontend/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: 2000 },
+      { path: '/root/backend/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 300, mtimeMs: 3000 },
     ];
     const groups = groupArtifacts(artifacts, '/root');
     expect(groups).toHaveLength(2);
@@ -20,8 +20,8 @@ describe('groupArtifacts', () => {
 
   it('computes totalSize correctly', () => {
     const artifacts: ScanResult[] = [
-      { path: '/root/app/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 1000 },
-      { path: '/root/app/dist', type: 'dist', sizeBytes: 200, mtimeMs: 2000 },
+      { path: '/root/app/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: 1000 },
+      { path: '/root/app/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: 2000 },
     ];
     const groups = groupArtifacts(artifacts, '/root');
     expect(groups[0]!.totalSize).toBe(300);
@@ -29,8 +29,8 @@ describe('groupArtifacts', () => {
 
   it('computes oldestMtimeMs correctly', () => {
     const artifacts: ScanResult[] = [
-      { path: '/root/app/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 5000 },
-      { path: '/root/app/dist', type: 'dist', sizeBytes: 200, mtimeMs: 1000 },
+      { path: '/root/app/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: 5000 },
+      { path: '/root/app/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: 1000 },
     ];
     const groups = groupArtifacts(artifacts, '/root');
     expect(groups[0]!.oldestMtimeMs).toBe(1000);
@@ -38,8 +38,8 @@ describe('groupArtifacts', () => {
 
   it('handles null sizeBytes', () => {
     const artifacts: ScanResult[] = [
-      { path: '/root/app/node_modules', type: 'node_modules', sizeBytes: null, mtimeMs: 1000 },
-      { path: '/root/app/dist', type: 'dist', sizeBytes: 200, mtimeMs: 2000 },
+      { path: '/root/app/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: null, mtimeMs: 1000 },
+      { path: '/root/app/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: 2000 },
     ];
     const groups = groupArtifacts(artifacts, '/root');
     expect(groups[0]!.totalSize).toBe(200);
@@ -47,7 +47,7 @@ describe('groupArtifacts', () => {
 
   it('handles artifacts at root level', () => {
     const artifacts: ScanResult[] = [
-      { path: '/root/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 1000 },
+      { path: '/root/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: 1000 },
     ];
     const groups = groupArtifacts(artifacts, '/root');
     expect(groups[0]!.key).toBe('.');
@@ -55,8 +55,8 @@ describe('groupArtifacts', () => {
 
   it('handles nested directories', () => {
     const artifacts: ScanResult[] = [
-      { path: '/root/infra/cdk.out/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 1000 },
-      { path: '/root/infra/cdk.out/dist', type: 'dist', sizeBytes: 200, mtimeMs: 2000 },
+      { path: '/root/infra/cdk.out/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: 1000 },
+      { path: '/root/infra/cdk.out/dist', type: 'dist', kind: 'directory', sizeBytes: 200, mtimeMs: 2000 },
     ];
     const groups = groupArtifacts(artifacts, '/root');
     expect(groups[0]!.key).toBe('infra/cdk.out');
@@ -65,8 +65,8 @@ describe('groupArtifacts', () => {
 
   it('preserves insertion order of groups', () => {
     const artifacts: ScanResult[] = [
-      { path: '/root/b/node_modules', type: 'node_modules', sizeBytes: 100, mtimeMs: 1000 },
-      { path: '/root/a/node_modules', type: 'node_modules', sizeBytes: 200, mtimeMs: 2000 },
+      { path: '/root/b/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 100, mtimeMs: 1000 },
+      { path: '/root/a/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 200, mtimeMs: 2000 },
     ];
     const groups = groupArtifacts(artifacts, '/root');
     expect(groups[0]!.key).toBe('b');
@@ -80,6 +80,7 @@ describe('flattenGroups', () => {
     children: childPaths.map((p) => ({
       path: p,
       type: 'node_modules',
+      kind: 'directory' as const,
       sizeBytes: 100,
       mtimeMs: 1000,
     })),

@@ -6,6 +6,7 @@ import { getSortedArtifacts } from '../../app/reducer.js';
 import { ArtifactRow } from './ArtifactRow.js';
 import { FileGroupRow } from './FileGroupRow.js';
 import { GroupRow } from './GroupRow.js';
+import { SectionSeparator } from './SectionSeparator.js';
 import { useWindow } from './useWindow.js';
 import { useTheme } from '../../shared/ThemeContext.js';
 import { TYPE_W, SIZE_W, AGE_W } from '../../shared/themes.js';
@@ -231,7 +232,9 @@ export function ArtifactTable({
         // Display items mode: render file groups + directories
         visibleDisplayItems.map((item, i) => {
           const absoluteIndex = displayScrollOffset + i;
-          const key = item.kind === 'file-group'
+          const key = item.kind === 'section-separator'
+            ? `sep-${item.label}`
+            : item.kind === 'file-group'
             ? `fgroup-${item.group.type}`
             : item.kind === 'file'
             ? `file-${item.artifact.path}`
@@ -240,7 +243,9 @@ export function ArtifactTable({
           return (
             <Box key={key}>
               <Box flexGrow={1}>
-                {item.kind === 'file-group' ? (
+                {item.kind === 'section-separator' ? (
+                  <SectionSeparator label={item.label} width={termWidth - 4 - detailWidth - scrollbarW} />
+                ) : item.kind === 'file-group' ? (
                   <FileGroupRow
                     group={item.group}
                     isExpanded={state.expandedFileTypes.has(item.group.type)}

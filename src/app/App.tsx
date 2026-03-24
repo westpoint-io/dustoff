@@ -136,6 +136,20 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     return displayItems[state.cursorIndex];
   };
 
+  // Skip cursor past section separators
+  useEffect(() => {
+    if (state.groupingEnabled) return;
+    const item = displayItems[state.cursorIndex];
+    if (item?.kind === 'section-separator') {
+      // Try moving down first, then up
+      if (state.cursorIndex + 1 < displayItems.length) {
+        dispatch({ type: 'SET_CURSOR', index: state.cursorIndex + 1 });
+      } else if (state.cursorIndex > 0) {
+        dispatch({ type: 'SET_CURSOR', index: state.cursorIndex - 1 });
+      }
+    }
+  }, [state.cursorIndex, state.groupingEnabled, displayItems]);
+
   useInput((input, key) => {
     // Confirm delete dialog — navigate between Yes/Cancel
     if (state.viewMode === 'confirm-delete') {

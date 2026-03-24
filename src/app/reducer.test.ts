@@ -1178,10 +1178,11 @@ describe('getDisplayItems()', () => {
     };
     const items = getDisplayItems(state);
 
-    expect(items).toHaveLength(3); // 1 group header + 2 files
-    expect(items[0]!.kind).toBe('file-group');
-    expect(items[1]!.kind).toBe('file');
+    expect(items).toHaveLength(4); // 1 separator + 1 group header + 2 files
+    expect(items[0]!.kind).toBe('section-separator');
+    expect(items[1]!.kind).toBe('file-group');
     expect(items[2]!.kind).toBe('file');
+    expect(items[3]!.kind).toBe('file');
   });
 
   test('collapsed file group shows only header', () => {
@@ -1194,7 +1195,27 @@ describe('getDisplayItems()', () => {
     };
     const items = getDisplayItems(state);
 
-    expect(items).toHaveLength(1); // just the group header
-    expect(items[0]!.kind).toBe('file-group');
+    expect(items).toHaveLength(2); // 1 separator + the group header
+    expect(items[0]!.kind).toBe('section-separator');
+    expect(items[1]!.kind).toBe('file-group');
+  });
+
+  test('adds section separators for both directories and files', () => {
+    const state: AppState = {
+      ...initialState,
+      artifacts: [
+        { path: '/project/node_modules', type: 'node_modules', kind: 'directory', sizeBytes: 500, mtimeMs: 1000 },
+        { path: '/a/.tsbuildinfo', type: '.tsbuildinfo', kind: 'file', sizeBytes: 100, mtimeMs: 2000 },
+      ],
+    };
+    const items = getDisplayItems(state);
+    const separators = items.filter((i) => i.kind === 'section-separator');
+    expect(separators).toHaveLength(2);
+    if (separators[0]!.kind === 'section-separator') {
+      expect(separators[0]!.label).toBe('Directories');
+    }
+    if (separators[1]!.kind === 'section-separator') {
+      expect(separators[1]!.label).toBe('Files');
+    }
   });
 });

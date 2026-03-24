@@ -96,7 +96,8 @@ export interface FileGroup {
 export type DisplayItem =
   | { kind: 'directory'; artifact: ScanResult }
   | { kind: 'file-group'; group: FileGroup }
-  | { kind: 'file'; artifact: ScanResult; indented: boolean };
+  | { kind: 'file'; artifact: ScanResult; indented: boolean }
+  | { kind: 'section-separator'; label: string };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -574,15 +575,21 @@ export function getDisplayItems(state: AppState): DisplayItem[] {
   // Build display items: directories first, then file groups
   const items: DisplayItem[] = [];
 
-  for (const artifact of directories) {
-    items.push({ kind: 'directory', artifact });
+  if (directories.length > 0) {
+    items.push({ kind: 'section-separator', label: 'Directories' });
+    for (const artifact of directories) {
+      items.push({ kind: 'directory', artifact });
+    }
   }
 
-  for (const group of fileGroups) {
-    items.push({ kind: 'file-group', group });
-    if (state.expandedFileTypes.has(group.type)) {
-      for (const file of group.files) {
-        items.push({ kind: 'file', artifact: file, indented: true });
+  if (fileGroups.length > 0) {
+    items.push({ kind: 'section-separator', label: 'Files' });
+    for (const group of fileGroups) {
+      items.push({ kind: 'file-group', group });
+      if (state.expandedFileTypes.has(group.type)) {
+        for (const file of group.files) {
+          items.push({ kind: 'file', artifact: file, indented: true });
+        }
       }
     }
   }

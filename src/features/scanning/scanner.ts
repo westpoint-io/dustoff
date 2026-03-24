@@ -1,7 +1,22 @@
 import { opendir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { TARGET_DIRS, IGNORE_DIRS } from './constants.js';
+import { TARGET_DIRS, IGNORE_DIRS, TARGET_FILES, TARGET_FILE_PREFIXES, TARGET_FILE_SUFFIXES } from './constants.js';
 import type { ScanResult, ScanOptions } from './types.js';
+
+/**
+ * Returns true if the filename matches any target file pattern.
+ * Checks exact match, prefix match (rotated logs), and suffix match (profiling artifacts).
+ */
+function isTargetFile(name: string): boolean {
+  if (TARGET_FILES.has(name)) return true;
+  for (const prefix of TARGET_FILE_PREFIXES) {
+    if (name.startsWith(prefix)) return true;
+  }
+  for (const suffix of TARGET_FILE_SUFFIXES) {
+    if (name.endsWith(suffix)) return true;
+  }
+  return false;
+}
 
 /**
  * Returns true if the error is a permission-denied error (EACCES or EPERM).
@@ -15,15 +30,14 @@ function isPermissionError(err: unknown): boolean {
 }
 
 /**
- * BFS directory scanner that yields artifact directories as they are found.
+ * BFS scanner that yields artifact directories and files as they are found.
  *
  * Algorithm:
  * 1. Start a queue with [rootPath]
  * 2. Dequeue directory, open it, iterate entries
- * 3. Skip symlinks and non-directories
- * 4. Skip IGNORE_DIRS entries entirely
- * 5. If entry name is in TARGET_DIRS: yield it, do NOT recurse into it
- * 6. Otherwise: enqueue for further traversal
+ * 3. Skip symlinks
+ * 4. For files: yield if matching TARGET_FILES / prefixes / suffixes
+ * 5. For directories: skip IGNORE_DIRS, yield TARGET_DIRS, otherwise enqueue
  *
  * Key properties:
  * - Skips children of matched directories (avoids redundant traversal)
@@ -77,6 +91,28 @@ export async function* scan(
         }
 
         if (!entry.isDirectory()) {
+          // Check if this is a target file
+          if (entry.isFile() && isTargetFile(entry.name)) {
+            const filePath = join(currentDir, entry.name);
+            if (exclude?.has(entry.name)) {
+              continue;
+            }
+            let mtimeMs: number | undefined;
+            try {
+              const s = await stat(filePath);
+              mtimeMs = s.mtimeMs;
+            } catch {
+              // stat failed — leave mtimeMs undefined
+            }
+            debug?.(`scan: file artifact found ${filePath} (${entry.name})`);
+            yield {
+              path: filePath,
+              type: entry.name,
+              kind: 'file',
+              sizeBytes: null,
+              mtimeMs,
+            };
+          }
           continue;
         }
 
@@ -104,6 +140,7 @@ export async function* scan(
           yield {
             path: entryPath,
             type: entry.name,
+            kind: 'directory',
             sizeBytes: null,
             mtimeMs,
           };

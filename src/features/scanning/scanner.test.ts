@@ -291,4 +291,110 @@ describe('scan()', () => {
     expect(result.path).toBe('/project/node_modules');
     expect(result.type).toBe('node_modules');
   });
+
+  test('finds target files with kind: file', async () => {
+    vol.fromJSON({
+      '/project/.tsbuildinfo': '{}',
+      '/project/.eslintcache': '',
+      '/project/src/index.ts': 'export {};',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(2);
+    const fileResults = results.filter((r) => r.kind === 'file');
+    expect(fileResults).toHaveLength(2);
+    const types = new Set(fileResults.map((r) => r.type));
+    expect(types).toContain('.tsbuildinfo');
+    expect(types).toContain('.eslintcache');
+  });
+
+  test('matches file prefixes for rotated logs', async () => {
+    vol.fromJSON({
+      '/project/npm-debug.log': 'error log',
+      '/project/npm-debug.log.0': 'old log',
+      '/project/yarn-error.log': 'yarn error',
+      '/project/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    const fileResults = results.filter((r) => r.kind === 'file');
+    expect(fileResults).toHaveLength(3);
+    expect(fileResults.every((r) => r.kind === 'file')).toBe(true);
+  });
+
+  test('matches file suffixes for profiling artifacts', async () => {
+    vol.fromJSON({
+      '/project/Heap.20240101.heapsnapshot': 'snapshot data',
+      '/project/CPU.20240101.cpuprofile': 'profile data',
+      '/project/package.tgz': 'archive',
+      '/project/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    const fileResults = results.filter((r) => r.kind === 'file');
+    expect(fileResults).toHaveLength(3);
+  });
+
+  test('directory results have kind: directory', async () => {
+    vol.fromJSON({
+      '/project/node_modules/pkg/index.js': '',
+      '/project/dist/bundle.js': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(2);
+    expect(results.every((r) => r.kind === 'directory')).toBe(true);
+  });
+
+  test('finds files inside subdirectories during traversal', async () => {
+    vol.fromJSON({
+      '/project/packages/a/.tsbuildinfo': '{}',
+      '/project/packages/b/.tsbuildinfo': '{}',
+      '/project/packages/b/node_modules/pkg/index.js': '',
+      '/project/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    const files = results.filter((r) => r.kind === 'file');
+    const dirs = results.filter((r) => r.kind === 'directory');
+    expect(files).toHaveLength(2);
+    expect(dirs).toHaveLength(1);
+    expect(dirs[0]!.type).toBe('node_modules');
+  });
+
+  test('file results have sizeBytes as null', async () => {
+    vol.fromJSON({
+      '/project/.tsbuildinfo': '{}',
+      '/project/.eslintcache': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    for (const result of results) {
+      expect(result.sizeBytes).toBeNull();
+    }
+  });
 });

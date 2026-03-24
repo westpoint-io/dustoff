@@ -54,8 +54,44 @@ const META_MAP: Record<string, ArtifactMeta> = {
   'dist': { description: 'Build output', regenerate: 'npm run build' },
   'build': { description: 'Build output', regenerate: 'npm run build' },
   '.output': { description: 'Build output', regenerate: 'npm run build' },
+
+  // File-based artifacts — build/compiler output
+  '.tsbuildinfo': { description: 'TypeScript incremental build info', regenerate: 'tsc --build' },
+
+  // File-based artifacts — Yarn PnP
+  '.pnp.cjs': { description: 'Yarn PnP runtime', regenerate: 'yarn install' },
+  '.pnp.loader.mjs': { description: 'Yarn PnP ESM loader', regenerate: 'yarn install' },
+
+  // File-based artifacts — package manager logs
+  'npm-debug.log': { description: 'npm debug log', regenerate: 'Not regenerated' },
+  'yarn-error.log': { description: 'Yarn error log', regenerate: 'Not regenerated' },
+  'yarn-debug.log': { description: 'Yarn debug log', regenerate: 'Not regenerated' },
+  'pnpm-debug.log': { description: 'pnpm debug log', regenerate: 'Not regenerated' },
+  '.pnpm-debug.log': { description: 'pnpm debug log', regenerate: 'Not regenerated' },
+  'lerna-debug.log': { description: 'Lerna debug log', regenerate: 'Not regenerated' },
+
+  // File-based artifacts — profiling/diagnostics
+  '.heapsnapshot': { description: 'V8 heap snapshot', regenerate: 'Not regenerated' },
+  '.cpuprofile': { description: 'V8 CPU profile', regenerate: 'Not regenerated' },
+  '.heapprofile': { description: 'V8 heap profile', regenerate: 'Not regenerated' },
+
+  // File-based artifacts — package archives
+  '.tgz': { description: 'Package archive', regenerate: 'npm pack' },
 };
 
 export function getArtifactMeta(type: string): ArtifactMeta | undefined {
-  return META_MAP[type];
+  const direct = META_MAP[type];
+  if (direct) return direct;
+
+  // Check prefix matches (rotated logs: "npm-debug.log.0" → "npm-debug.log")
+  for (const key of Object.keys(META_MAP)) {
+    if (type.startsWith(key) && type !== key) return META_MAP[key];
+  }
+
+  // Check suffix matches (profiling: "Heap.20240101.heapsnapshot" → ".heapsnapshot")
+  for (const key of Object.keys(META_MAP)) {
+    if (key.startsWith('.') && type.endsWith(key)) return META_MAP[key];
+  }
+
+  return undefined;
 }

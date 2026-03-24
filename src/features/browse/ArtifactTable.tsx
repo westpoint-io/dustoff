@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import type { Dispatch } from 'react';
 import { Box, Text } from 'ink';
-import type { AppState, AppAction } from '../../app/reducer.js';
+import type { AppState, AppAction, DisplayItem } from '../../app/reducer.js';
 import { getSortedArtifacts } from '../../app/reducer.js';
 import { ArtifactRow } from './ArtifactRow.js';
+import { FileGroupRow } from './FileGroupRow.js';
 import { GroupRow } from './GroupRow.js';
 import { useWindow } from './useWindow.js';
 import { useTheme } from '../../shared/ThemeContext.js';
@@ -52,6 +53,7 @@ interface ArtifactTableProps {
   detailWidth?: number;
   onVisibleCountChange?: (count: number) => void;
   flatItems?: FlatItem[];
+  displayItems?: DisplayItem[];
   searchQuery?: string;
   isSearchMode?: boolean;
   searchResultCount?: number;
@@ -70,6 +72,7 @@ export function ArtifactTable({
   detailWidth = 0,
   onVisibleCountChange,
   flatItems,
+  displayItems,
   searchQuery = '',
   isSearchMode = false,
   searchResultCount = 0,
@@ -79,9 +82,11 @@ export function ArtifactTable({
   const sortedArtifacts = getSortedArtifacts(state);
   const reservedRows = (termHeight >= 30 ? RESERVED_ROWS_FULL : RESERVED_ROWS_COMPACT) + extraReservedRows;
 
-  // In grouping mode, use flat items; otherwise use sorted artifacts
+  // In grouping mode, use flat items; with display items, use those; else sorted artifacts
   const totalItemCount = state.groupingEnabled && flatItems
     ? flatItems.length
+    : displayItems
+    ? displayItems.length
     : sortedArtifacts.length;
 
   const { visibleItems: visibleFlatItems, scrollOffset, visibleCount } = useWindow<FlatItem>(
@@ -96,9 +101,23 @@ export function ArtifactTable({
     reservedRows,
   );
 
+  const { visibleItems: visibleDisplayItems, scrollOffset: displayScrollOffset, visibleCount: displayVisibleCount } = useWindow<DisplayItem>(
+    displayItems ?? [],
+    state.cursorIndex,
+    reservedRows,
+  );
+
   // Use the right values depending on mode
-  const effectiveVisibleCount = state.groupingEnabled && flatItems ? visibleCount : artVisibleCount;
-  const effectiveScrollOffset = state.groupingEnabled && flatItems ? scrollOffset : artScrollOffset;
+  const effectiveVisibleCount = state.groupingEnabled && flatItems
+    ? visibleCount
+    : displayItems
+    ? displayVisibleCount
+    : artVisibleCount;
+  const effectiveScrollOffset = state.groupingEnabled && flatItems
+    ? scrollOffset
+    : displayItems
+    ? displayScrollOffset
+    : artScrollOffset;
 
   useEffect(() => {
     onVisibleCountChange?.(effectiveVisibleCount);
@@ -208,8 +227,52 @@ export function ArtifactTable({
             </Box>
           );
         })
+      ) : displayItems ? (
+        // Display items mode: render file groups + directories
+        visibleDisplayItems.map((item, i) => {
+          const absoluteIndex = displayScrollOffset + i;
+          const key = item.kind === 'file-group'
+            ? `fgroup-${item.group.type}`
+            : item.kind === 'file'
+            ? `file-${item.artifact.path}`
+            : `dir-${item.artifact.path}`;
+
+          return (
+            <Box key={key}>
+              <Box flexGrow={1}>
+                {item.kind === 'file-group' ? (
+                  <FileGroupRow
+                    group={item.group}
+                    isExpanded={state.expandedFileTypes.has(item.group.type)}
+                    isCursor={absoluteIndex === state.cursorIndex}
+                    allSelected={item.group.files.every((f) => state.selectedPaths.has(f.path))}
+                    someSelected={item.group.files.some((f) => state.selectedPaths.has(f.path))}
+                  />
+                ) : (
+                  <Box flexGrow={1}>
+                    {item.kind === 'file' && item.indented && <Text>{'  '}</Text>}
+                    <ArtifactRow
+                      artifact={item.artifact}
+                      isCursor={absoluteIndex === state.cursorIndex}
+                      isSelected={state.selectedPaths.has(item.artifact.path)}
+                      rootPath={rootPath}
+                      maxSizeBytes={state.maxSizeBytes}
+                      commonPrefix={commonPrefix}
+                      themeName={state.themeName}
+                      pathWidth={pathWidth - (item.kind === 'file' && item.indented ? 2 : 0)}
+                      isSensitive={sensitiveSet.has(item.artifact.path)}
+                    />
+                  </Box>
+                )}
+              </Box>
+              {showScrollbar && (
+                <Text color={theme.overlay0}>{scrollbarChars[i]}</Text>
+              )}
+            </Box>
+          );
+        })
       ) : (
-        // Normal mode: render artifact rows
+        // Fallback: render artifact rows directly
         visibleArtifacts.map((artifact, i) => {
           const absoluteIndex = artScrollOffset + i;
           return (

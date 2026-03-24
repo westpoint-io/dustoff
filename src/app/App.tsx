@@ -13,7 +13,8 @@ import { TypeFilter } from '../features/browse/TypeFilter.js';
 import { LOGO, getThemeByName } from '../shared/themes.js';
 import { ThemeProvider } from '../shared/ThemeContext.js';
 import { formatBytes, truncatePath } from '../shared/formatters.js';
-import { reducer, initialState, getSortedArtifacts } from './reducer.js';
+import { reducer, initialState, getSortedArtifacts, getDisplayItems } from './reducer.js';
+import type { DisplayItem } from './reducer.js';
 import { loadThemeName, saveThemeName } from '../shared/config.js';
 import { groupArtifacts, flattenGroups } from '../features/browse/grouping.js';
 import type { FlatItem } from '../features/browse/grouping.js';
@@ -97,6 +98,11 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     [state.artifacts, state.sortKey, state.sortDir, state.searchQuery, state.typeFilter],
   );
 
+  const displayItems = useMemo(
+    () => getDisplayItems(state),
+    [state.artifacts, state.sortKey, state.sortDir, state.searchQuery, state.typeFilter, state.expandedFileTypes],
+  );
+
   // Compute flat items for grouping mode
   const flatItems: FlatItem[] = useMemo(() => {
     if (!state.groupingEnabled) return [];
@@ -123,6 +129,11 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
   const getCursorFlatItem = (): FlatItem | undefined => {
     if (!state.groupingEnabled || flatItems.length === 0) return undefined;
     return flatItems[state.cursorIndex];
+  };
+
+  const getCursorDisplayItem = (): DisplayItem | undefined => {
+    if (state.groupingEnabled) return undefined;
+    return displayItems[state.cursorIndex];
   };
 
   useInput((input, key) => {
@@ -250,7 +261,9 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       return;
     }
 
-    const effectiveItemCount = state.groupingEnabled && flatItems.length > 0 ? flatItems.length : sortedArtifacts.length;
+    const effectiveItemCount = state.groupingEnabled && flatItems.length > 0
+      ? flatItems.length
+      : displayItems.length;
     if (key.upArrow || input === 'k') {
       dispatch({ type: 'CURSOR_UP' });
     } else if (key.downArrow || input === 'j') {
@@ -261,10 +274,17 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       dispatch({ type: 'CURSOR_PAGE_DOWN', visibleCount, itemCount: effectiveItemCount });
     } else if (key.tab) {
       dispatch({ type: 'DETAIL_TOGGLE' });
-    } else if (key.return && state.groupingEnabled) {
-      const item = getCursorFlatItem();
-      if (item?.kind === 'group-header') {
-        dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+    } else if (key.return) {
+      if (state.groupingEnabled) {
+        const item = getCursorFlatItem();
+        if (item?.kind === 'group-header') {
+          dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+        }
+      } else {
+        const item = getCursorDisplayItem();
+        if (item?.kind === 'file-group') {
+          dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.group.type });
+        }
       }
     } else if (key.rightArrow && state.groupingEnabled) {
       const item = getCursorFlatItem();
@@ -275,6 +295,16 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       const item = getCursorFlatItem();
       if (item?.kind === 'group-header' && !state.collapsedGroups.has(item.group.key)) {
         dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      }
+    } else if (key.rightArrow && !state.groupingEnabled) {
+      const item = getCursorDisplayItem();
+      if (item?.kind === 'file-group' && !state.expandedFileTypes.has(item.group.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.group.type });
+      }
+    } else if (key.leftArrow && !state.groupingEnabled) {
+      const item = getCursorDisplayItem();
+      if (item?.kind === 'file-group' && state.expandedFileTypes.has(item.group.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.group.type });
       }
     } else if (input === ' ' && key.shift && state.selectionAnchor !== null) {
       const start = Math.min(state.selectionAnchor, state.cursorIndex);
@@ -297,9 +327,14 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
         }
       } else {
-        const artifact = sortedArtifacts[state.cursorIndex];
-        if (artifact) {
-          dispatch({ type: 'TOGGLE_SELECT', path: artifact.path });
+        const item = getCursorDisplayItem();
+        if (item?.kind === 'file-group') {
+          dispatch({
+            type: 'TOGGLE_FILE_GROUP_SELECT',
+            paths: item.group.files.map((f) => f.path),
+          });
+        } else if (item?.kind === 'directory' || item?.kind === 'file') {
+          dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
         }
       }
     } else if (input === 'a') {
@@ -380,8 +415,10 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       if (item?.kind === 'artifact') return item.artifact;
       return undefined;
     }
-    return sortedArtifacts[state.cursorIndex];
-  }, [state.groupingEnabled, flatItems, sortedArtifacts, state.cursorIndex]);
+    const dItem = displayItems[state.cursorIndex];
+    if (dItem?.kind === 'directory' || dItem?.kind === 'file') return dItem.artifact;
+    return undefined;
+  }, [state.groupingEnabled, flatItems, displayItems, state.cursorIndex]);
 
   // Animated progress bar position (indeterminate bounce)
   const [barTick, setBarTick] = useState(0);
@@ -503,6 +540,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
                 detailWidth={detailWidth}
                 onVisibleCountChange={setVisibleCount}
                 flatItems={state.groupingEnabled ? flatItems : undefined}
+                displayItems={state.groupingEnabled ? undefined : displayItems}
                 searchQuery={state.searchQuery}
                 isSearchMode={state.isSearchMode}
                 searchResultCount={sortedArtifacts.length}
@@ -544,7 +582,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           scanDurationMs={state.scanDurationMs}
           directoriesScanned={state.directoriesScanned}
           cursorIndex={state.cursorIndex}
-          totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : sortedArtifacts.length}
+          totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : displayItems.length}
         />
 
         {/* Shortcut bar — replaced by flash/toast when active */}

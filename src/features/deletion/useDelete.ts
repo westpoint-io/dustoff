@@ -28,7 +28,9 @@ export function useDelete(
       });
 
       try {
-        await rm(artifact.path, { recursive: true, force: true });
+        await rm(artifact.path, artifact.kind === 'directory'
+          ? { recursive: true, force: true }
+          : { force: true });
         freedBytes += artifact.sizeBytes ?? 0;
         deletedPaths.push(artifact.path);
       } catch {

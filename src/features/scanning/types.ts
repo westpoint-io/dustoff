@@ -1,6 +1,7 @@
 export interface ScanResult {
   path: string;
-  type: string;           // basename of the matched dir (e.g. "node_modules", ".next")
+  type: string;           // basename of the matched dir or file (e.g. "node_modules", ".tsbuildinfo")
+  kind: 'file' | 'directory'; // whether this is a file or directory artifact
   sizeBytes: number | null; // null = not yet calculated
   mtimeMs?: number;       // last-modified time in milliseconds; undefined if stat failed
 }

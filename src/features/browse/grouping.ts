@@ -14,7 +14,9 @@ export interface ArtifactGroup {
 
 export type FlatItem =
   | { kind: 'group-header'; group: ArtifactGroup }
-  | { kind: 'artifact'; artifact: ScanResult; indented: boolean };
+  | { kind: 'artifact'; artifact: ScanResult; indented: boolean }
+  | { kind: 'file-group-nested'; type: string; files: ScanResult[]; totalSize: number; indented: boolean }
+  | { kind: 'file-nested'; artifact: ScanResult; indented: boolean };
 
 // ---------------------------------------------------------------------------
 // groupArtifacts — groups sorted artifacts by parent directory, merging
@@ -140,14 +142,41 @@ export function groupArtifacts(
 export function flattenGroups(
   groups: ArtifactGroup[],
   collapsedGroups: ReadonlySet<string>,
+  expandedFileTypes?: ReadonlySet<string>,
 ): FlatItem[] {
   const items: FlatItem[] = [];
 
   for (const group of groups) {
     items.push({ kind: 'group-header', group });
     if (!collapsedGroups.has(group.key)) {
-      for (const child of group.children) {
+      // Separate directory children from file children
+      const dirChildren = group.children.filter((c) => c.kind !== 'file');
+      const fileChildren = group.children.filter((c) => c.kind === 'file');
+
+      // Emit directory children as normal
+      for (const child of dirChildren) {
         items.push({ kind: 'artifact', artifact: child, indented: true });
+      }
+
+      // Group file children by type
+      const filesByType = new Map<string, ScanResult[]>();
+      for (const file of fileChildren) {
+        let bucket = filesByType.get(file.type);
+        if (!bucket) {
+          bucket = [];
+          filesByType.set(file.type, bucket);
+        }
+        bucket.push(file);
+      }
+
+      for (const [type, files] of filesByType) {
+        const totalSize = files.reduce((sum, f) => sum + (f.sizeBytes ?? 0), 0);
+        items.push({ kind: 'file-group-nested', type, files, totalSize, indented: true });
+        if (expandedFileTypes?.has(type)) {
+          for (const file of files) {
+            items.push({ kind: 'file-nested', artifact: file, indented: true });
+          }
+        }
       }
     }
   }

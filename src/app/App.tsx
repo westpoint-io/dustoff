@@ -107,8 +107,8 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
   const flatItems: FlatItem[] = useMemo(() => {
     if (!state.groupingEnabled) return [];
     const groups = groupArtifacts(sortedArtifacts, rootPath);
-    return flattenGroups(groups, state.collapsedGroups);
-  }, [state.groupingEnabled, sortedArtifacts, rootPath, state.collapsedGroups]);
+    return flattenGroups(groups, state.collapsedGroups, state.expandedFileTypes);
+  }, [state.groupingEnabled, sortedArtifacts, rootPath, state.collapsedGroups, state.expandedFileTypes]);
 
   // Compute available types for type filter
   const availableTypes = useMemo(() => {
@@ -275,7 +275,8 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       let paths: string[];
       if (state.groupingEnabled && flatItems.length > 0) {
         paths = flatItems.slice(start, end + 1)
-          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> => item.kind === 'artifact')
+          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> | Extract<typeof item, { kind: 'file-nested' }> =>
+            item.kind === 'artifact' || item.kind === 'file-nested')
           .map((item) => item.artifact.path);
       } else {
         paths = displayItems.slice(start, end + 1)
@@ -308,6 +309,8 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
         const item = getCursorFlatItem();
         if (item?.kind === 'group-header') {
           dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+        } else if (item?.kind === 'file-group-nested') {
+          dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.type });
         }
       } else {
         const item = getCursorDisplayItem();
@@ -319,11 +322,15 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       const item = getCursorFlatItem();
       if (item?.kind === 'group-header' && state.collapsedGroups.has(item.group.key)) {
         dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      } else if (item?.kind === 'file-group-nested' && !state.expandedFileTypes.has(item.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.type });
       }
     } else if (key.leftArrow && state.groupingEnabled) {
       const item = getCursorFlatItem();
       if (item?.kind === 'group-header' && !state.collapsedGroups.has(item.group.key)) {
         dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      } else if (item?.kind === 'file-group-nested' && state.expandedFileTypes.has(item.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.type });
       }
     } else if (key.rightArrow && !state.groupingEnabled) {
       const item = getCursorDisplayItem();
@@ -341,7 +348,8 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       let paths: string[];
       if (state.groupingEnabled && flatItems.length > 0) {
         paths = flatItems.slice(start, end + 1)
-          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> => item.kind === 'artifact')
+          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> | Extract<typeof item, { kind: 'file-nested' }> =>
+            item.kind === 'artifact' || item.kind === 'file-nested')
           .map((item) => item.artifact.path);
       } else {
         paths = displayItems.slice(start, end + 1)
@@ -363,6 +371,13 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
             dispatch({ type: 'SELECT_PATHS', paths });
           }
         } else if (item?.kind === 'artifact') {
+          dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
+        } else if (item?.kind === 'file-group-nested') {
+          dispatch({
+            type: 'TOGGLE_FILE_GROUP_SELECT',
+            paths: item.files.map((f) => f.path),
+          });
+        } else if (item?.kind === 'file-nested') {
           dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
         }
       } else {
@@ -451,7 +466,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
   const cursorArtifact = useMemo(() => {
     if (state.groupingEnabled && flatItems.length > 0) {
       const item = flatItems[state.cursorIndex];
-      if (item?.kind === 'artifact') return item.artifact;
+      if (item?.kind === 'artifact' || item?.kind === 'file-nested') return item.artifact;
       return undefined;
     }
     const dItem = displayItems[state.cursorIndex];

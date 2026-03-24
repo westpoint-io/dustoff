@@ -192,6 +192,10 @@ export function ArtifactTable({
           const absoluteIndex = effectiveScrollOffset + i;
           const key = item.kind === 'group-header'
             ? `group-${item.group.key}`
+            : item.kind === 'file-group-nested'
+            ? `fgn-${item.type}-${i}`
+            : item.kind === 'file-nested'
+            ? `fn-${item.artifact.path}`
             : `art-${item.artifact.path}`;
 
           return (
@@ -205,6 +209,32 @@ export function ArtifactTable({
                     allSelected={item.group.children.every((c) => state.selectedPaths.has(c.path))}
                     someSelected={item.group.children.some((c) => state.selectedPaths.has(c.path))}
                   />
+                ) : item.kind === 'file-group-nested' ? (
+                  <Box flexGrow={1}>
+                    <Text>{'  '}</Text>
+                    <FileGroupRow
+                      group={{ type: item.type, files: item.files, totalSize: item.totalSize, oldestMtimeMs: undefined }}
+                      isExpanded={state.expandedFileTypes.has(item.type)}
+                      isCursor={absoluteIndex === state.cursorIndex}
+                      allSelected={item.files.every((f) => state.selectedPaths.has(f.path))}
+                      someSelected={item.files.some((f) => state.selectedPaths.has(f.path))}
+                    />
+                  </Box>
+                ) : item.kind === 'file-nested' ? (
+                  <Box flexGrow={1}>
+                    <Text>{'    '}</Text>
+                    <ArtifactRow
+                      artifact={item.artifact}
+                      isCursor={absoluteIndex === state.cursorIndex}
+                      isSelected={state.selectedPaths.has(item.artifact.path)}
+                      rootPath={rootPath}
+                      maxSizeBytes={state.maxSizeBytes}
+                      commonPrefix={commonPrefix}
+                      themeName={state.themeName}
+                      pathWidth={pathWidth - 4}
+                      isSensitive={sensitiveSet.has(item.artifact.path)}
+                    />
+                  </Box>
                 ) : (
                   <Box flexGrow={1}>
                     {item.indented && <Text>{'  '}</Text>}

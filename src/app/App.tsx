@@ -136,18 +136,23 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     return displayItems[state.cursorIndex];
   };
 
-  // Skip cursor past section separators
+  // Skip cursor past section separators — track previous index to determine direction
+  const prevCursorRef = useRef(state.cursorIndex);
   useEffect(() => {
-    if (state.groupingEnabled) return;
+    if (state.groupingEnabled) {
+      prevCursorRef.current = state.cursorIndex;
+      return;
+    }
     const item = displayItems[state.cursorIndex];
     if (item?.kind === 'section-separator') {
-      // Try moving down first, then up
-      if (state.cursorIndex + 1 < displayItems.length) {
-        dispatch({ type: 'SET_CURSOR', index: state.cursorIndex + 1 });
-      } else if (state.cursorIndex > 0) {
+      const movingUp = state.cursorIndex < prevCursorRef.current;
+      if (movingUp && state.cursorIndex > 0) {
         dispatch({ type: 'SET_CURSOR', index: state.cursorIndex - 1 });
+      } else if (state.cursorIndex + 1 < displayItems.length) {
+        dispatch({ type: 'SET_CURSOR', index: state.cursorIndex + 1 });
       }
     }
+    prevCursorRef.current = state.cursorIndex;
   }, [state.cursorIndex, state.groupingEnabled, displayItems]);
 
   useInput((input, key) => {

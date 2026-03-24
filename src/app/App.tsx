@@ -136,45 +136,24 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     return displayItems[state.cursorIndex];
   };
 
-  // Skip cursor past section separators — track previous index to determine direction
-  const prevCursorRef = useRef(state.cursorIndex);
-  useEffect(() => {
-    if (state.groupingEnabled) {
-      prevCursorRef.current = state.cursorIndex;
-      return;
+  // Helper: find the next valid cursor index, skipping section separators
+  const skipSeparators = (index: number, direction: 'up' | 'down'): number => {
+    if (state.groupingEnabled || !displayItems[index]) return index;
+    if (displayItems[index]?.kind !== 'section-separator') return index;
+    const step = direction === 'up' ? -1 : 1;
+    let i = index + step;
+    while (i >= 0 && i < displayItems.length) {
+      if (displayItems[i]?.kind !== 'section-separator') return i;
+      i += step;
     }
-    const item = displayItems[state.cursorIndex];
-    if (item?.kind === 'section-separator') {
-      const movingUp = state.cursorIndex < prevCursorRef.current;
-      // Find nearest non-separator in the preferred direction
-      if (movingUp) {
-        // Look upward for a non-separator, fall back to downward
-        let target = -1;
-        for (let i = state.cursorIndex - 1; i >= 0; i--) {
-          if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
-        }
-        if (target === -1) {
-          for (let i = state.cursorIndex + 1; i < displayItems.length; i++) {
-            if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
-          }
-        }
-        if (target !== -1) dispatch({ type: 'SET_CURSOR', index: target });
-      } else {
-        // Look downward for a non-separator, fall back to upward
-        let target = -1;
-        for (let i = state.cursorIndex + 1; i < displayItems.length; i++) {
-          if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
-        }
-        if (target === -1) {
-          for (let i = state.cursorIndex - 1; i >= 0; i--) {
-            if (displayItems[i]?.kind !== 'section-separator') { target = i; break; }
-          }
-        }
-        if (target !== -1) dispatch({ type: 'SET_CURSOR', index: target });
-      }
+    // Nothing found in preferred direction, search opposite
+    i = index - step;
+    while (i >= 0 && i < displayItems.length) {
+      if (displayItems[i]?.kind !== 'section-separator') return i;
+      i -= step;
     }
-    prevCursorRef.current = state.cursorIndex;
-  }, [state.cursorIndex, state.groupingEnabled, displayItems]);
+    return index; // fallback: stay put
+  };
 
   useInput((input, key) => {
     // Confirm delete dialog — navigate between Yes/Cancel
@@ -321,13 +300,19 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       ? flatItems.length
       : displayItems.length;
     if (key.upArrow || input === 'k') {
-      dispatch({ type: 'CURSOR_UP' });
+      const next = skipSeparators(Math.max(0, state.cursorIndex - 1), 'up');
+      dispatch({ type: 'SET_CURSOR', index: next });
     } else if (key.downArrow || input === 'j') {
-      dispatch({ type: 'CURSOR_DOWN', itemCount: effectiveItemCount });
+      const max = effectiveItemCount - 1;
+      const next = skipSeparators(Math.min(max, state.cursorIndex + 1), 'down');
+      dispatch({ type: 'SET_CURSOR', index: next });
     } else if (key.pageUp) {
-      dispatch({ type: 'CURSOR_PAGE_UP', visibleCount, itemCount: effectiveItemCount });
+      const next = skipSeparators(Math.max(0, state.cursorIndex - visibleCount), 'up');
+      dispatch({ type: 'SET_CURSOR', index: next });
     } else if (key.pageDown) {
-      dispatch({ type: 'CURSOR_PAGE_DOWN', visibleCount, itemCount: effectiveItemCount });
+      const max = effectiveItemCount - 1;
+      const next = skipSeparators(Math.min(max, state.cursorIndex + visibleCount), 'down');
+      dispatch({ type: 'SET_CURSOR', index: next });
     } else if (key.tab) {
       dispatch({ type: 'DETAIL_TOGGLE' });
     } else if (key.return) {
@@ -439,9 +424,9 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       dispatch({ type: 'CYCLE_THEME' });
       // Flash will be set via the effect below
     } else if (input === 'g' && !key.shift) {
-      dispatch({ type: 'CURSOR_HOME' });
+      dispatch({ type: 'SET_CURSOR', index: skipSeparators(0, 'down') });
     } else if (input === 'G') {
-      dispatch({ type: 'CURSOR_END', itemCount: effectiveItemCount });
+      dispatch({ type: 'SET_CURSOR', index: skipSeparators(effectiveItemCount - 1, 'up') });
     } else if (input === 'x') {
       dispatch({ type: 'TOGGLE_GROUPING' });
     } else if (input === '-' && state.detailVisible) {

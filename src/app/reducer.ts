@@ -76,6 +76,7 @@ export type AppAction =
   | { type: 'TYPE_FILTER_CURSOR_DOWN'; typeCount: number }
   | { type: 'CLEAR_TYPE_FILTER' }
   | { type: 'SET_CURSOR'; index: number }
+  | { type: 'CURSOR_MOVE'; index: number }
   | { type: 'SET_SELECTION_ANCHOR'; anchor: number }
   | { type: 'DETAIL_SCROLL_UP' }
   | { type: 'DETAIL_SCROLL_DOWN'; totalLines: number; maxHeight: number }
@@ -427,6 +428,11 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_CURSOR': {
       return { ...state, cursorIndex: action.index };
+    }
+
+    case 'CURSOR_MOVE': {
+      if (action.index === state.cursorIndex) return state;
+      return { ...state, cursorIndex: action.index, selectionAnchor: null, detailScrollOffset: 0 };
     }
 
     case 'SET_SELECTION_ANCHOR': {

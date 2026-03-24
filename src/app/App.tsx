@@ -103,6 +103,11 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     [state.artifacts, state.sortKey, state.sortDir, state.searchQuery, state.typeFilter, state.expandedFileTypes],
   );
 
+  const selectableDisplayCount = useMemo(
+    () => displayItems.filter((i) => i.kind !== 'section-separator').length,
+    [displayItems],
+  );
+
   // Ensure cursor doesn't sit on a separator (e.g., initial state where cursor=0 is the "Directories" header)
   useEffect(() => {
     if (state.groupingEnabled || displayItems.length === 0) return;
@@ -114,7 +119,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
         }
       }
     }
-  }, [state.scanStatus]);
+  }, [state.scanStatus, state.cursorIndex, state.groupingEnabled, displayItems]);
 
   // Compute flat items for grouping mode
   const flatItems: FlatItem[] = useMemo(() => {
@@ -151,21 +156,22 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
 
   // Helper: find the next valid cursor index, skipping section separators
   const skipSeparators = (index: number, direction: 'up' | 'down'): number => {
-    if (state.groupingEnabled || !displayItems[index]) return index;
-    if (displayItems[index]?.kind !== 'section-separator') return index;
+    if (state.groupingEnabled || displayItems.length === 0) return Math.max(0, index);
+    const clamped = Math.max(0, Math.min(index, displayItems.length - 1));
+    if (displayItems[clamped]?.kind !== 'section-separator') return clamped;
     const step = direction === 'up' ? -1 : 1;
-    let i = index + step;
+    let i = clamped + step;
     while (i >= 0 && i < displayItems.length) {
       if (displayItems[i]?.kind !== 'section-separator') return i;
       i += step;
     }
     // Nothing found in preferred direction, search opposite
-    i = index - step;
+    i = clamped - step;
     while (i >= 0 && i < displayItems.length) {
       if (displayItems[i]?.kind !== 'section-separator') return i;
       i -= step;
     }
-    return index; // fallback: stay put
+    return clamped; // fallback: stay put
   };
 
   useInput((input, key) => {
@@ -312,20 +318,21 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     const effectiveItemCount = state.groupingEnabled && flatItems.length > 0
       ? flatItems.length
       : displayItems.length;
+    if (effectiveItemCount === 0) return;
     if (key.upArrow || input === 'k') {
       const next = skipSeparators(Math.max(0, state.cursorIndex - 1), 'up');
-      dispatch({ type: 'SET_CURSOR', index: next });
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.downArrow || input === 'j') {
       const max = effectiveItemCount - 1;
       const next = skipSeparators(Math.min(max, state.cursorIndex + 1), 'down');
-      dispatch({ type: 'SET_CURSOR', index: next });
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.pageUp) {
       const next = skipSeparators(Math.max(0, state.cursorIndex - visibleCount), 'up');
-      dispatch({ type: 'SET_CURSOR', index: next });
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.pageDown) {
       const max = effectiveItemCount - 1;
       const next = skipSeparators(Math.min(max, state.cursorIndex + visibleCount), 'down');
-      dispatch({ type: 'SET_CURSOR', index: next });
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.tab) {
       dispatch({ type: 'DETAIL_TOGGLE' });
     } else if (key.return) {
@@ -437,9 +444,9 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       dispatch({ type: 'CYCLE_THEME' });
       // Flash will be set via the effect below
     } else if (input === 'g' && !key.shift) {
-      dispatch({ type: 'SET_CURSOR', index: skipSeparators(0, 'down') });
+      dispatch({ type: 'CURSOR_MOVE', index: skipSeparators(0, 'down') });
     } else if (input === 'G') {
-      dispatch({ type: 'SET_CURSOR', index: skipSeparators(effectiveItemCount - 1, 'up') });
+      dispatch({ type: 'CURSOR_MOVE', index: skipSeparators(effectiveItemCount - 1, 'up') });
     } else if (input === 'x') {
       dispatch({ type: 'TOGGLE_GROUPING' });
     } else if (input === '-' && state.detailVisible) {
@@ -660,7 +667,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           scanDurationMs={state.scanDurationMs}
           directoriesScanned={state.directoriesScanned}
           cursorIndex={state.cursorIndex}
-          totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : displayItems.length}
+          totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : selectableDisplayCount}
         />
 
         {/* Shortcut bar — replaced by flash/toast when active */}

@@ -312,7 +312,7 @@ describe('scan()', () => {
     expect(types).toContain('.eslintcache');
   });
 
-  test('matches file prefixes for rotated logs', async () => {
+  test('matches file prefixes for rotated logs and normalizes type', async () => {
     vol.fromJSON({
       '/project/npm-debug.log': 'error log',
       '/project/npm-debug.log.0': 'old log',
@@ -327,10 +327,13 @@ describe('scan()', () => {
 
     const fileResults = results.filter((r) => r.kind === 'file');
     expect(fileResults).toHaveLength(3);
-    expect(fileResults.every((r) => r.kind === 'file')).toBe(true);
+    // Both npm-debug.log and npm-debug.log.0 should have type "npm-debug.log"
+    const npmLogs = fileResults.filter((r) => r.type === 'npm-debug.log');
+    expect(npmLogs).toHaveLength(2);
+    expect(fileResults.some((r) => r.type === 'yarn-error.log')).toBe(true);
   });
 
-  test('matches file suffixes for profiling artifacts', async () => {
+  test('matches file suffixes for profiling artifacts and normalizes type', async () => {
     vol.fromJSON({
       '/project/Heap.20240101.heapsnapshot': 'snapshot data',
       '/project/CPU.20240101.cpuprofile': 'profile data',
@@ -345,6 +348,11 @@ describe('scan()', () => {
 
     const fileResults = results.filter((r) => r.kind === 'file');
     expect(fileResults).toHaveLength(3);
+    // Types should be the suffix pattern, not the full filename
+    const types = new Set(fileResults.map((r) => r.type));
+    expect(types).toContain('.heapsnapshot');
+    expect(types).toContain('.cpuprofile');
+    expect(types).toContain('.tgz');
   });
 
   test('directory results have kind: directory', async () => {

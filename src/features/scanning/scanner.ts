@@ -4,18 +4,21 @@ import { TARGET_DIRS, IGNORE_DIRS, TARGET_FILES, TARGET_FILE_PREFIXES, TARGET_FI
 import type { ScanResult, ScanOptions } from './types.js';
 
 /**
- * Returns true if the filename matches any target file pattern.
- * Checks exact match, prefix match (rotated logs), and suffix match (profiling artifacts).
+ * Returns the normalized type for a target file, or null if not a target.
+ * For exact matches, returns the filename.
+ * For prefix matches (rotated logs), returns the prefix (e.g. "npm-debug.log").
+ * For suffix matches (profiling), returns the suffix (e.g. ".heapsnapshot").
+ * This ensures files are grouped by their base type, not by exact filename.
  */
-function isTargetFile(name: string): boolean {
-  if (TARGET_FILES.has(name)) return true;
+function matchTargetFile(name: string): string | null {
+  if (TARGET_FILES.has(name)) return name;
   for (const prefix of TARGET_FILE_PREFIXES) {
-    if (name.startsWith(prefix)) return true;
+    if (name.startsWith(prefix)) return prefix;
   }
   for (const suffix of TARGET_FILE_SUFFIXES) {
-    if (name.endsWith(suffix)) return true;
+    if (name.endsWith(suffix)) return suffix;
   }
-  return false;
+  return null;
 }
 
 /**
@@ -92,26 +95,29 @@ export async function* scan(
 
         if (!entry.isDirectory()) {
           // Only scan for files when using default targets (not custom targets)
-          if (!options?.targets && entry.isFile() && isTargetFile(entry.name)) {
-            const filePath = join(currentDir, entry.name);
-            if (exclude?.has(entry.name)) {
-              continue;
+          if (!options?.targets && entry.isFile()) {
+            const fileType = matchTargetFile(entry.name);
+            if (fileType !== null) {
+              const filePath = join(currentDir, entry.name);
+              if (exclude?.has(fileType)) {
+                continue;
+              }
+              let mtimeMs: number | undefined;
+              try {
+                const s = await stat(filePath);
+                mtimeMs = s.mtimeMs;
+              } catch {
+                // stat failed — leave mtimeMs undefined
+              }
+              debug?.(`scan: file artifact found ${filePath} (${fileType})`);
+              yield {
+                path: filePath,
+                type: fileType,
+                kind: 'file',
+                sizeBytes: null,
+                mtimeMs,
+              };
             }
-            let mtimeMs: number | undefined;
-            try {
-              const s = await stat(filePath);
-              mtimeMs = s.mtimeMs;
-            } catch {
-              // stat failed — leave mtimeMs undefined
-            }
-            debug?.(`scan: file artifact found ${filePath} (${entry.name})`);
-            yield {
-              path: filePath,
-              type: entry.name,
-              kind: 'file',
-              sizeBytes: null,
-              mtimeMs,
-            };
           }
           continue;
         }

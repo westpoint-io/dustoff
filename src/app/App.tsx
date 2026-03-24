@@ -103,6 +103,19 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     [state.artifacts, state.sortKey, state.sortDir, state.searchQuery, state.typeFilter, state.expandedFileTypes],
   );
 
+  // Ensure cursor doesn't sit on a separator (e.g., initial state where cursor=0 is the "Directories" header)
+  useEffect(() => {
+    if (state.groupingEnabled || displayItems.length === 0) return;
+    if (displayItems[state.cursorIndex]?.kind === 'section-separator') {
+      for (let i = state.cursorIndex + 1; i < displayItems.length; i++) {
+        if (displayItems[i]?.kind !== 'section-separator') {
+          dispatch({ type: 'SET_CURSOR', index: i });
+          return;
+        }
+      }
+    }
+  }, [state.scanStatus]);
+
   // Compute flat items for grouping mode
   const flatItems: FlatItem[] = useMemo(() => {
     if (!state.groupingEnabled) return [];

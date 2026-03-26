@@ -15,6 +15,7 @@ describe('ArtifactRow', () => {
   const baseArtifact = {
     path: '/home/user/project/node_modules',
     type: 'node_modules',
+    kind: 'directory' as const,
     sizeBytes: null as number | null,
     mtimeMs: Date.now() - 90 * 24 * 60 * 60 * 1000,
   };
@@ -257,6 +258,7 @@ describe('DetailPanel', () => {
   const artifact = {
     path: '/home/user/projects/webapp/node_modules',
     type: 'node_modules',
+    kind: 'directory' as const,
     sizeBytes: 1340000000,
     mtimeMs: Date.now() - 92 * 24 * 60 * 60 * 1000,
   };
@@ -296,6 +298,7 @@ describe('DetailPanel sizing', () => {
   const artifact = {
     path: '/home/user/projects/webapp/node_modules',
     type: 'node_modules',
+    kind: 'directory' as const,
     sizeBytes: 1340000000,
     mtimeMs: Date.now() - 92 * 24 * 60 * 60 * 1000,
   };
@@ -403,6 +406,7 @@ describe('ArtifactRow — selection', () => {
   const artifact = {
     path: '/home/user/project/node_modules',
     type: 'node_modules',
+    kind: 'directory' as const,
     sizeBytes: 500000000,
     mtimeMs: Date.now() - 30 * 24 * 60 * 60 * 1000,
   };

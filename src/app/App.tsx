@@ -13,7 +13,8 @@ import { TypeFilter } from '../features/browse/TypeFilter.js';
 import { LOGO, getThemeByName } from '../shared/themes.js';
 import { ThemeProvider } from '../shared/ThemeContext.js';
 import { formatBytes, truncatePath } from '../shared/formatters.js';
-import { reducer, initialState, getSortedArtifacts } from './reducer.js';
+import { reducer, initialState, getSortedArtifacts, getDisplayItems } from './reducer.js';
+import type { DisplayItem } from './reducer.js';
 import { loadThemeName, saveThemeName } from '../shared/config.js';
 import { groupArtifacts, flattenGroups } from '../features/browse/grouping.js';
 import type { FlatItem } from '../features/browse/grouping.js';
@@ -97,12 +98,35 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
     [state.artifacts, state.sortKey, state.sortDir, state.searchQuery, state.typeFilter],
   );
 
+  const displayItems = useMemo(
+    () => getDisplayItems(state),
+    [state.artifacts, state.sortKey, state.sortDir, state.searchQuery, state.typeFilter, state.expandedFileTypes],
+  );
+
+  const selectableDisplayCount = useMemo(
+    () => displayItems.filter((i) => i.kind !== 'section-separator').length,
+    [displayItems],
+  );
+
+  // Ensure cursor doesn't sit on a separator (e.g., initial state where cursor=0 is the "Directories" header)
+  useEffect(() => {
+    if (state.groupingEnabled || displayItems.length === 0) return;
+    if (displayItems[state.cursorIndex]?.kind === 'section-separator') {
+      for (let i = state.cursorIndex + 1; i < displayItems.length; i++) {
+        if (displayItems[i]?.kind !== 'section-separator') {
+          dispatch({ type: 'SET_CURSOR', index: i });
+          return;
+        }
+      }
+    }
+  }, [state.scanStatus, state.cursorIndex, state.groupingEnabled, displayItems]);
+
   // Compute flat items for grouping mode
   const flatItems: FlatItem[] = useMemo(() => {
     if (!state.groupingEnabled) return [];
     const groups = groupArtifacts(sortedArtifacts, rootPath);
-    return flattenGroups(groups, state.collapsedGroups);
-  }, [state.groupingEnabled, sortedArtifacts, rootPath, state.collapsedGroups]);
+    return flattenGroups(groups, state.collapsedGroups, state.expandedFileTypes);
+  }, [state.groupingEnabled, sortedArtifacts, rootPath, state.collapsedGroups, state.expandedFileTypes]);
 
   // Compute available types for type filter
   const availableTypes = useMemo(() => {
@@ -123,6 +147,31 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
   const getCursorFlatItem = (): FlatItem | undefined => {
     if (!state.groupingEnabled || flatItems.length === 0) return undefined;
     return flatItems[state.cursorIndex];
+  };
+
+  const getCursorDisplayItem = (): DisplayItem | undefined => {
+    if (state.groupingEnabled) return undefined;
+    return displayItems[state.cursorIndex];
+  };
+
+  // Helper: find the next valid cursor index, skipping section separators
+  const skipSeparators = (index: number, direction: 'up' | 'down'): number => {
+    if (state.groupingEnabled || displayItems.length === 0) return Math.max(0, index);
+    const clamped = Math.max(0, Math.min(index, displayItems.length - 1));
+    if (displayItems[clamped]?.kind !== 'section-separator') return clamped;
+    const step = direction === 'up' ? -1 : 1;
+    let i = clamped + step;
+    while (i >= 0 && i < displayItems.length) {
+      if (displayItems[i]?.kind !== 'section-separator') return i;
+      i += step;
+    }
+    // Nothing found in preferred direction, search opposite
+    i = clamped - step;
+    while (i >= 0 && i < displayItems.length) {
+      if (displayItems[i]?.kind !== 'section-separator') return i;
+      i -= step;
+    }
+    return clamped; // fallback: stay put
   };
 
   useInput((input, key) => {
@@ -238,48 +287,107 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
 
     if (rangeUp || rangeDown) {
       const anchor = state.selectionAnchor ?? state.cursorIndex;
+      const maxIndex = state.groupingEnabled && flatItems.length > 0
+        ? flatItems.length - 1
+        : displayItems.length - 1;
       const newCursor = rangeUp
         ? Math.max(0, state.cursorIndex - 1)
-        : Math.min(sortedArtifacts.length - 1, state.cursorIndex + 1);
+        : Math.min(maxIndex, state.cursorIndex + 1);
       const start = Math.min(anchor, newCursor);
       const end = Math.max(anchor, newCursor);
-      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
+
+      let paths: string[];
+      if (state.groupingEnabled && flatItems.length > 0) {
+        paths = flatItems.slice(start, end + 1)
+          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> | Extract<typeof item, { kind: 'file-nested' }> =>
+            item.kind === 'artifact' || item.kind === 'file-nested')
+          .map((item) => item.artifact.path);
+      } else {
+        paths = displayItems.slice(start, end + 1)
+          .filter((item): item is Extract<DisplayItem, { kind: 'directory' | 'file' }> =>
+            item.kind === 'directory' || item.kind === 'file')
+          .map((item) => item.artifact.path);
+      }
+
       dispatch({ type: 'SET_RANGE_SELECTION', paths });
       dispatch({ type: 'SET_SELECTION_ANCHOR', anchor });
       dispatch({ type: 'SET_CURSOR', index: newCursor });
       return;
     }
 
-    const effectiveItemCount = state.groupingEnabled && flatItems.length > 0 ? flatItems.length : sortedArtifacts.length;
+    const effectiveItemCount = state.groupingEnabled && flatItems.length > 0
+      ? flatItems.length
+      : displayItems.length;
+    if (effectiveItemCount === 0) return;
     if (key.upArrow || input === 'k') {
-      dispatch({ type: 'CURSOR_UP' });
+      const next = skipSeparators(Math.max(0, state.cursorIndex - 1), 'up');
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.downArrow || input === 'j') {
-      dispatch({ type: 'CURSOR_DOWN', itemCount: effectiveItemCount });
+      const max = effectiveItemCount - 1;
+      const next = skipSeparators(Math.min(max, state.cursorIndex + 1), 'down');
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.pageUp) {
-      dispatch({ type: 'CURSOR_PAGE_UP', visibleCount, itemCount: effectiveItemCount });
+      const next = skipSeparators(Math.max(0, state.cursorIndex - visibleCount), 'up');
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.pageDown) {
-      dispatch({ type: 'CURSOR_PAGE_DOWN', visibleCount, itemCount: effectiveItemCount });
+      const max = effectiveItemCount - 1;
+      const next = skipSeparators(Math.min(max, state.cursorIndex + visibleCount), 'down');
+      dispatch({ type: 'CURSOR_MOVE', index: next });
     } else if (key.tab) {
       dispatch({ type: 'DETAIL_TOGGLE' });
-    } else if (key.return && state.groupingEnabled) {
-      const item = getCursorFlatItem();
-      if (item?.kind === 'group-header') {
-        dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+    } else if (key.return) {
+      if (state.groupingEnabled) {
+        const item = getCursorFlatItem();
+        if (item?.kind === 'group-header') {
+          dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+        } else if (item?.kind === 'file-group-nested') {
+          dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.type });
+        }
+      } else {
+        const item = getCursorDisplayItem();
+        if (item?.kind === 'file-group') {
+          dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.group.type });
+        }
       }
     } else if (key.rightArrow && state.groupingEnabled) {
       const item = getCursorFlatItem();
       if (item?.kind === 'group-header' && state.collapsedGroups.has(item.group.key)) {
         dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      } else if (item?.kind === 'file-group-nested' && !state.expandedFileTypes.has(item.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.type });
       }
     } else if (key.leftArrow && state.groupingEnabled) {
       const item = getCursorFlatItem();
       if (item?.kind === 'group-header' && !state.collapsedGroups.has(item.group.key)) {
         dispatch({ type: 'TOGGLE_GROUP_COLLAPSE', key: item.group.key });
+      } else if (item?.kind === 'file-group-nested' && state.expandedFileTypes.has(item.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.type });
+      }
+    } else if (key.rightArrow && !state.groupingEnabled) {
+      const item = getCursorDisplayItem();
+      if (item?.kind === 'file-group' && !state.expandedFileTypes.has(item.group.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.group.type });
+      }
+    } else if (key.leftArrow && !state.groupingEnabled) {
+      const item = getCursorDisplayItem();
+      if (item?.kind === 'file-group' && state.expandedFileTypes.has(item.group.type)) {
+        dispatch({ type: 'TOGGLE_FILE_TYPE_EXPAND', fileType: item.group.type });
       }
     } else if (input === ' ' && key.shift && state.selectionAnchor !== null) {
       const start = Math.min(state.selectionAnchor, state.cursorIndex);
       const end = Math.max(state.selectionAnchor, state.cursorIndex);
-      const paths = sortedArtifacts.slice(start, end + 1).map((a) => a.path);
+      let paths: string[];
+      if (state.groupingEnabled && flatItems.length > 0) {
+        paths = flatItems.slice(start, end + 1)
+          .filter((item): item is Extract<typeof item, { kind: 'artifact' }> | Extract<typeof item, { kind: 'file-nested' }> =>
+            item.kind === 'artifact' || item.kind === 'file-nested')
+          .map((item) => item.artifact.path);
+      } else {
+        paths = displayItems.slice(start, end + 1)
+          .filter((item): item is Extract<DisplayItem, { kind: 'directory' | 'file' }> =>
+            item.kind === 'directory' || item.kind === 'file')
+          .map((item) => item.artifact.path);
+      }
       dispatch({ type: 'SELECT_PATHS', paths });
       return;
     } else if (input === ' ') {
@@ -295,11 +403,23 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           }
         } else if (item?.kind === 'artifact') {
           dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
+        } else if (item?.kind === 'file-group-nested') {
+          dispatch({
+            type: 'TOGGLE_FILE_GROUP_SELECT',
+            paths: item.files.map((f) => f.path),
+          });
+        } else if (item?.kind === 'file-nested') {
+          dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
         }
       } else {
-        const artifact = sortedArtifacts[state.cursorIndex];
-        if (artifact) {
-          dispatch({ type: 'TOGGLE_SELECT', path: artifact.path });
+        const item = getCursorDisplayItem();
+        if (item?.kind === 'file-group') {
+          dispatch({
+            type: 'TOGGLE_FILE_GROUP_SELECT',
+            paths: item.group.files.map((f) => f.path),
+          });
+        } else if (item?.kind === 'directory' || item?.kind === 'file') {
+          dispatch({ type: 'TOGGLE_SELECT', path: item.artifact.path });
         }
       }
     } else if (input === 'a') {
@@ -324,9 +444,9 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
       dispatch({ type: 'CYCLE_THEME' });
       // Flash will be set via the effect below
     } else if (input === 'g' && !key.shift) {
-      dispatch({ type: 'CURSOR_HOME' });
+      dispatch({ type: 'CURSOR_MOVE', index: skipSeparators(0, 'down') });
     } else if (input === 'G') {
-      dispatch({ type: 'CURSOR_END', itemCount: effectiveItemCount });
+      dispatch({ type: 'CURSOR_MOVE', index: skipSeparators(effectiveItemCount - 1, 'up') });
     } else if (input === 'x') {
       dispatch({ type: 'TOGGLE_GROUPING' });
     } else if (input === '-' && state.detailVisible) {
@@ -377,11 +497,13 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
   const cursorArtifact = useMemo(() => {
     if (state.groupingEnabled && flatItems.length > 0) {
       const item = flatItems[state.cursorIndex];
-      if (item?.kind === 'artifact') return item.artifact;
+      if (item?.kind === 'artifact' || item?.kind === 'file-nested') return item.artifact;
       return undefined;
     }
-    return sortedArtifacts[state.cursorIndex];
-  }, [state.groupingEnabled, flatItems, sortedArtifacts, state.cursorIndex]);
+    const dItem = displayItems[state.cursorIndex];
+    if (dItem?.kind === 'directory' || dItem?.kind === 'file') return dItem.artifact;
+    return undefined;
+  }, [state.groupingEnabled, flatItems, displayItems, state.cursorIndex]);
 
   // Animated progress bar position (indeterminate bounce)
   const [barTick, setBarTick] = useState(0);
@@ -503,6 +625,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
                 detailWidth={detailWidth}
                 onVisibleCountChange={setVisibleCount}
                 flatItems={state.groupingEnabled ? flatItems : undefined}
+                displayItems={state.groupingEnabled ? undefined : displayItems}
                 searchQuery={state.searchQuery}
                 isSearchMode={state.isSearchMode}
                 searchResultCount={sortedArtifacts.length}
@@ -544,7 +667,7 @@ export default function App({ rootPath = process.cwd(), exclude, targets, verbos
           scanDurationMs={state.scanDurationMs}
           directoriesScanned={state.directoriesScanned}
           cursorIndex={state.cursorIndex}
-          totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : sortedArtifacts.length}
+          totalArtifacts={state.groupingEnabled && flatItems.length > 0 ? flatItems.length : selectableDisplayCount}
         />
 
         {/* Shortcut bar — replaced by flash/toast when active */}

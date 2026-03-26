@@ -271,6 +271,23 @@ describe('scan()', () => {
     expect(types).not.toContain('coverage');
   });
 
+  test('finds .serverless directory', async () => {
+    vol.fromJSON({
+      '/project/.serverless/cloudformation-template.json': '{}',
+      '/project/.serverless/function.zip': '',
+      '/project/handler.js': 'module.exports.hello = () => {};',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(1);
+    expect(results[0]!.path).toBe('/project/.serverless');
+    expect(results[0]!.type).toBe('.serverless');
+  });
+
   test('returns ScanResult with correct shape', async () => {
     vol.fromJSON({
       '/project/node_modules/react/index.js': '',
@@ -290,5 +307,153 @@ describe('scan()', () => {
     expect(result.sizeBytes).toBeNull();
     expect(result.path).toBe('/project/node_modules');
     expect(result.type).toBe('node_modules');
+  });
+
+  test('finds target files with kind: file', async () => {
+    vol.fromJSON({
+      '/project/.tsbuildinfo': '{}',
+      '/project/.eslintcache': '',
+      '/project/src/index.ts': 'export {};',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(2);
+    const fileResults = results.filter((r) => r.kind === 'file');
+    expect(fileResults).toHaveLength(2);
+    const types = new Set(fileResults.map((r) => r.type));
+    expect(types).toContain('.tsbuildinfo');
+    expect(types).toContain('.eslintcache');
+  });
+
+  test('matches file prefixes for rotated logs and normalizes type', async () => {
+    vol.fromJSON({
+      '/project/npm-debug.log': 'error log',
+      '/project/npm-debug.log.0': 'old log',
+      '/project/yarn-error.log': 'yarn error',
+      '/project/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    const fileResults = results.filter((r) => r.kind === 'file');
+    expect(fileResults).toHaveLength(3);
+    // Both npm-debug.log and npm-debug.log.0 should have type "npm-debug.log"
+    const npmLogs = fileResults.filter((r) => r.type === 'npm-debug.log');
+    expect(npmLogs).toHaveLength(2);
+    expect(fileResults.some((r) => r.type === 'yarn-error.log')).toBe(true);
+  });
+
+  test('matches file suffixes for profiling artifacts and normalizes type', async () => {
+    vol.fromJSON({
+      '/project/Heap.20240101.heapsnapshot': 'snapshot data',
+      '/project/CPU.20240101.cpuprofile': 'profile data',
+      '/project/package.tgz': 'archive',
+      '/project/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    const fileResults = results.filter((r) => r.kind === 'file');
+    expect(fileResults).toHaveLength(3);
+    // Types should be the suffix pattern, not the full filename
+    const types = new Set(fileResults.map((r) => r.type));
+    expect(types).toContain('.heapsnapshot');
+    expect(types).toContain('.cpuprofile');
+    expect(types).toContain('.tgz');
+  });
+
+  test('directory results have kind: directory', async () => {
+    vol.fromJSON({
+      '/project/node_modules/pkg/index.js': '',
+      '/project/dist/bundle.js': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(2);
+    expect(results.every((r) => r.kind === 'directory')).toBe(true);
+  });
+
+  test('finds files inside subdirectories during traversal', async () => {
+    vol.fromJSON({
+      '/project/packages/a/.tsbuildinfo': '{}',
+      '/project/packages/b/.tsbuildinfo': '{}',
+      '/project/packages/b/node_modules/pkg/index.js': '',
+      '/project/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    const files = results.filter((r) => r.kind === 'file');
+    const dirs = results.filter((r) => r.kind === 'directory');
+    expect(files).toHaveLength(2);
+    expect(dirs).toHaveLength(1);
+    expect(dirs[0]!.type).toBe('node_modules');
+  });
+
+  test('finds both directory and file artifacts in a monorepo', async () => {
+    vol.fromJSON({
+      '/monorepo/packages/a/node_modules/react/index.js': '',
+      '/monorepo/packages/a/.tsbuildinfo': '{}',
+      '/monorepo/packages/b/node_modules/lodash/index.js': '',
+      '/monorepo/packages/b/.tsbuildinfo': '{}',
+      '/monorepo/packages/b/.eslintcache': '',
+      '/monorepo/.stylelintcache': '',
+      '/monorepo/npm-debug.log': 'error',
+      '/monorepo/npm-debug.log.0': 'old error',
+      '/monorepo/src/index.ts': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/monorepo')) {
+      results.push(result);
+    }
+
+    const dirs = results.filter((r) => r.kind === 'directory');
+    const files = results.filter((r) => r.kind === 'file');
+
+    expect(dirs).toHaveLength(2); // 2 node_modules
+    expect(files.length).toBeGreaterThanOrEqual(5); // 2 tsbuildinfo + 1 eslintcache + 1 stylelintcache + 2 npm-debug.log*
+
+    // Verify all results have required shape
+    for (const r of results) {
+      expect(r.path).toBeDefined();
+      expect(r.type).toBeDefined();
+      expect(r.kind).toBeDefined();
+      expect(r.sizeBytes).toBeNull();
+      expect(['file', 'directory']).toContain(r.kind);
+    }
+  });
+
+  test('file results have sizeBytes as null', async () => {
+    vol.fromJSON({
+      '/project/.tsbuildinfo': '{}',
+      '/project/.eslintcache': '',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    for (const result of results) {
+      expect(result.sizeBytes).toBeNull();
+    }
   });
 });

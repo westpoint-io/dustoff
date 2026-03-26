@@ -32,6 +32,7 @@ export interface AppState {
   typeFilterCursor: number;
   selectionAnchor: number | null;
   detailScrollOffset: number;
+  expandedFileTypes: Set<string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -75,9 +76,29 @@ export type AppAction =
   | { type: 'TYPE_FILTER_CURSOR_DOWN'; typeCount: number }
   | { type: 'CLEAR_TYPE_FILTER' }
   | { type: 'SET_CURSOR'; index: number }
+  | { type: 'CURSOR_MOVE'; index: number }
   | { type: 'SET_SELECTION_ANCHOR'; anchor: number }
   | { type: 'DETAIL_SCROLL_UP' }
-  | { type: 'DETAIL_SCROLL_DOWN'; totalLines: number; maxHeight: number };
+  | { type: 'DETAIL_SCROLL_DOWN'; totalLines: number; maxHeight: number }
+  | { type: 'TOGGLE_FILE_TYPE_EXPAND'; fileType: string }
+  | { type: 'TOGGLE_FILE_GROUP_SELECT'; paths: string[] };
+
+// ---------------------------------------------------------------------------
+// Display items — what ArtifactTable renders
+// ---------------------------------------------------------------------------
+
+export interface FileGroup {
+  type: string;
+  files: ScanResult[];
+  totalSize: number;
+  oldestMtimeMs: number | undefined;
+}
+
+export type DisplayItem =
+  | { kind: 'directory'; artifact: ScanResult }
+  | { kind: 'file-group'; group: FileGroup }
+  | { kind: 'file'; artifact: ScanResult; indented: boolean }
+  | { kind: 'section-separator'; label: string };
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -115,6 +136,7 @@ export const initialState: AppState = {
   typeFilterCursor: 0,
   selectionAnchor: null,
   detailScrollOffset: 0,
+  expandedFileTypes: new Set(),
 };
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -408,6 +430,11 @@ export function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, cursorIndex: action.index };
     }
 
+    case 'CURSOR_MOVE': {
+      if (action.index === state.cursorIndex) return state;
+      return { ...state, cursorIndex: action.index, selectionAnchor: null, detailScrollOffset: 0 };
+    }
+
     case 'SET_SELECTION_ANCHOR': {
       return { ...state, selectionAnchor: action.anchor };
     }
@@ -425,6 +452,31 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         detailScrollOffset: Math.min(maxOffset, state.detailScrollOffset + 1),
       };
+    }
+
+    case 'TOGGLE_FILE_TYPE_EXPAND': {
+      const next = new Set(state.expandedFileTypes);
+      if (next.has(action.fileType)) {
+        next.delete(action.fileType);
+      } else {
+        next.add(action.fileType);
+      }
+      return { ...state, expandedFileTypes: next };
+    }
+
+    case 'TOGGLE_FILE_GROUP_SELECT': {
+      const allSelected = action.paths.every((p) => state.selectedPaths.has(p));
+      const next = new Set(state.selectedPaths);
+      if (allSelected) {
+        for (const p of action.paths) {
+          next.delete(p);
+        }
+      } else {
+        for (const p of action.paths) {
+          next.add(p);
+        }
+      }
+      return { ...state, selectedPaths: next };
     }
 
     default: {
@@ -469,4 +521,84 @@ export function getSortedArtifacts(state: AppState): ScanResult[] {
   }
 
   return result;
+}
+
+/**
+ * Builds the display list: directories as individual rows, files grouped by type.
+ * File groups are collapsed by default; expanded types show individual files.
+ */
+export function getDisplayItems(state: AppState): DisplayItem[] {
+  const sorted = getSortedArtifacts(state);
+  const directories: ScanResult[] = [];
+  const filesByType = new Map<string, ScanResult[]>();
+
+  for (const artifact of sorted) {
+    if (artifact.kind === 'file') {
+      let group = filesByType.get(artifact.type);
+      if (!group) {
+        group = [];
+        filesByType.set(artifact.type, group);
+      }
+      group.push(artifact);
+    } else {
+      directories.push(artifact);
+    }
+  }
+
+  // Build file groups
+  const fileGroups: FileGroup[] = [];
+  for (const [type, files] of filesByType) {
+    let totalSize = 0;
+    let oldestMtimeMs: number | undefined;
+    for (const f of files) {
+      totalSize += f.sizeBytes ?? 0;
+      if (f.mtimeMs !== undefined) {
+        if (oldestMtimeMs === undefined || f.mtimeMs < oldestMtimeMs) {
+          oldestMtimeMs = f.mtimeMs;
+        }
+      }
+    }
+    fileGroups.push({ type, files, totalSize, oldestMtimeMs });
+  }
+
+  // Sort file groups by the same sort key as artifacts
+  fileGroups.sort((a, b) => {
+    if (state.sortKey === 'size') {
+      return state.sortDir === 'desc' ? b.totalSize - a.totalSize : a.totalSize - b.totalSize;
+    }
+    if (state.sortKey === 'path') {
+      const cmp = a.type.localeCompare(b.type);
+      return state.sortDir === 'asc' ? cmp : -cmp;
+    }
+    if (state.sortKey === 'age') {
+      const aMtime = a.oldestMtimeMs ?? 0;
+      const bMtime = b.oldestMtimeMs ?? 0;
+      return state.sortDir === 'desc' ? aMtime - bMtime : bMtime - aMtime;
+    }
+    return 0;
+  });
+
+  // Build display items: directories first, then file groups
+  const items: DisplayItem[] = [];
+
+  if (directories.length > 0) {
+    items.push({ kind: 'section-separator', label: 'Directories' });
+    for (const artifact of directories) {
+      items.push({ kind: 'directory', artifact });
+    }
+  }
+
+  if (fileGroups.length > 0) {
+    items.push({ kind: 'section-separator', label: 'Files' });
+    for (const group of fileGroups) {
+      items.push({ kind: 'file-group', group });
+      if (state.expandedFileTypes.has(group.type)) {
+        for (const file of group.files) {
+          items.push({ kind: 'file', artifact: file, indented: true });
+        }
+      }
+    }
+  }
+
+  return items;
 }

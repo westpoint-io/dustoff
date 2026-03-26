@@ -25,10 +25,6 @@ export const TARGET_DIRS: ReadonlySet<string> = new Set([
   '.rollup.cache',
   '.cache',
 
-  // Linter/formatter caches
-  '.eslintcache',
-  '.stylelintcache',
-
   // Transpiler caches
   '.swc',
 
@@ -41,6 +37,9 @@ export const TARGET_DIRS: ReadonlySet<string> = new Set([
   'storybook-static',
   'gatsby_cache',
   '.docusaurus',
+
+  // Serverless Framework outputs
+  '.serverless',
 
   // Runtime caches
   'deno_cache',
@@ -66,3 +65,37 @@ export const IGNORE_DIRS: ReadonlySet<string> = new Set([
   'sys',
   'dev',
 ]);
+
+/**
+ * Target files to find — individual build artifact files that can be safely deleted.
+ * Case-sensitive exact filename matching.
+ */
+export const TARGET_FILES: ReadonlySet<string> = new Set([
+  '.tsbuildinfo',
+  '.eslintcache',
+  '.stylelintcache',
+  '.pnp.cjs',
+  '.pnp.loader.mjs',
+]);
+
+/**
+ * File name prefixes to match — catches rotated log variants like npm-debug.log.0.
+ */
+export const TARGET_FILE_PREFIXES: readonly string[] = [
+  'npm-debug.log',
+  'yarn-error.log',
+  'yarn-debug.log',
+  'pnpm-debug.log',
+  '.pnpm-debug.log',
+  'lerna-debug.log',
+];
+
+/**
+ * File extension suffixes to match — profiling and build artifacts.
+ */
+export const TARGET_FILE_SUFFIXES: readonly string[] = [
+  '.heapsnapshot',
+  '.cpuprofile',
+  '.heapprofile',
+  '.tgz',
+];

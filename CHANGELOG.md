@@ -1,3 +1,35 @@
+# [1.1.0](https://github.com/westpoint-io/dustoff/compare/v1.0.0...v1.1.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* address code review issues — test fixtures, range selection, custom targets ([b7ebec6](https://github.com/westpoint-io/dustoff/commit/b7ebec6c67539664360ba260ab8d457269f2487b))
+* address Copilot PR review — cursor state, empty list guards, separator deps ([227b764](https://github.com/westpoint-io/dustoff/commit/227b764679b55e431a03aef67a0b1185111ae02c))
+* adjust initial cursor position to skip section separator on scan complete ([4acccf8](https://github.com/westpoint-io/dustoff/commit/4acccf86a31b796025a0677b8aa33cce99375443))
+* cursor skips section separators in correct direction ([d73483b](https://github.com/westpoint-io/dustoff/commit/d73483b834575785ea72203ef93423e3d31ef599))
+* hide Items count and Largest Subdirs in detail panel for file artifacts ([f306768](https://github.com/westpoint-io/dustoff/commit/f3067688d1479a055376d54133a2a0b33023366b))
+* normalize file artifact type to matching pattern for correct grouping ([e32c06c](https://github.com/westpoint-io/dustoff/commit/e32c06c65ae8cebb9b86485fa1ddd04f25e6d6a2))
+* prevent cursor from getting stuck on section separators at list boundaries ([0c97a44](https://github.com/westpoint-io/dustoff/commit/0c97a44d3c8fff54525d2642481f74ca92842225))
+* skip section separators during cursor navigation instead of useEffect ([9ec6ffb](https://github.com/westpoint-io/dustoff/commit/9ec6ffbdd2ee8494aa572278d970918ffbe32c8f))
+
+
+### Features
+
+* add .serverless to detected artifact types ([9d1018a](https://github.com/westpoint-io/dustoff/commit/9d1018aad5969f6d064784772616f762320f6ebc)), closes [#9](https://github.com/westpoint-io/dustoff/issues/9)
+* add artifact metadata for file-based artifact types ([c104995](https://github.com/westpoint-io/dustoff/commit/c104995b7527cb5daa27edd2027161bbe81d7b1c))
+* add expandedFileTypes state and file group actions to reducer ([a01f873](https://github.com/westpoint-io/dustoff/commit/a01f873f9d52e46bce0271211832f9c92094aa98))
+* add FileGroupRow component for collapsed file groups ([e853781](https://github.com/westpoint-io/dustoff/commit/e853781f6e9c2c810437972e731bd89b1a66b95a))
+* add getDisplayItems for file group display logic ([afe7490](https://github.com/westpoint-io/dustoff/commit/afe749079162d15a0be6c7daaa0f78f691137864))
+* add kind discriminant to ScanResult and file target constants ([4fc0b4c](https://github.com/westpoint-io/dustoff/commit/4fc0b4cadc804904c7aa50bb9ad0632b10a2ebc0))
+* add section separators between directories and files in normal mode ([b278502](https://github.com/westpoint-io/dustoff/commit/b2785028b840cf2f696fd05c2b08ddcda1304e64))
+* export file target constants from public API ([9dcc0c8](https://github.com/westpoint-io/dustoff/commit/9dcc0c8f89d63f4efdc09b114415321b4ba1fdcc))
+* grouped file-based artifact scanning ([#14](https://github.com/westpoint-io/dustoff/issues/14)) ([a01aad1](https://github.com/westpoint-io/dustoff/commit/a01aad14bc9378473e5f837f4cf8e6e23d986153)), closes [#11](https://github.com/westpoint-io/dustoff/issues/11)
+* integrate file group display into ArtifactTable and App ([22a6770](https://github.com/westpoint-io/dustoff/commit/22a6770aa2e1086183ad6c19a82766ee2b2c222b))
+* nest file groups inside directory groups in grouping mode ([a39ded6](https://github.com/westpoint-io/dustoff/commit/a39ded6a3da1338e8da35b8bb7b455e18ed83969))
+* scan for file-based artifacts with kind discriminant ([2c3fabd](https://github.com/westpoint-io/dustoff/commit/2c3fabdd5b86334ea117341ce8ce2ff0ab4ef314))
+* use non-recursive rm for file artifact deletion ([f6ac035](https://github.com/westpoint-io/dustoff/commit/f6ac035f4acdeb84ad7e017631dc2ce69b78a34d))
+* use stat for file artifact size instead of recursive traversal ([0a9f456](https://github.com/westpoint-io/dustoff/commit/0a9f456fd84f07e18d51af397a1a5acd6815b2bb))
+
 # 1.0.0 (2026-03-24)
 
 

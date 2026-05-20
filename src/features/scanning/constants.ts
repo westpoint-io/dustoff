@@ -1,6 +1,6 @@
 /**
- * Target directories to find — JS/TS artifact directories that can be safely deleted.
- * Comprehensive list of JS/TS artifact directories.
+ * Target directories to find — project artifact directories that can be safely deleted.
+ * Comprehensive list of generated artifact directories.
  * Case-sensitive exact basename matching.
  */
 export const TARGET_DIRS: ReadonlySet<string> = new Set([
@@ -8,17 +8,20 @@ export const TARGET_DIRS: ReadonlySet<string> = new Set([
   'node_modules',
   '.npm',
   '.pnpm-store',
+  '.gradle',
 
   // Framework build outputs
   '.next',
   '.nuxt',
   '.angular',
+  '.expo',
   '.svelte-kit',
   '.vite',
   '.turbo',
   '.nx',
 
   // Bundler caches
+  '.webpack',
   '.parcel-cache',
   '.rpt2_cache',
   '.esbuild',
@@ -48,6 +51,15 @@ export const TARGET_DIRS: ReadonlySet<string> = new Set([
   'dist',
   'build',
   '.output',
+]);
+
+/**
+ * Nested target directories to find where matching by basename would be unsafe
+ * or too broad. Paths use forward slashes and can appear anywhere under the
+ * scan root.
+ */
+export const TARGET_DIR_PATHS: ReadonlySet<string> = new Set([
+  '.meteor/local',
 ]);
 
 /**

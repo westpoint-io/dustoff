@@ -63,6 +63,9 @@ async function sumDir(dirPath: string, seenInodes: Set<string>): Promise<number>
         }
       }
     }
+  } catch {
+    // Directory became inaccessible or disappeared during iteration.
+    return total;
   } finally {
     try {
       await dir.close();

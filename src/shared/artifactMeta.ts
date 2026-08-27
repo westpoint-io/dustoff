@@ -1,6 +1,6 @@
 /**
  * Static metadata for artifact types — description and regeneration command.
- * Covers all TARGET_DIRS from constants.ts.
+ * Covers all directory and file artifact types from constants.ts.
  */
 
 interface ArtifactMeta {
@@ -13,17 +13,21 @@ const META_MAP: Record<string, ArtifactMeta> = {
   'node_modules': { description: 'Package dependencies', regenerate: 'npm install' },
   '.npm': { description: 'npm download cache', regenerate: 'npm install' },
   '.pnpm-store': { description: 'pnpm content-addressable store', regenerate: 'pnpm install' },
+  '.gradle': { description: 'Gradle build cache', regenerate: 'gradle build' },
 
   // Framework build outputs
   '.next': { description: 'Next.js build cache', regenerate: 'next build' },
   '.nuxt': { description: 'Nuxt.js build cache', regenerate: 'nuxt build' },
   '.angular': { description: 'Angular build cache', regenerate: 'ng build' },
+  '.expo': { description: 'Expo local project cache', regenerate: 'expo start' },
+  '.meteor/local': { description: 'Meteor local build cache', regenerate: 'meteor run' },
   '.svelte-kit': { description: 'SvelteKit build output', regenerate: 'svelte-kit build' },
   '.vite': { description: 'Vite dependency cache', regenerate: 'vite build' },
   '.turbo': { description: 'Turborepo build cache', regenerate: 'turbo run build' },
   '.nx': { description: 'Nx computation cache', regenerate: 'nx run build' },
 
   // Bundler caches
+  '.webpack': { description: 'Webpack filesystem cache', regenerate: 'webpack build' },
   '.parcel-cache': { description: 'Parcel bundler cache', regenerate: 'parcel build' },
   '.rpt2_cache': { description: 'Rollup TypeScript cache', regenerate: 'Auto-regenerated on build' },
   '.esbuild': { description: 'esbuild cache', regenerate: 'Auto-regenerated on build' },

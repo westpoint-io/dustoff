@@ -1,5 +1,5 @@
 import { vol } from 'memfs';
-import { mock, beforeEach, describe, test, expect } from 'bun:test';
+import { mock, afterAll, beforeEach, describe, test, expect } from 'bun:test';
 import { scan } from './scanner.js';
 
 mock.module('node:fs', () => {
@@ -13,6 +13,10 @@ mock.module('node:fs/promises', () => {
 
 beforeEach(() => {
   vol.reset();
+});
+
+afterAll(() => {
+  mock.restore();
 });
 
 describe('scan()', () => {
@@ -70,6 +74,33 @@ describe('scan()', () => {
     expect(foundTypes).toContain('.nuxt');
     expect(foundTypes).toContain('.parcel-cache');
     expect(results).toHaveLength(12);
+  });
+
+  test('finds additional project artifact directories', async () => {
+    vol.fromJSON({
+      '/project/.expo/web/cache.json': '{}',
+      '/project/.gradle/caches/modules-2/files-2.1/module.bin': '',
+      '/project/.meteor/local/build/programs/server/app.js': '',
+      '/project/.meteor/packages': 'meteor-base',
+      '/project/.webpack/cache/default-development/index.pack': '',
+      '/project/src/index.ts': 'export {};',
+    });
+
+    const results = [];
+    for await (const result of scan('/project')) {
+      results.push(result);
+    }
+
+    const foundTypes = new Set(results.map((r) => r.type));
+    expect(foundTypes).toContain('.expo');
+    expect(foundTypes).toContain('.gradle');
+    expect(foundTypes).toContain('.meteor/local');
+    expect(foundTypes).toContain('.webpack');
+    expect(foundTypes).not.toContain('.meteor');
+    expect(results).toHaveLength(4);
+
+    const meteorResult = results.find((r) => r.type === '.meteor/local');
+    expect(meteorResult!.path).toBe('/project/.meteor/local');
   });
 
   test('skips children of matched directories', async () => {

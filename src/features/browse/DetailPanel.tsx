@@ -157,7 +157,7 @@ export function DetailPanel({ artifact, width, rootPath, maxHeight, scrollOffset
     result.push(
       <Box key={k()}><Text color={theme.text}>{'Age'}</Text><Box flexGrow={1} /><Text color={ageClr}>{formatAge(artifact.mtimeMs)}</Text></Box>,
     );
-    if (itemCount !== null) {
+    if (artifact.kind !== 'file' && itemCount !== null) {
       result.push(
         <Box key={k()}><Text color={theme.text}>{'Items'}</Text><Box flexGrow={1} /><Text color={theme.flamingo}>{itemCount}</Text></Box>,
       );
@@ -184,38 +184,40 @@ export function DetailPanel({ artifact, width, rootPath, maxHeight, scrollOffset
       result.push(<Text key={k()} color={theme.green}>{'$ '}{meta.regenerate}</Text>);
     }
 
-    // Subdir chart — inline each bar as its own line element
-    result.push(<Text key={k()} color={theme.overlay0}>{sep}</Text>);
-    result.push(<Text key={k()} color={theme.text} bold>{'Largest Subdirs'}</Text>);
+    // Subdir chart — only for directory artifacts
+    if (artifact.kind !== 'file') {
+      result.push(<Text key={k()} color={theme.overlay0}>{sep}</Text>);
+      result.push(<Text key={k()} color={theme.text} bold>{'Largest Subdirs'}</Text>);
 
-    if (subdirSizes === null) {
-      result.push(<Text key={k()} color={theme.overlay0}>{'Calculating\u2026'}</Text>);
-    } else if (subdirSizes.length > 0) {
-      const segColors = SEGMENT_COLORS(theme);
-      const maxBytes = subdirSizes[0]!.bytes;
-      const sizeColW = 10; // enough for "1,024.5 MB"
-      const nameColW = 12;
-      const barWidth = Math.max(4, innerW - nameColW - sizeColW - 3); // 3 = spaces
-      for (let i = 0; i < subdirSizes.length; i++) {
-        const seg = subdirSizes[i]!;
-        const filled = Math.max(1, Math.round((seg.bytes / maxBytes) * barWidth));
-        const empty = barWidth - filled;
-        const color = segColors[i % segColors.length]!;
-        const segName = seg.name.length > nameColW ? seg.name.slice(0, nameColW - 1) + '\u2026' : seg.name;
-        const sizeStr = formatBytes(seg.bytes).padStart(sizeColW);
-        result.push(
-          <Text key={k()}>
-            <Text color={theme.text}>{segName.padEnd(nameColW)}</Text>
-            <Text>{' '}</Text>
-            <Text color={color}>{'\u2588'.repeat(filled)}</Text>
-            <Text color={theme.overlay0}>{'\u2591'.repeat(empty)}</Text>
-            <Text>{' '}</Text>
-            <Text color={theme.overlay0}>{sizeStr}</Text>
-          </Text>,
-        );
+      if (subdirSizes === null) {
+        result.push(<Text key={k()} color={theme.overlay0}>{'Calculating\u2026'}</Text>);
+      } else if (subdirSizes.length > 0) {
+        const segColors = SEGMENT_COLORS(theme);
+        const maxBytes = subdirSizes[0]!.bytes;
+        const sizeColW = 10; // enough for "1,024.5 MB"
+        const nameColW = 12;
+        const barWidth = Math.max(4, innerW - nameColW - sizeColW - 3); // 3 = spaces
+        for (let i = 0; i < subdirSizes.length; i++) {
+          const seg = subdirSizes[i]!;
+          const filled = Math.max(1, Math.round((seg.bytes / maxBytes) * barWidth));
+          const empty = barWidth - filled;
+          const color = segColors[i % segColors.length]!;
+          const segName = seg.name.length > nameColW ? seg.name.slice(0, nameColW - 1) + '\u2026' : seg.name;
+          const sizeStr = formatBytes(seg.bytes).padStart(sizeColW);
+          result.push(
+            <Text key={k()}>
+              <Text color={theme.text}>{segName.padEnd(nameColW)}</Text>
+              <Text>{' '}</Text>
+              <Text color={color}>{'\u2588'.repeat(filled)}</Text>
+              <Text color={theme.overlay0}>{'\u2591'.repeat(empty)}</Text>
+              <Text>{' '}</Text>
+              <Text color={theme.overlay0}>{sizeStr}</Text>
+            </Text>,
+          );
+        }
+      } else {
+        result.push(<Text key={k()} color={theme.overlay0}>{'Empty directory'}</Text>);
       }
-    } else {
-      result.push(<Text key={k()} color={theme.overlay0}>{'Empty directory'}</Text>);
     }
 
     return result;

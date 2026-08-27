@@ -25,7 +25,7 @@
 
 ## 🧹 What It Does
 
-Scan your filesystem for JavaScript/TypeScript build artifacts — `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, and [30+ more](#detected-artifacts) — then interactively browse, sort, select, and safely delete them to reclaim disk space.
+Scan your filesystem for JavaScript/TypeScript build artifacts — directories like `node_modules`, `.next`, `dist`, `.cache`, `coverage`, `.turbo`, and files like `.tsbuildinfo`, `.eslintcache`, heap snapshots, debug logs, and [more](#detected-artifacts) — then interactively browse, sort, select, and safely delete them to reclaim disk space.
 
 ## 🚀 Installation
 
@@ -98,9 +98,13 @@ Press `/` to search — instantly filter artifacts by path. Press `f` to open th
   <img src="assets/features/search_filter.gif" alt="Searching and filtering artifacts" width="800" />
 </p>
 
+### File Artifact Scanning
+
+dustoff detects individual build artifact files (`.tsbuildinfo`, `.eslintcache`, debug logs, heap snapshots, etc.) and groups them by type into collapsible rows. Expand with `Enter` to see individual files, or select the whole group with `Space`.
+
 ### Directory Grouping
 
-Press `x` to group artifacts by parent directory. Collapse and expand groups with `Enter` or arrow keys. Select an entire group at once with `Space` on the group header.
+Press `x` to group artifacts by parent directory. Collapse and expand groups with `Enter` or arrow keys. Select an entire group at once with `Space` on the group header. File groups nest inside their parent directory groups.
 
 <p align="center">
   <img src="assets/features/grouping.gif" alt="Directory grouping" width="800" />
@@ -185,19 +189,32 @@ Cycle through themes with `t` during a session. Your preference is saved to `~/.
 
 ## 🔍 Detected Artifacts
 
-dustoff scans for these directories:
+### Directories
 
 | Category | Directories |
 |----------|-------------|
 | **Package managers** | `node_modules`, `.npm`, `.pnpm-store` |
 | **Framework builds** | `.next`, `.nuxt`, `.angular`, `.svelte-kit`, `.vite`, `.turbo`, `.nx` |
 | **Bundler caches** | `.parcel-cache`, `.rpt2_cache`, `.esbuild`, `.rollup.cache`, `.cache` |
-| **Linter/formatter** | `.eslintcache`, `.stylelintcache` |
 | **Transpiler** | `.swc` |
 | **Test/coverage** | `coverage`, `.nyc_output`, `.jest` |
 | **Docs/storybook** | `storybook-static`, `gatsby_cache`, `.docusaurus` |
+| **Serverless** | `.serverless` |
 | **Runtime** | `deno_cache` |
 | **Build outputs** | `dist`, `build`, `.output` |
+
+### Files
+
+Files are grouped by type into collapsible rows.
+
+| Category | Files |
+|----------|-------|
+| **Build/compiler** | `.tsbuildinfo` |
+| **Linter/formatter caches** | `.eslintcache`, `.stylelintcache` |
+| **Yarn PnP** | `.pnp.cjs`, `.pnp.loader.mjs` |
+| **Package manager logs** | `npm-debug.log*`, `yarn-error.log*`, `yarn-debug.log*`, `pnpm-debug.log*`, `.pnpm-debug.log*`, `lerna-debug.log*` |
+| **Profiling/diagnostics** | `*.heapsnapshot`, `*.cpuprofile`, `*.heapprofile` |
+| **Package archives** | `*.tgz` |
 
 ## 🤝 Contributing
 

@@ -1,125 +1,119 @@
-import { vol } from 'memfs';
-import { mock, beforeEach, describe, test, expect } from 'bun:test';
+import { link, mkdtemp, mkdir, rm, stat, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { afterEach, beforeEach, describe, test, expect } from 'bun:test';
 import { calculateSize, calculateSizeWithTimeout } from './size.js';
 
-mock.module('node:fs', () => {
-  const memfs = require('memfs');
-  return { default: memfs.fs, ...memfs.fs };
-});
-mock.module('node:fs/promises', () => {
-  const memfs = require('memfs');
-  return { default: memfs.fs.promises, ...memfs.fs.promises };
+let tmpDir: string;
+
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(tmpdir(), 'dustoff-size-test-'));
 });
 
-beforeEach(() => {
-  vol.reset();
+afterEach(async () => {
+  await rm(tmpDir, { recursive: true, force: true });
 });
+
+function pathInTmp(...segments: string[]): string {
+  return join(tmpDir, ...segments);
+}
+
+const testWithHardlinks = process.platform === 'win32' ? test.skip : test;
 
 describe('calculateSize()', () => {
   test('calculates size of directory with files', async () => {
-    vol.fromJSON({
-      '/dir/a.txt': 'hello',
-      '/dir/b.txt': 'world',
-    });
+    const dir = pathInTmp('dir');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'a.txt'), 'hello');
+    await writeFile(join(dir, 'b.txt'), 'world');
 
-    const size = await calculateSize('/dir');
+    const size = await calculateSize(dir);
 
-    // memfs does not set stat.blocks accurately (typically 0), so the code falls back
-    // to stat.size. The total should be >= sum of file content lengths (5 + 5 = 10).
     expect(typeof size).toBe('number');
     expect(size).toBeGreaterThanOrEqual(10);
   });
 
   test('returns 0 for empty directory', async () => {
-    vol.mkdirSync('/empty');
+    const dir = pathInTmp('empty');
+    await mkdir(dir);
 
-    const size = await calculateSize('/empty');
+    const size = await calculateSize(dir);
 
     expect(size).toBe(0);
   });
 
   test('handles nested directories — includes all files', async () => {
-    vol.fromJSON({
-      '/root/a.txt': 'aaaa',
-      '/root/sub/b.txt': 'bbbb',
-      '/root/sub/deep/c.txt': 'cccc',
-    });
+    const root = pathInTmp('root');
+    await mkdir(join(root, 'sub', 'deep'), { recursive: true });
+    await writeFile(join(root, 'a.txt'), 'aaaa');
+    await writeFile(join(root, 'sub', 'b.txt'), 'bbbb');
+    await writeFile(join(root, 'sub', 'deep', 'c.txt'), 'cccc');
 
-    const size = await calculateSize('/root');
+    const size = await calculateSize(root);
 
-    // Each file is 4 bytes; total should be >= 12 (fallback to stat.size)
     expect(size).toBeGreaterThanOrEqual(12);
   });
 
   test('returns 0 for non-existent directory — does not throw', async () => {
-    const size = await calculateSize('/does-not-exist');
+    const size = await calculateSize(pathInTmp('does-not-exist'));
 
     expect(size).toBe(0);
   });
 
-  test('handles permission errors gracefully — still calculates accessible files', async () => {
-    // Create a directory with some accessible files
-    vol.fromJSON({
-      '/root/accessible/file.txt': 'content here',
-    });
+  test('handles accessible directories without throwing', async () => {
+    const root = pathInTmp('root');
+    await mkdir(join(root, 'accessible'), { recursive: true });
+    await writeFile(join(root, 'accessible', 'file.txt'), 'content here');
 
-    // calculateSize should not throw even if some paths fail to open
-    // The function wraps errors and returns 0 for inaccessible entries
-    const size = await calculateSize('/root');
+    const size = await calculateSize(root);
 
     expect(typeof size).toBe('number');
     expect(size).toBeGreaterThanOrEqual(0);
   });
 
-  test('deduplicates inodes — skips files with same inode key', async () => {
-    // memfs stat returns ino:0 for all files (no real hardlink support), so both
-    // files will share the same inode key "0:0". This tests the dedup code path
-    // in the context of memfs's limitations.
-    vol.fromJSON({
-      '/dir/file1.txt': 'content of file one',
-      '/dir/file2.txt': 'content of file two',
-    });
+  testWithHardlinks('deduplicates hardlinked files by inode', async () => {
+    const dir = pathInTmp('dir');
+    await mkdir(dir, { recursive: true });
+    const original = join(dir, 'file1.txt');
+    const hardlink = join(dir, 'file2.txt');
+    await writeFile(original, 'content of file one');
+    await link(original, hardlink);
 
-    const size = await calculateSize('/dir');
+    const size = await calculateSize(dir);
+    const originalStat = await stat(original);
+    const singleFileSize = originalStat.blocks != null && originalStat.blocks > 0
+      ? originalStat.blocks * 512
+      : originalStat.size;
 
-    // With real hardlinks the result would be 1x file size. With memfs, all files
-    // return ino=0, so only the first file's size is counted.
-    // We just verify the result is a non-negative number and does not throw.
     expect(typeof size).toBe('number');
-    expect(size).toBeGreaterThanOrEqual(0);
+    expect(size).toBeGreaterThan(0);
+    expect(size).toBeLessThanOrEqual(singleFileSize + 512);
   });
 });
 
 describe('calculateSizeWithTimeout()', () => {
   test('returns size for fast calculation', async () => {
-    vol.fromJSON({
-      '/dir/file.txt': 'small content',
-    });
+    const dir = pathInTmp('dir');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'file.txt'), 'small content');
 
-    const size = await calculateSizeWithTimeout('/dir', 5000);
+    const size = await calculateSizeWithTimeout(dir, 5000);
 
     expect(typeof size).toBe('number');
     expect(size).toBeGreaterThanOrEqual(0);
   });
 
   test('returns null on timeout', async () => {
-    // Use a very short timeout (1ms) so the timeout fires before the async walk completes.
-    // We need a somewhat real directory to walk — memfs is fast so we use a deep structure
-    // to give the timeout a chance to fire.
-    vol.fromJSON({
-      '/big/a/file.txt': 'x'.repeat(100),
-      '/big/b/file.txt': 'x'.repeat(100),
-      '/big/c/file.txt': 'x'.repeat(100),
-    });
+    const big = pathInTmp('big');
+    await mkdir(join(big, 'a'), { recursive: true });
+    await mkdir(join(big, 'b'), { recursive: true });
+    await mkdir(join(big, 'c'), { recursive: true });
+    await writeFile(join(big, 'a', 'file.txt'), 'x'.repeat(100));
+    await writeFile(join(big, 'b', 'file.txt'), 'x'.repeat(100));
+    await writeFile(join(big, 'c', 'file.txt'), 'x'.repeat(100));
 
-    // With timeoutMs=0, the delay fires immediately before the promise resolves.
-    // This is guaranteed because delay(0) schedules a macrotask whereas
-    // calculateSize also uses async I/O — in this controlled test the race resolves
-    // to the timeout sentinel.
-    const size = await calculateSizeWithTimeout('/big', 0);
+    const size = await calculateSizeWithTimeout(big, 0);
 
-    // May be null (timeout fired) or a number (calculation completed first).
-    // Either is valid — the important thing is it does NOT throw.
     expect(size === null || typeof size === 'number').toBe(true);
   });
 });

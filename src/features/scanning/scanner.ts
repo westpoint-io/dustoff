@@ -1,6 +1,13 @@
 import { opendir, stat } from 'node:fs/promises';
-import { join } from 'node:path';
-import { TARGET_DIRS, IGNORE_DIRS, TARGET_FILES, TARGET_FILE_PREFIXES, TARGET_FILE_SUFFIXES } from './constants.js';
+import { join, relative } from 'node:path';
+import {
+  TARGET_DIRS,
+  TARGET_DIR_PATHS,
+  IGNORE_DIRS,
+  TARGET_FILES,
+  TARGET_FILE_PREFIXES,
+  TARGET_FILE_SUFFIXES,
+} from './constants.js';
 import type { ScanResult, ScanOptions } from './types.js';
 
 /**
@@ -17,6 +24,21 @@ function matchTargetFile(name: string): string | null {
   }
   for (const suffix of TARGET_FILE_SUFFIXES) {
     if (name.endsWith(suffix)) return suffix;
+  }
+  return null;
+}
+
+/**
+ * Returns the normalized type for a nested target directory path, or null if
+ * the path is not a target. This keeps cases like ".meteor/local" precise
+ * without marking the entire ".meteor" project metadata directory removable.
+ */
+function matchTargetDirectoryPath(rootPath: string, entryPath: string): string | null {
+  const relativePath = relative(rootPath, entryPath).replace(/\\/g, '/');
+  for (const targetPath of TARGET_DIR_PATHS) {
+    if (relativePath === targetPath || relativePath.endsWith(`/${targetPath}`)) {
+      return targetPath;
+    }
   }
   return null;
 }
@@ -40,7 +62,7 @@ function isPermissionError(err: unknown): boolean {
  * 2. Dequeue directory, open it, iterate entries
  * 3. Skip symlinks
  * 4. For files: yield if matching TARGET_FILES / prefixes / suffixes
- * 5. For directories: skip IGNORE_DIRS, yield TARGET_DIRS, otherwise enqueue
+ * 5. For directories: skip IGNORE_DIRS, yield TARGET_DIRS / TARGET_DIR_PATHS, otherwise enqueue
  *
  * Key properties:
  * - Skips children of matched directories (avoids redundant traversal)
@@ -127,6 +149,32 @@ export async function* scan(
         if (IGNORE_DIRS.has(entry.name)) {
           // Skip system/SCM directories — don't recurse
           continue;
+        }
+
+        if (!options?.targets) {
+          const pathType = matchTargetDirectoryPath(rootPath, entryPath);
+          if (pathType !== null) {
+            if (exclude?.has(pathType)) {
+              continue;
+            }
+            let mtimeMs: number | undefined;
+            try {
+              const s = await stat(entryPath);
+              mtimeMs = s.mtimeMs;
+            } catch {
+              // stat failed — leave mtimeMs undefined
+            }
+
+            debug?.(`scan: artifact found ${entryPath} (${pathType})`);
+            yield {
+              path: entryPath,
+              type: pathType,
+              kind: 'directory',
+              sizeBytes: null,
+              mtimeMs,
+            };
+            continue;
+          }
         }
 
         if (targets.has(entry.name)) {
